@@ -317,14 +317,19 @@
     .slot-macros-summary { font-size: 11px; font-weight: 700; color: var(--text-sec); }
     .slot-cals { font-size: 13px; font-weight: 800; color: var(--primary); }
     .btn-slot-add {
-      background: #FFFFFF;
-      border: 1px solid #D1D5DB;
-      color: var(--text);
+      background: #1C1C1E;
+      border: 1px solid #38383A;
+      color: #FFFFFF;
       font-size: 11px;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 6px;
       cursor: pointer;
+    }
+    .btn-slot-add:active { 
+      background: var(--primary); 
+      color: white; 
+      border-color: var(--primary); 
     }
     .btn-slot-add:active { background: var(--primary); color: white; border-color: var(--primary); }
 
@@ -471,17 +476,17 @@
     }
     .yoddha-rank-badge {
       display: inline-block;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
-      padding: 3px 8px;
+      padding: 4px 10px;
       background: rgba(255,255,255,0.15);
-      border-radius: 4px;
-      margin-bottom: 6px;
+      border-radius: 6px;
+      margin-bottom: 8px;
       color: var(--gold);
     }
-    .yoddha-title { font-size: 20px; font-weight: 800; margin-bottom: 2px; }
-    .yoddha-sub { font-size: 12px; color: #A1A1AA; margin-bottom: 12px; }
+    .yoddha-title { font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+    .yoddha-sub { font-size: 12px; color: #A1A1AA; margin-bottom: 14px; line-height: 1.4; }
     .yoddha-streak-hero {
       display: flex;
       align-items: center;
@@ -495,7 +500,7 @@
     .xp-bar-container {
       background: rgba(255,255,255,0.2);
       border-radius: 10px;
-      height: 8px;
+      height: 9px;
       overflow: hidden;
       margin: 8px 0 4px 0;
     }
@@ -519,20 +524,28 @@
     .quest-title { font-size: 13px; font-weight: 700; }
     .quest-sub { font-size: 11px; color: var(--text-sec); margin-top: 2px; }
     .btn-quest-claim {
-      background: var(--primary-soft);
-      color: var(--primary);
-      border: 1px solid var(--primary);
-      padding: 5px 10px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 7px 12px;
       border-radius: 6px;
       font-size: 11px;
       font-weight: 700;
       cursor: pointer;
+      white-space: nowrap;
     }
     .btn-quest-claim.claimed {
       background: var(--surface-secondary);
       color: var(--text-sec);
-      border-color: var(--border);
+      border: 1px solid var(--border);
       cursor: default;
+    }
+    .btn-quest-claim.locked {
+      background: var(--surface-secondary);
+      color: var(--text-sec);
+      border: 1px solid var(--border);
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     /* Tab Bar */
@@ -856,14 +869,21 @@
       </div>
     </div>
 
-    <!-- TAB 3: MEAL PLANNER (9 REGIONAL & TARGETED OPTIONS) -->
+    <!-- TAB 3: MEAL PLANNER (REGIONAL & TARGETED OPTIONS) -->
     <div id="tab-planner" class="tab-view">
       <div class="card">
-        <h3 style="margin: 0 0 6px 0;">🎯 9 Regional & Targeted Indian Plans</h3>
-        <p style="font-size: 13px; color: var(--text-sec); margin: 0 0 12px 0;">
-          Scaled automatically to your goal (<span id="planner-target-cals">2000</span> kcal) across all 5 daily meal slots with complete Protein and Carb profiles. Tap <b>Apply Plan</b> to populate any plan directly into today's log.
-        </p>
-        <div id="recommended-plans-list"></div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <div>
+            <h3 style="margin: 0 0 4px 0;">🍱 9 Regional & Targeted Indian Plans</h3>
+            <p style="font-size: 13px; color: var(--text-sec); margin: 0;">
+              Scaled automatically to your goal (<span id="planner-target-cals">2000</span> kcal).
+            </p>
+          </div>
+          <button class="btn-submit" style="margin: 0; padding: 7px 12px; font-size: 12px; width: auto;" onclick="openCustomPlanModal()">
+            + Create Plan
+          </button>
+        </div>
+        <div id="recommended-plans-list" style="margin-top: 12px;"></div>
       </div>
     </div>
 
@@ -899,7 +919,7 @@
     <!-- TAB 5: DESI YODDHA GAMIFICATION -->
     <div id="tab-yoddha" class="tab-view">
       <div class="yoddha-hero-card">
-        <div class="yoddha-rank-badge" id="yoddha-level-badge">Level 1 • Halwai Ka Yaar</div>
+        <div class="yoddha-rank-badge" id="yoddha-level-badge">🥉 Level 1: Halwai Ka Yaar</div>
         <div class="yoddha-title" id="yoddha-title-display">Halwai Ka Yaar</div>
         <div class="yoddha-sub" id="yoddha-desc-display">Beginning your journey; breaking free from daily sweets and fried snacks!</div>
         
@@ -907,13 +927,13 @@
           <div class="streak-hero-num" id="yoddha-streak-display">0</div>
           <div style="font-size: 12px; line-height: 1.3;">
             <b>Day Desi Streak</b><br>
-            <span style="color: #D1D5DB; font-size: 11px;">Log at least 1 meal every day to build streak! Resets to 0 if a day is missed.</span>
+            <span style="color: #D1D5DB; font-size: 11px;">Log at least 1 meal every day to build your streak! Resets to 0 if a day is missed.</span>
           </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700;">
           <span id="xp-progress-label">0 / 250 XP</span>
-          <span>Next Rank: Level 2</span>
+          <span id="next-rank-label">Next Rank: Level 2</span>
         </div>
         <div class="xp-bar-container">
           <div class="xp-bar-fill" id="xp-bar-fill"></div>
@@ -923,7 +943,7 @@
       <h4 style="margin: 0 0 8px 4px;">🎯 Daily Desi Quests</h4>
       <div id="quests-container"></div>
 
-      <h4 style="margin: 14px 0 8px 4px;">🏆 Desi Trophy Cabinet</h4>
+      <h4 style="margin: 18px 0 8px 4px;">🏆 Desi Streak & Trophy Cabinet</h4>
       <div id="trophies-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;"></div>
     </div>
   </main>
@@ -1124,6 +1144,10 @@
       <div class="form-group" id="waist-input-group" style="display: none;">
         <label class="form-label">Waist Circumference at Navel (cm)</label>
         <input type="number" id="calc-waist" class="form-input" value="94" oninput="runFatLossCalculation()">
+        <div id="whtr-risk-card" style="margin-top: 6px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
+          <span id="whtr-value-lbl">WHtR: 0.55</span>
+          <span id="whtr-status-badge" style="padding: 2px 6px; border-radius: 4px;">Elevated Risk</span>
+        </div>
       </div>
 
       <div class="card" style="background: var(--surface-secondary); padding: 12px; margin-bottom: 12px;">
@@ -1209,6 +1233,52 @@
       <button class="btn-submit" onclick="saveApiKeys()">Save Key</button>
     </div>
   </div>
+  <!-- MODAL: ADD CUSTOM MEAL PLAN -->
+  <div class="modal-overlay" id="add-custom-plan-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">🍱 Create Custom Meal Plan</div>
+        <button class="close-modal" onclick="closeCustomPlanModal()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Plan Title *Required</label>
+        <input type="text" id="cust-plan-title" class="form-input" placeholder="e.g. My High-Protein Bulk Plan" required>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Category Tag</label>
+          <input type="text" id="cust-plan-tag" class="form-input" placeholder="e.g. High Protein" value="Custom Plan">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Badge Style</label>
+          <select id="cust-plan-badge" class="form-input">
+            <option value="badge-macro">Blue Macro Badge</option>
+            <option value="badge-bihari">Bihari Orange Badge</option>
+            <option value="badge-success">Green Success Badge</option>
+            <option value="badge-warning">Warning Badge</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Short Description</label>
+        <input type="text" id="cust-plan-desc" class="form-input" placeholder="e.g. Customized calories and protein split for muscle building">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Plan Items Preview (Text Summary)</label>
+        <textarea id="cust-plan-preview" class="form-input" rows="3" placeholder="🌅 Breakfast: Oats & Eggs&#10;🍛 Lunch: 2 Rotis & Dal..."></textarea>
+      </div>
+
+      <div style="background: var(--surface-secondary); padding: 10px; border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 11px; color: var(--text-sec);">
+        💡 Tip: When you apply this custom plan, it will auto-populate default healthy staples scaled to your target calories, which you can then customize.
+      </div>
+
+      <button class="btn-submit" onclick="saveCustomPlan()">Save Custom Plan</button>
+    </div>
+  </div>
 
   <!-- Bottom Navigation Bar -->
   <nav class="tabbar">
@@ -1236,10 +1306,10 @@
 
   <script>
     /* ==========================================================================
-       AUTHENTIC ANUVAAD INDB 2024.11 EMBEDDED DATABASE (270 FOODS WITH MACROS)
-       Format: [Food Name, Portion Unit, Calories (kcal), Protein (g), Carbs (g), Fat (g), Sugar (g), Cholesterol (mg)]
+       AUTHENTIC ANUVAAD INDB 2024.11 EMBEDDED DATABASE SAMPLE
+       Format: [Food Name, Portion Unit, Calories (kcal), Protein (g), Carbs (g), Fat (g)]
        ========================================================================== */
-    const ANUVAAD_INDB_DATABASE  = [
+    const ANUVAAD_INDB_DATABASE = [
   ["Hot tea (Garam Chai)","1 tea cup",16,0.4,2.6,0.5],
   ["Instant coffee","1 tea cup",23,0.6,3.6,0.8],
   ["Espreso coffee","1 tea cup",52,1.8,6.6,2.1],
@@ -2257,13 +2327,215 @@
 ];
 
 
+    const ALL_9_MEAL_PLANS = [
+      {
+        title: "North Indian High-Protein Shakahari",
+        tag: "High Protein",
+        badgeClass: "badge-macro",
+        desc: "Paneer, sprouts, dal, and curd scaled for muscle tone and fat loss.",
+        items_preview: "🌅 Breakfast: Moong Sprouts Salad & Besan Cheela\n🍛 Lunch: 2 Rotis, Paneer Bhurji, Dal & Dahi\n☕️ Snacks: Roasted Makhana & Masala Chai\n🍲 Dinner: 2 Rotis, Rajma & Mixed Green Salad\n🌙 Midnight: Warm Turmeric Milk",
+        meals: {
+          breakfast: [{ name: "Moong dal stuffed cheela/chilla", portion: "2 cheelas", calories: 310, protein: 14, carbs: 38, fat: 10, qty: 1 }],
+          lunch: [
+            { name: "Chapati/Roti", portion: "2 chapatis", calories: 170, protein: 6, carbs: 34, fat: 1, qty: 1 },
+            { name: "Paneer Bhurji", portion: "1 katori", calories: 220, protein: 12, carbs: 6, fat: 17, qty: 1 },
+            { name: "Yellow Dal Tadka", portion: "1 katori", calories: 150, protein: 7.5, carbs: 20, fat: 4.5, qty: 1 }
+          ],
+          snacks: [{ name: "Hot tea (Garam Chai)", portion: "1 cup", calories: 95, protein: 3, carbs: 14, fat: 3, qty: 1 }],
+          dinner: [
+            { name: "Chapati/Roti", portion: "2 chapatis", calories: 170, protein: 6, carbs: 34, fat: 1, qty: 1 },
+            { name: "Kidney bean curry (Rajmah curry)", portion: "1 bowl", calories: 180, protein: 8, carbs: 24, fat: 6, qty: 1 }
+          ],
+          midnight: [{ name: "Hot chocolate", portion: "1 cup", calories: 110, protein: 4, carbs: 10, fat: 4, qty: 1 }]
+        }
+      },
+      {
+        title: "Bihari Sattu & Litti Desi Power",
+        tag: "Regional Bihari",
+        badgeClass: "badge-bihari",
+        desc: "Traditional slow-digesting roasted gram flour and baingan-tamatar chokha.",
+        items_preview: "🌅 Breakfast: Chana Sattu Namkeen Sharbat\n🍛 Lunch: 2 Wheat Rotis, Dal Tadka & Aloo Bhujia\n☕️ Snacks: Roasted Chana & Gur\n🍲 Dinner: Litti Chokha with Baingan Bhartha & Salad\n🌙 Midnight: Salted Lassi",
+        meals: {
+          breakfast: [{ name: "Bihari Sattu Sharbat (Namkeen)", portion: "1 glass", calories: 220, protein: 12, carbs: 34, fat: 3.5, qty: 1 }],
+          lunch: [
+            { name: "Chapati/Roti", portion: "2 chapatis", calories: 170, protein: 6, carbs: 34, fat: 1, qty: 1 },
+            { name: "Washed moong dal (Dhuli moong ki dal)", portion: "1 bowl", calories: 150, protein: 8, carbs: 22, fat: 4.5, qty: 1 }
+          ],
+          snacks: [{ name: "Peanut brittle (Moongfali ki chikki)", portion: "1 piece", calories: 140, protein: 7, carbs: 22, fat: 2.5, qty: 1 }],
+          dinner: [{ name: "Litti Chokha (2 pcs with Chokha)", portion: "1 plate", calories: 340, protein: 11, carbs: 54, fat: 8.5, qty: 1 }],
+          midnight: [{ name: "Lassi (salted)", portion: "1 glass", calories: 45, protein: 2, carbs: 4, fat: 1.5, qty: 1 }]
+        }
+      },
+      {
+        title: "South Indian Idli-Sambar Lean Plan",
+        tag: "South Indian",
+        badgeClass: "badge-macro",
+        desc: "Steamed fermented rice cakes with high-fiber lentil sambar and rasam.",
+        items_preview: "🌅 Breakfast: 3 Idlis with Sambar and Coconut Chutney\n🍛 Lunch: Steamed Rice with Sambar and Rasam\n☕️ Snacks: Filter Coffee with Milk\n🍲 Dinner: Rava Dosa with Tomato Chutney\n🌙 Midnight: Warm Cumin Water",
+        meals: {
+          breakfast: [
+            { name: "Idli", portion: "3 idlis", calories: 276, protein: 9.2, carbs: 56.4, fat: 0.6, qty: 1 },
+            { name: "Sambar", portion: "1 bowl", calories: 97, protein: 3.4, carbs: 10.6, fat: 4.4, qty: 1 }
+          ],
+          lunch: [
+            { name: "Boiled rice (Uble chawal)", portion: "1 plate", calories: 180, protein: 3.5, carbs: 39, fat: 0.4, qty: 1 },
+            { name: "Sambar", portion: "1 bowl", calories: 97, protein: 3.4, carbs: 10.6, fat: 4.4, qty: 1 }
+          ],
+          snacks: [{ name: "Hot tea (Garam Chai)", portion: "1 cup", calories: 85, protein: 2, carbs: 12, fat: 3, qty: 1 }],
+          dinner: [{ name: "Semolina dosa (Suji/Rava dosa)", portion: "1 dosa", calories: 227, protein: 7.3, carbs: 32.8, fat: 7.1, qty: 1 }],
+          midnight: [{ name: "Cumin infused water (Jeere/Zeere ka pani)", portion: "1 glass", calories: 9, protein: 0.2, carbs: 1.9, fat: 0.1, qty: 1 }]
+        }
+      },
+      {
+        title: "Punjabi Paneer & Paratha Bulk",
+        tag: "High Calorie",
+        badgeClass: "badge-warning",
+        desc: "Rich butter-based gravies, paneer stuffed parathas, and whole milk curd.",
+        items_preview: "🌅 Breakfast: 2 Aloo Parathas with Butter & Dahi\n🍛 Lunch: Shahi Paneer, 2 Naans & Mixed Salad\n☕️ Snacks: Lassi (Sweet)\n🍲 Dinner: Butter Chicken or Dal Makhani with Roti\n🌙 Midnight: Full Cream Milk",
+        meals: {
+          breakfast: [
+            { name: "Potato parantha/paratha (Aloo ka parantha/paratha)", portion: "2 paranthas", calories: 410, protein: 7.4, carbs: 47.8, fat: 20.4, qty: 1 },
+            { name: "Curd / Dahi (Whole milk)", portion: "1 katori", calories: 100, protein: 4, carbs: 6, fat: 6.5, qty: 1 }
+          ],
+          lunch: [
+            { name: "Shahi paneer", portion: "1 bowl", calories: 312, protein: 10.2, carbs: 13.2, fat: 24.6, qty: 1 },
+            { name: "Naan", portion: "2 naans", calories: 572, protein: 16.2, carbs: 103.6, fat: 10, qty: 1 }
+          ],
+          snacks: [{ name: "Sweet Lassi (Meethi lassi)", portion: "1 glass", calories: 150, protein: 4, carbs: 28, fat: 3, qty: 1 }],
+          dinner: [
+            { name: "Dal makhani", portion: "1 bowl", calories: 180, protein: 7, carbs: 18, fat: 8, qty: 1 },
+            { name: "Chapati/Roti", portion: "2 chapatis", calories: 170, protein: 6, carbs: 34, fat: 1, qty: 1 }
+          ],
+          midnight: [{ name: "Hot cocoa", portion: "1 cup", calories: 90, protein: 3.4, carbs: 9.2, fat: 4.6, qty: 1 }]
+        }
+      },
+      {
+        title: "Maharashtrian Poha & Thalipeeth Weight Loss",
+        tag: "Low Calorie",
+        badgeClass: "badge-success",
+        desc: "Light rice flake breakfast, sprouted pulses, and multi-grain flatbreads.",
+        items_preview: "🌅 Breakfast: Kanda Batata Poha with Lemon & Peanuts\n🍛 Lunch: 2 Chapati, Matki Usal & Taak\n☕️ Snacks: Murmura Chivda\n🍲 Dinner: Sprouted Moong Dal Khichdi\n🌙 Midnight: Lemon Water",
+        meals: {
+          breakfast: [{ name: "Poha", portion: "1 bowl", calories: 295, protein: 6.1, carbs: 35.0, fat: 14.1, qty: 1 }],
+          lunch: [
+            { name: "Chapati/Roti", portion: "2 chapatis", calories: 170, protein: 6, carbs: 34, fat: 1, qty: 1 },
+            { name: "Whole moth (Moth ki dal)", portion: "1 bowl", calories: 110, protein: 4, carbs: 11, fat: 5, qty: 1 }
+          ],
+          snacks: [{ name: "Murmura (Puffed rice)", portion: "1 bowl", calories: 113, protein: 3.6, carbs: 15.7, fat: 4.0, qty: 1 }],
+          dinner: [{ name: "Rice dal porridge (Chawal dal ki khichdi/khichri)", portion: "1 bowl", calories: 220, protein: 7, carbs: 38, fat: 4, qty: 1 }],
+          midnight: [{ name: "Lemonade", portion: "1 glass", calories: 21, protein: 0, carbs: 5.5, fat: 0, qty: 1 }]
+        }
+      },
+      {
+        title: "Bengali Machher Jhol & Rice Cleanse",
+        tag: "Peshawari / Eastern",
+        badgeClass: "badge-api",
+        desc: "Steamed white rice paired with mustard-infused fish curry and vegetable bhaja.",
+        items_preview: "🌅 Breakfast: Muri (Puffed Rice) with Tea\n🍛 Lunch: Steamed Rice, Machli Curry & Salad\n☕️ Snacks: Tea and Rosogolla\n🍲 Dinner: Roti with Shukto / Veg Curry\n🌙 Midnight: Warm Milk",
+        meals: {
+          breakfast: [{ name: "Puffed wheat (Murmure/Moori)", portion: "1 bowl", calories: 113, protein: 3.6, carbs: 15.7, fat: 4.0, qty: 1 }],
+          lunch: [
+            { name: "Boiled rice (Uble chawal)", portion: "1 plate", calories: 234, protein: 5.2, carbs: 51.4, fat: 0.4, qty: 1 },
+            { name: "Fish curry (Machli curry)", portion: "1 bowl", calories: 111, protein: 8.8, carbs: 3.8, fat: 6.7, qty: 1 }
+          ],
+          snacks: [{ name: "Rasgulla", portion: "1 piece", calories: 119, protein: 1.4, carbs: 25.8, fat: 1.8, qty: 1 }],
+          dinner: [
+            { name: "Chapati/Roti", portion: "2 chapatis", calories: 170, protein: 6, carbs: 34, fat: 1, qty: 1 },
+            { name: "Potato curry (Aloo ki sabzi)", portion: "1 bowl", calories: 90, protein: 1.5, carbs: 10.4, fat: 4.5, qty: 1 }
+          ],
+          midnight: [{ name: "Instant coffee", portion: "1 cup", calories: 23, protein: 0.6, carbs: 3.6, fat: 0.8, qty: 1 }]
+        }
+      },
+      {
+        title: "Gujarati Farsan & Khichdi Balance",
+        tag: "Balanced",
+        badgeClass: "badge-db",
+        desc: "Sweet and sour dal, steamed dhokla, and comforting lentil rice khichdi.",
+        items_preview: "🌅 Breakfast: 2 Instant Dhoklas with Green Chutney\n🍛 Lunch: Gujarati Dal, Rice, Rotli & Ringan Olo\n☕️ Snacks: Khakhra with Masala Tea\n🍲 Dinner: Vegetable Khichdi with Kadhi\n🌙 Midnight: Chaach",
+        meals: {
+          breakfast: [{ name: "Dhokla", portion: "2 pieces", calories: 216, protein: 13.4, carbs: 30.7, fat: 5.3, qty: 1 }],
+          lunch: [
+            { name: "Chapati/Roti", portion: "2 chapatis", calories: 170, protein: 6, carbs: 34, fat: 1, qty: 1 },
+            { name: "Sour lentils (Khatti dal)", portion: "1 bowl", calories: 70, protein: 4.4, carbs: 12, fat: 0.2, qty: 1 }
+          ],
+          snacks: [{ name: "Khakhra", portion: "2 pieces", calories: 178, protein: 4.8, carbs: 27.7, fat: 5.3, qty: 1 }],
+          dinner: [{ name: "Vegetable khichdi/khichri", portion: "1 bowl", calories: 210, protein: 6, carbs: 35, fat: 4, qty: 1 }],
+          midnight: [{ name: "Lassi (salted)", portion: "1 glass", calories: 19, protein: 1.4, carbs: 1.9, fat: 0.7, qty: 1 }]
+        }
+      },
+      {
+        title: "South Indian Egg & Dosa Conditioning",
+        tag: "Athlete Fuel",
+        badgeClass: "badge-macro",
+        desc: "Fermented crepe paired with boiled eggs and protein-rich sambar.",
+        items_preview: "🌅 Breakfast: Masala Dosa with Coconut Chutney\n🍛 Lunch: Rice, Sambar & 2 Boiled Eggs\n☕️ Snacks: Sundal (Boiled Chana Salad)\n🍲 Dinner: Appam with Vegetable Stew\n🌙 Midnight: Warm Milk",
+        meals: {
+          breakfast: [{ name: "Masala dosa", portion: "1 dosa", calories: 165, protein: 3.3, carbs: 19.6, fat: 7.8, qty: 1 }],
+          lunch: [
+            { name: "Boiled egg (Ubla anda)", portion: "2 eggs", calories: 90, protein: 8.8, carbs: 0.2, fat: 6.0, qty: 1 },
+            { name: "Boiled rice (Uble chawal)", portion: "1 plate", calories: 117, protein: 2.6, carbs: 25.7, fat: 0.2, qty: 1 }
+          ],
+          snacks: [{ name: "Sprouted moong salad", portion: "1 bowl", calories: 38, protein: 2.3, carbs: 5.5, fat: 0.7, qty: 1 }],
+          dinner: [{ name: "Appam", portion: "2 appams", calories: 536, protein: 6.2, carbs: 26.6, fat: 45.2, qty: 1 }],
+          midnight: [{ name: "Hot tea (Garam Chai)", portion: "1 cup", calories: 16, protein: 0.4, carbs: 2.6, fat: 0.5, qty: 1 }]
+        }
+      },
+      {
+        title: "Intermittent Fasting Desi Light Crunch",
+        tag: "Light & Clean",
+        badgeClass: "badge-success",
+        desc: "Low calorie, nutrient-dense salads, soups, and roasted foxnuts for steady energy.",
+        items_preview: "🌅 Breakfast: Black Coffee / Green Tea & Handful of Almonds\n🍛 Lunch: Roasted Makhana & Sprouts Chaat\n☕️ Snacks: Cucumber Mint Raita\n🍲 Dinner: Clear Tomato Soup & Tandoori Chicken Breast\n🌙 Midnight: Chamomile Tea",
+        meals: {
+          breakfast: [{ name: "Instant coffee", portion: "1 cup", calories: 23, protein: 0.6, carbs: 3.6, fat: 0.8, qty: 1 }],
+          lunch: [{ name: "Sprouted moong dal chat", portion: "1 plate", calories: 64, protein: 2.8, carbs: 12.0, fat: 0.6, qty: 1 }],
+          snacks: [{ name: "Cucumber raita (Kheere ka raita)", portion: "1 bowl", calories: 59, protein: 4.0, carbs: 6.3, fat: 2.1, qty: 1 }],
+          dinner: [
+            { name: "Clear tomato soup (Tamatar ka soup)", portion: "1 soup bowl", calories: 80, protein: 4.8, carbs: 3.5, fat: 12.2, qty: 1 },
+            { name: "Tandoori chicken", portion: "1 piece", calories: 145, protein: 16.3, carbs: 2.3, fat: 7.9, qty: 1 }
+          ],
+          midnight: [{ name: "Cumin infused water (Jeere/Zeere ka pani)", portion: "1 glass", calories: 9, protein: 0.2, carbs: 1.9, fat: 0.1, qty: 1 }]
+        }
+      }
+    ];
+
     /* ==========================================================================
-       STORAGE KEYS & STATE MANAGEMENT
+       XP LEVELS CONFIGURATION
+       ========================================================================== */
+    const XP_LEVELS = [
+      { level: 1, minXp: 0, maxXp: 250, title: "Halwai Ka Yaar", badge: "🥉 Level 1: Halwai Ka Yaar", desc: "Beginning your journey; breaking free from daily sweets and fried snacks!" },
+      { level: 2, minXp: 251, maxXp: 500, title: "Chai-Biscuit Tyagi", badge: "🥉 Level 2: Chai-Biscuit Tyagi", desc: "Steering clear of mindless snacking and embracing mindful chai time." },
+      { level: 3, minXp: 501, maxXp: 1000, title: "Phulka Parakrami", badge: "🥈 Level 3: Phulka Parakrami", desc: "Portion control warrior; balancing rotis, wholesome sabzis, and energy." },
+      { level: 4, minXp: 1001, maxXp: 2000, title: "Sattu-Dal Senapati", badge: "🥈 Level 4: Sattu-Dal Senapati", desc: "Commanding your plates with pure desi protein, pulses, and fibrous staples." },
+      { level: 5, minXp: 2001, maxXp: 4000, title: "Vyayam Veeryodaya", badge: "🥇 Level 5: Vyayam Veeryodaya", desc: "Disciplined nutrition aligned with regular workouts and vital energy." },
+      { level: 6, minXp: 4001, maxXp: 8000, title: "Akhada Mahabira", badge: "👑 Level 6: Akhada Mahabira", desc: "True akhada warrior; showing unyielding resolve in every single meal." },
+      { level: 7, minXp: 8001, maxXp: 12000, title: "Mahabali Param Yoddha", badge: "🔱 Level 7: Mahabali Param Yoddha", desc: "Supreme master of desi caloric discipline, macronutrient limits, and endurance." },
+      { level: 8, minXp: 12001, maxXp: Infinity, title: "Brahmand Nayak Yoddha", badge: "🌟 Level 8: Brahmand Nayak Yoddha", desc: "Legendary pinnacle of holistic fitness, metabolic vitality, and unwavering tapasya." }
+    ];
+
+    /* ==========================================================================
+       STREAK ACHIEVEMENTS CONFIGURATION
+       ========================================================================== */
+    const STREAK_ACHIEVEMENTS = [
+      { id: "s1", icon: "🥇", title: "Pehla Kadam", desc: "Log your first meal.", target: 1, type: "first_meal" },
+      { id: "s3", icon: "🔥", title: "Shaktiman", desc: "Maintain a 3-day streak.", target: 3 },
+      { id: "s7", icon: "⚡", title: "Centurion", desc: "Maintain a 7-day streak.", target: 7 },
+      { id: "s14", icon: "⚡", title: "Pakka Yoddha", desc: "Maintain a 14-day streak.", target: 14 },
+      { id: "s30", icon: "🔥", title: "Masik Mahabali", desc: "Maintain a 30-day streak.", target: 30 },
+      { id: "s45", icon: "🛡️", title: "Vajra Anushasan", desc: "Maintain a 45-day streak.", target: 45 },
+      { id: "s60", icon: "⚔️", title: "Drishta Senapati", desc: "Maintain a 60-day streak.", target: 60 },
+      { id: "s90", icon: "🔱", title: "Trishul Tapaswi", desc: "Maintain a 90-day streak.", target: 90 },
+      { id: "s120", icon: "👑", title: "Samrat Sadhak", desc: "Maintain a 120-day streak.", target: 120 },
+      { id: "s150", icon: "☀️", title: "Surya Tejasvi", desc: "Maintain a 150-day streak.", target: 150 },
+      { id: "s180", icon: "🏔️", title: "Himalaya Sthir", desc: "Maintain a 180-day streak.", target: 180 }
+    ];
+
+    /* ==========================================================================
+       STORAGE KEYS & STATE
        ========================================================================== */
     const STORAGE_KEY_LOGS = "desicalorie_5yr_logs_v13";
     const STORAGE_KEY_GOALS = "desicalorie_goals_v13";
     const STORAGE_KEY_CUSTOM_FOODS = "desicalorie_custom_foods_v13";
-    const STORAGE_KEY_CACHED_API = "desicalorie_cached_api_foods_v13";
     const STORAGE_KEY_KEYS = "desicalorie_apikeys_v13";
     const STORAGE_KEY_PROFILE = "desicalorie_yoddha_v13";
 
@@ -2276,9 +2548,6 @@
     let activeSelection = null;
     let currentCalcMode = "general";
 
-    /* ==========================================================================
-       SAFE DATE.UTC NAVIGATION (PREVENTS IST BACKWARD ROLLBACK)
-       ========================================================================== */
     function getTodayDateStr() {
       const now = new Date();
       const y = now.getFullYear();
@@ -2307,9 +2576,6 @@
       }
     }
 
-    /* ==========================================================================
-       INIT & PERSISTENCE
-       ========================================================================== */
     window.addEventListener("DOMContentLoaded", () => {
       loadAllSavedData();
       renderTodayDashboard();
@@ -2340,7 +2606,10 @@
         }
 
         const savedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
-        if (savedProfile) yoddhaProfile = JSON.parse(savedProfile);
+        if (savedProfile) {
+          yoddhaProfile = JSON.parse(savedProfile);
+          if (!yoddhaProfile.claimedQuests) yoddhaProfile.claimedQuests = {};
+        }
 
         const savedKeys = localStorage.getItem(STORAGE_KEY_KEYS);
         if (savedKeys) {
@@ -2369,13 +2638,14 @@
       return currentLogs[dateStr];
     }
 
-    /* ==========================================================================
-       STRICT STREAK RULES (DEFAULT 0 DAYS, RESET ON MISSED DAY)
-       ========================================================================== */
     function hasAnyMealLogged(dStr) {
       const entry = currentLogs[dStr];
       if (!entry || !entry.meals) return false;
       return Object.values(entry.meals).some(arr => arr && arr.length > 0);
+    }
+
+    function hasEverLoggedMeal() {
+      return Object.keys(currentLogs).some(dStr => hasAnyMealLogged(dStr));
     }
 
     function calculateCurrentStreak() {
@@ -2410,804 +2680,186 @@
       }
     }
 
-    /* ==========================================================================
-       RENDER 9 MEAL PLANS WITH COMPLETE PROTEIN & CARBS
-       ========================================================================== */
-    function renderRecommendedPlans() {
-      const container = document.getElementById("recommended-plans-list");
-      const target = userGoals.calories;
-
-      container.innerHTML = ALL_9_MEAL_PLANS.map((p, idx) => {
-        let pTotal = 0, cTotal = 0, calTotal = 0;
-        Object.values(p.meals).forEach(items => {
-          items.forEach(it => {
-            calTotal += Math.round(it.calories * (it.qty || 1));
-            pTotal += Math.round(it.protein * (it.qty || 1));
-            cTotal += Math.round(it.carbs * (it.qty || 1));
-          });
+    function getDayNutrientTotals(dateStr) {
+      const dayEntry = getDayLog(dateStr);
+      let cals = 0, pro = 0, carbs = 0, fat = 0, sugar = 0, chol = 0, count = 0, activeSlots = 0;
+      ["breakfast", "lunch", "snacks", "dinner", "midnight"].forEach(slot => {
+        const items = dayEntry.meals[slot] || [];
+        if (items.length > 0) activeSlots++;
+        items.forEach(it => {
+          const qty = it.qty || 1;
+          cals += Math.round(it.calories * qty);
+          pro += Math.round((it.protein || 0) * qty);
+          carbs += Math.round((it.carbs || 0) * qty);
+          fat += Math.round((it.fat || 0) * qty);
+          sugar += Math.round((it.sugar || 0) * qty * 10) / 10;
+          chol += Math.round((it.cholesterol || 0) * qty);
+          count++;
         });
-
-        return `
-          <div class="card" style="margin-bottom: 12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <b style="font-size:15px;">${p.title}</b>
-              <span class="badge ${p.badgeClass}">${p.tag}</span>
-            </div>
-            <div style="font-size:12px; color:var(--text-sec); margin-bottom:6px;">${p.desc}</div>
-            <div style="display:flex; gap:8px; margin-bottom:8px; font-size:11px; font-weight:700;">
-              <span class="badge badge-macro">Total: ${calTotal} kcal</span>
-              <span class="badge badge-macro">💪 P: ${pTotal}g</span>
-              <span class="badge badge-macro">🌾 C: ${cTotal}g</span>
-            </div>
-            <div style="font-size:12px; white-space:pre-line; color:#4B5563; margin-bottom:12px; line-height:1.5; background:var(--surface-secondary); padding:8px 10px; border-radius:var(--radius-sm);">${p.items_preview}</div>
-            <button class="btn-submit" style="margin:0; padding:10px; font-size:13px;" onclick="applyQuickPlan(${idx})">
-              Apply Plan (${target} kcal Target)
-            </button>
-          </div>
-        `;
-      }).join("");
-    }
-
-    function applyQuickPlan(planIdx) {
-      const selectedPlan = ALL_9_MEAL_PLANS[planIdx];
-      if (!selectedPlan) return;
-
-      const dayData = getDayLog(currentDateStr);
-      dayData.meals.breakfast = JSON.parse(JSON.stringify(selectedPlan.meals.breakfast || []));
-      dayData.meals.lunch = JSON.parse(JSON.stringify(selectedPlan.meals.lunch || []));
-      dayData.meals.snacks = JSON.parse(JSON.stringify(selectedPlan.meals.snacks || []));
-      dayData.meals.dinner = JSON.parse(JSON.stringify(selectedPlan.meals.dinner || []));
-      dayData.meals.midnight = JSON.parse(JSON.stringify(selectedPlan.meals.midnight || []));
-
-      persistLogs();
-      awardXP(30, `Applied ${selectedPlan.title}`);
-      triggerConfetti();
-      playDesiChime("level");
-      switchTab("today");
-      renderTodayDashboard();
-      showToast(`⚡ Applied "${selectedPlan.title}" to ${currentDateStr}!`);
-    }
-
-    /* ==========================================================================
-       DATABASE VIEWER & ADD CUSTOM FOOD
-       ========================================================================== */
-    function getAllDatabaseFoods() {
-      const defaultList = ANUVAAD_INDB_DATABASE.map(item => ({
-        id: "indb_" + item[0].replace(/\s+/g, "_"),
-        name: item[0],
-        portion: item[1],
-        calories: item[2],
-        protein: item[3],
-        carbs: item[4],
-        fat: item[5],
-        sugar: item[6] !== undefined ? item[6] : 0,
-        cholesterol: item[7] !== undefined ? item[7] : 0,
-        origin: (item[0].includes("Bihari") || item[0].includes("Litti")) ? "BIHARI" : "INDB"
-      }));
-      return [...customFoods, ...defaultList];
-    }
-
-    function renderDatabaseView() {
-      const container = document.getElementById("db-items-container");
-      const query = (document.getElementById("db-search-input").value || "").trim().toLowerCase();
-      const allList = getAllDatabaseFoods();
-
-      document.getElementById("db-total-count-lbl").innerText = 
-        `${allList.length} total dishes stored (${customFoods.length} custom, ${ANUVAAD_INDB_DATABASE.length} embedded)`;
-
-      const matches = allList.filter(item => 
-        item.name.toLowerCase().includes(query) || item.portion.toLowerCase().includes(query)
-      );
-
-      if (matches.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec);">No food items found matching "${query}".</div>`;
-        return;
-      }
-
-      container.innerHTML = matches.map(item => {
-        let badge = `<span class="badge badge-db">🏛 Anuvaad INDB</span>`;
-        if (item.origin === "CUSTOM") badge = `<span class="badge badge-custom">⭐️ Custom</span>`;
-        if (item.origin === "BIHARI") badge = `<span class="badge badge-bihari">🌾 Bihari</span>`;
-
-        return `
-          <div class="db-food-card">
-            <div style="flex: 1; padding-right: 10px;">
-              <div class="db-food-name">${item.name}</div>
-              <div class="db-food-stats">
-                ${badge}
-                <span>${item.portion}</span> • 
-                <span class="badge badge-macro">P: <b>${item.protein}g</b></span>
-                <span class="badge badge-macro">C: <b>${item.carbs}g</b></span>
-                <span>F: <b>${item.fat}g</b></span>
-                <span>🍬 <b>${item.sugar || 0}g</b></span>
-                <span>🫀 <b>${item.cholesterol || 0}mg</b></span>
-              </div>
-            </div>
-            <div style="text-align: right;">
-              <div class="db-food-cal">${item.calories} <span style="font-size: 10px; font-weight: 600; color: var(--text-sec);">kcal</span></div>
-              <button class="btn-db-log" onclick="promptLogDbFood(${JSON.stringify(item).replace(/"/g, '&quot;')})">+ Log</button>
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    function openAddCustomFoodModal() {
-      document.getElementById("add-custom-food-modal").classList.add("active");
-      document.getElementById("cust-food-name").focus();
-    }
-    function closeAddCustomFoodModal() {
-      document.getElementById("add-custom-food-modal").classList.remove("active");
-    }
-
-    function autoComputeCarbs() {
-      const cals = parseFloat(document.getElementById("cust-food-cal").value) || 0;
-      const fat = parseFloat(document.getElementById("cust-food-fat").value) || 0;
-      const pro = parseFloat(document.getElementById("cust-food-pro").value) || 0;
-      if (cals > 0) {
-        const remaining = cals - (pro * 4) - (fat * 9);
-        const estCarb = Math.max(0, Math.round(remaining / 4));
-        document.getElementById("cust-food-carb").value = estCarb;
-      }
-    }
-
-    function saveNewCustomFood() {
-      const name = document.getElementById("cust-food-name").value.trim();
-      const portion = document.getElementById("cust-food-portion").value.trim() || "1 serving";
-      const cals = parseFloat(document.getElementById("cust-food-cal").value);
-      const fat = parseFloat(document.getElementById("cust-food-fat").value) || 0;
-      const pro = parseFloat(document.getElementById("cust-food-pro").value) || 0;
-      const carb = parseFloat(document.getElementById("cust-food-carb").value) || 0;
-      const sugar = parseFloat(document.getElementById("cust-food-sugar").value) || 0;
-      const chol = parseFloat(document.getElementById("cust-food-chol").value) || 0;
-
-      if (!name || isNaN(cals) || cals <= 0) {
-        showToast("Please enter a food name and valid calories.");
-        return;
-      }
-
-      const newFood = {
-        id: "cust_" + Date.now(),
-        name: name,
-        portion: portion,
-        calories: Math.round(cals),
-        protein: Math.round(pro * 10) / 10,
-        fat: Math.round(fat * 10) / 10,
-        carbs: Math.round(carb * 10) / 10,
-        sugar: Math.round(sugar * 10) / 10,
-        cholesterol: Math.round(chol),
-        origin: "CUSTOM"
-      };
-
-      customFoods.unshift(newFood);
-      persistCustomFoods();
-      closeAddCustomFoodModal();
-      renderDatabaseView();
-      awardXP(20, "Added Food to Database");
-      playDesiChime("quest");
-      showToast(`✓ Added "${name}" (${cals} kcal • ${pro}g P • ${carb}g C) to Database!`);
-
-      document.getElementById("cust-food-name").value = "";
-      document.getElementById("cust-food-cal").value = "";
-      document.getElementById("cust-food-fat").value = "";
-      document.getElementById("cust-food-pro").value = "";
-      document.getElementById("cust-food-carb").value = "0";
-      document.getElementById("cust-food-sugar").value = "0";
-      document.getElementById("cust-food-chol").value = "0";
-    }
-
-    function promptLogDbFood(food) {
-      openFoodSearchModal("lunch");
-      selectFoodItem(food);
-    }
-
-    /* ==========================================================================
-       TODAY DASHBOARD RENDERING: CALORIES, PROTEIN, CARBS, FAT, SUGAR & CHOL
-       ========================================================================== */
-    function renderTodayDashboard() {
-      const isToday = (currentDateStr === getTodayDateStr());
-      document.getElementById("display-date-label").innerText = isToday ? "Today" : currentDateStr;
-
-      const dayData = getDayLog(currentDateStr);
-      const slots = ["breakfast", "lunch", "snacks", "dinner", "midnight"];
-
-      let grandTotalCals = 0;
-      let grandTotalPro = 0;
-      let grandTotalCarbs = 0;
-      let grandTotalFat = 0;
-      let grandTotalSugar = 0;
-      let grandTotalChol = 0;
-      let totalItemCount = 0;
-
-      slots.forEach(slotKey => {
-        const container = document.getElementById(`items-${slotKey}`);
-        container.innerHTML = "";
-        const items = dayData.meals[slotKey] || [];
-        let slotCalSum = 0;
-        let slotProSum = 0;
-        let slotCarbSum = 0;
-
-        items.forEach((item, idx) => {
-          totalItemCount++;
-          const itemCals = Math.round(item.calories * item.qty);
-          const itemPro = Math.round((item.protein || 0) * item.qty);
-          const itemCarb = Math.round((item.carbs || 0) * item.qty);
-          const itemFat = Math.round((item.fat || 0) * item.qty);
-          const itemSugar = Math.round((item.sugar || 0) * item.qty * 10) / 10;
-          const itemChol = Math.round((item.cholesterol || 0) * item.qty);
-
-          slotCalSum += itemCals;
-          slotProSum += itemPro;
-          slotCarbSum += itemCarb;
-
-          grandTotalCals += itemCals;
-          grandTotalPro += itemPro;
-          grandTotalCarbs += itemCarb;
-          grandTotalFat += itemFat;
-          grandTotalSugar += itemSugar;
-          grandTotalChol += itemChol;
-
-          const row = document.createElement("div");
-          row.className = "food-item-row";
-          
-          let badgeTag = `<span class="badge badge-db">INDB</span>`;
-          if (item.origin === "API") badgeTag = `<span class="badge badge-api">⚡ API</span>`;
-          if (item.origin === "MISC") badgeTag = `<span class="badge badge-misc">⚡ Misc</span>`;
-          if (item.origin === "CUSTOM") badgeTag = `<span class="badge badge-custom">⭐️ Custom</span>`;
-          if (item.origin === "PLAN") badgeTag = `<span class="badge badge-api">🍱 Plan</span>`;
-          if (item.origin === "BIHARI") badgeTag = `<span class="badge badge-bihari">🌾 Bihari</span>`;
-
-          row.innerHTML = `
-            <div>
-              <div class="food-info-name">${item.name}</div>
-              <div class="food-info-sub">
-                ${badgeTag}
-                <span>${item.qty} × ${item.portion || "srv"}</span>
-                <span>• ${itemCals} kcal</span>
-                <span class="badge badge-macro">P: ${itemPro}g</span>
-                <span class="badge badge-macro">C: ${itemCarb}g</span>
-                <span>(F:${itemFat}g | 🍬${itemSugar}g 🫀${itemChol}mg)</span>
-              </div>
-            </div>
-            <button class="del-btn" onclick="deleteFoodItem('${slotKey}', ${idx})">✕</button>
-          `;
-          container.appendChild(row);
-        });
-
-        document.getElementById(`cals-${slotKey}`).innerText = `${slotCalSum} kcal`;
-        document.getElementById(`macros-${slotKey}`).innerText = `P: ${slotProSum}g • C: ${slotCarbSum}g`;
       });
-
-      // Calories & Gauge
-      document.getElementById("consumed-cal").innerText = grandTotalCals;
-      document.getElementById("items-logged-count").innerText = totalItemCount;
-
-      const remaining = userGoals.calories - grandTotalCals;
-      const remPill = document.getElementById("remaining-pill");
-      const remLbl = document.getElementById("remaining-lbl");
-      const remNum = document.getElementById("remaining-cal");
-
-      if (remaining >= 0) {
-        remPill.className = "stat-pill deficit";
-        remNum.innerText = `${remaining} kcal`;
-        remLbl.innerText = `Remaining (Budget: ${userGoals.calories})`;
-      } else {
-        remPill.className = "stat-pill over";
-        remNum.innerText = `+${Math.abs(remaining)} kcal`;
-        remLbl.innerText = `Over Budget (${userGoals.calories})`;
-      }
-
-      // Protein Progress & Goal Tracking
-      const proGoal = userGoals.protein || 75;
-      document.getElementById("protein-header-val").innerText = `${grandTotalPro}g / ${proGoal}g`;
-      const proPct = Math.min(100, Math.round((grandTotalPro / proGoal) * 100));
-      const proFill = document.getElementById("protein-progress-fill");
-      proFill.style.width = `${proPct}%`;
-      const proStatus = document.getElementById("protein-status-lbl");
-      const proRem = document.getElementById("protein-rem-lbl");
-
-      if (grandTotalPro >= proGoal) {
-        proFill.style.background = "var(--success)";
-        proStatus.style.color = "var(--success)";
-        proStatus.innerText = `✓ Goal Met (${proPct}%)`;
-        proRem.innerText = `+${grandTotalPro - proGoal}g extra`;
-      } else {
-        proFill.style.background = "var(--blue)";
-        proStatus.style.color = "var(--blue)";
-        proStatus.innerText = `${proPct}% Met`;
-        proRem.innerText = `${proGoal - grandTotalPro}g left`;
-      }
-
-      // Carbohydrates Budget / Limit Tracking
-      const carbGoal = userGoals.carbs || 220;
-      document.getElementById("carbs-header-val").innerText = `${grandTotalCarbs}g / ${carbGoal}g`;
-      const carbPct = Math.min(100, Math.round((grandTotalCarbs / carbGoal) * 100));
-      const carbFill = document.getElementById("carbs-progress-fill");
-      carbFill.style.width = `${carbPct}%`;
-      const carbStatus = document.getElementById("carbs-status-lbl");
-      const carbRem = document.getElementById("carbs-rem-lbl");
-
-      if (grandTotalCarbs > carbGoal) {
-        carbFill.style.background = "var(--danger)";
-        carbStatus.style.color = "var(--danger)";
-        carbStatus.innerText = `⚠️ Over Budget`;
-        carbRem.innerText = `+${grandTotalCarbs - carbGoal}g over`;
-      } else if (carbPct >= 85) {
-        carbFill.style.background = "var(--warning)";
-        carbStatus.style.color = "var(--warning)";
-        carbStatus.innerText = `Near Limit`;
-        carbRem.innerText = `${carbGoal - grandTotalCarbs}g left`;
-      } else {
-        carbFill.style.background = "#EAB308";
-        carbStatus.style.color = "var(--success)";
-        carbStatus.innerText = `Within Budget`;
-        carbRem.innerText = `${carbGoal - grandTotalCarbs}g left`;
-      }
-
-      // Free Sugar Limit Monitoring (25g)
-      grandTotalSugar = Math.round(grandTotalSugar * 10) / 10;
-      const sugarGoal = userGoals.sugar || 25;
-      document.getElementById("total-sugar").innerText = `${grandTotalSugar}g / ${sugarGoal}g`;
-      const sugarPct = Math.min(100, Math.round((grandTotalSugar / sugarGoal) * 100));
-      const sugarFill = document.getElementById("sugar-progress-fill");
-      sugarFill.style.width = `${sugarPct}%`;
-      const sugarStatus = document.getElementById("sugar-status-lbl");
-      const sugarRem = document.getElementById("sugar-rem-lbl");
-
-      if (grandTotalSugar > sugarGoal) {
-        sugarFill.style.background = "var(--danger)";
-        sugarStatus.style.color = "var(--danger)";
-        sugarStatus.innerText = `⚠️ Exceeded`;
-        sugarRem.innerText = `+${(grandTotalSugar - sugarGoal).toFixed(1)}g`;
-      } else if (sugarPct >= 80) {
-        sugarFill.style.background = "var(--warning)";
-        sugarStatus.style.color = "var(--warning)";
-        sugarStatus.innerText = `Near Limit`;
-        sugarRem.innerText = `${(sugarGoal - grandTotalSugar).toFixed(1)}g left`;
-      } else {
-        sugarFill.style.background = "var(--success)";
-        sugarStatus.style.color = "var(--success)";
-        sugarStatus.innerText = `Safe (≤25g)`;
-        sugarRem.innerText = `${(sugarGoal - grandTotalSugar).toFixed(1)}g left`;
-      }
-
-      // Cholesterol Limit Monitoring (300mg)
-      const cholGoal = userGoals.cholesterol || 300;
-      document.getElementById("total-chol").innerText = `${grandTotalChol}mg / ${cholGoal}mg`;
-      const cholPct = Math.min(100, Math.round((grandTotalChol / cholGoal) * 100));
-      const cholFill = document.getElementById("chol-progress-fill");
-      cholFill.style.width = `${cholPct}%`;
-      const cholStatus = document.getElementById("chol-status-lbl");
-      const cholRem = document.getElementById("chol-rem-lbl");
-
-      if (grandTotalChol > cholGoal) {
-        cholFill.style.background = "var(--danger)";
-        cholStatus.style.color = "var(--danger)";
-        cholStatus.innerText = `⚠️ Exceeded`;
-        cholRem.innerText = `+${grandTotalChol - cholGoal}mg`;
-      } else if (cholPct >= 80) {
-        cholFill.style.background = "var(--warning)";
-        cholStatus.style.color = "var(--warning)";
-        cholStatus.innerText = `Near Limit`;
-        cholRem.innerText = `${cholGoal - grandTotalChol}mg left`;
-      } else {
-        cholFill.style.background = "var(--success)";
-        cholStatus.style.color = "var(--success)";
-        cholStatus.innerText = `Safe (≤300mg)`;
-        cholRem.innerText = `${cholGoal - grandTotalChol}mg left`;
-      }
-
-      // Total Fat
-      document.getElementById("total-fat").innerText = `${grandTotalFat}g / ${userGoals.fat || 65}g`;
-
-      // Main Circle Gauge
-      const circ = 2 * Math.PI * 50;
-      const calPct = Math.min(grandTotalCals / userGoals.calories, 1.0);
-      const offset = circ - (calPct * circ);
-      const gaugeCircle = document.getElementById("gauge-circle");
-      gaugeCircle.style.strokeDashoffset = offset;
-      gaugeCircle.style.stroke = remaining < 0 ? "var(--danger)" : "var(--primary)";
-
-      // Streak Counters
-      const liveStreak = calculateCurrentStreak();
-      document.getElementById("header-streak-count").innerText = liveStreak;
-      document.getElementById("yoddha-streak-display").innerText = liveStreak;
-    }
-
-    function deleteFoodItem(slotKey, idx) {
-      const dayData = getDayLog(currentDateStr);
-      dayData.meals[slotKey].splice(idx, 1);
-      persistLogs();
-      renderTodayDashboard();
-      showToast("Item removed.");
-    }
-
-    function quickLogStaple(name, cals, pro, carb, fat, sugar, chol, portion) {
-      const currentHour = new Date().getHours();
-      let slot = "lunch";
-      if (currentHour < 11) slot = "breakfast";
-      else if (currentHour >= 11 && currentHour < 16) slot = "lunch";
-      else if (currentHour >= 16 && currentHour < 19) slot = "snacks";
-      else if (currentHour >= 19 && currentHour < 23) slot = "dinner";
-      else slot = "midnight";
-
-      const dayData = getDayLog(currentDateStr);
-      dayData.meals[slot].push({
-        id: "staple_" + Date.now(),
-        name: name,
-        portion: portion,
-        calories: cals,
-        protein: pro,
-        carbs: carb,
-        fat: fat,
-        sugar: sugar || 0,
-        cholesterol: chol || 0,
-        qty: 1.0,
-        origin: (name.includes("Bihari") || name.includes("Sattu")) ? "BIHARI" : "INDB"
-      });
-
-      awardXP(15, `Logged ${name}`);
-      playDesiChime("log");
-      persistLogs();
-      renderTodayDashboard();
-      showToast(`⚡ 1-Tap: ${name} (P:${pro}g C:${carb}g) added to ${slot.toUpperCase()}`);
+      return { cals, pro, carbs, fat, sugar, chol, count, activeSlots };
     }
 
     /* ==========================================================================
-       SEARCH & LOG FOOD
+       YODDHA GAMIFICATION SYSTEM (LEVELS, 4 DAILY QUESTS, 11 STREAKS)
        ========================================================================== */
-    function openFoodSearchModal(preferredSlot = "lunch") {
-      document.getElementById("food-search-modal").classList.add("active");
-      document.getElementById("food-query-input").value = "";
-      document.getElementById("search-results-container").innerHTML = "";
-      document.getElementById("portion-selector-box").style.display = "none";
-      document.getElementById("selected-food-slot").value = preferredSlot;
-      activeSelection = null;
-      document.getElementById("food-query-input").focus();
-    }
-
-    function closeFoodSearchModal() {
-      document.getElementById("food-search-modal").classList.remove("active");
-    }
-
-    function handleFoodSearch(query) {
-      const container = document.getElementById("search-results-container");
-      query = query.trim().toLowerCase();
-      if (!query) { container.innerHTML = ""; return; }
-
-      const allFoods = getAllDatabaseFoods();
-      const matches = allFoods.filter(f => f.name.toLowerCase().includes(query));
-
-      container.innerHTML = matches.slice(0, 40).map(f => `
-        <div class="food-item-row" style="cursor:pointer;" onclick="selectFoodItem(${JSON.stringify(f).replace(/"/g, '&quot;')})">
-          <div>
-            <div style="font-weight: 600; font-size: 13px;">${f.name}</div>
-            <div style="font-size: 11px; color: var(--text-sec); display:flex; gap:4px; margin-top:2px;">
-              <span>${f.portion} • </span>
-              <span class="badge badge-macro">P: ${f.protein}g</span>
-              <span class="badge badge-macro">C: ${f.carbs}g</span>
-              <span>• F:${f.fat}g | 🍬${f.sugar || 0}g</span>
-            </div>
-          </div>
-          <div style="font-weight: 700; color: var(--primary); font-size: 13px;">${f.calories} kcal</div>
-        </div>
-      `).join("");
-    }
-
-    function selectFoodItem(item) {
-      activeSelection = item;
-      document.getElementById("selected-food-title").innerText = `${item.name} (${item.calories} kcal / ${item.portion})`;
-      document.getElementById("serving-unit-label").innerText = item.portion;
-      document.getElementById("portion-selector-box").style.display = "block";
-      updateCalculatedPortion();
-    }
-
-    function updateCalculatedPortion() {
-      if (!activeSelection) return;
-      const qty = parseFloat(document.getElementById("serving-qty").value) || 1;
-      const total = Math.round(activeSelection.calories * qty);
-      const pro = Math.round(activeSelection.protein * qty);
-      const carb = Math.round(activeSelection.carbs * qty);
-      const sugar = Math.round((activeSelection.sugar || 0) * qty * 10) / 10;
-      const chol = Math.round((activeSelection.cholesterol || 0) * qty);
-      document.getElementById("portion-cals-preview").innerHTML = `
-        Total: <b>${total} kcal</b> | 
-        <span style="color:var(--blue);">Protein: <b>${pro}g</b></span> | 
-        <span style="color:#B45309;">Carbs: <b>${carb}g</b></span> | 
-        <span>Sugar: ${sugar}g</span> | 
-        <span>Chol: ${chol}mg</span>
-      `;
-    }
-
-    function confirmAddFood() {
-      if (!activeSelection) return;
-      const qty = parseFloat(document.getElementById("serving-qty").value) || 1;
-      const slot = document.getElementById("selected-food-slot").value;
-
-      const dayData = getDayLog(currentDateStr);
-      dayData.meals[slot].push({ ...activeSelection, qty: qty });
-
-      awardXP(15, `Logged ${activeSelection.name}`);
-      playDesiChime("log");
-      persistLogs();
-      closeFoodSearchModal();
-      renderTodayDashboard();
-      showToast(`Added ${activeSelection.name} to ${slot.toUpperCase()}`);
-    }
-
-    /* ==========================================================================
-       MISCELLANEOUS EXTRA MEAL
-       ========================================================================== */
-    function openMiscMealModal() {
-      document.getElementById("misc-meal-modal").classList.add("active");
-      document.getElementById("misc-calories").focus();
-    }
-    function closeMiscMealModal() {
-      document.getElementById("misc-meal-modal").classList.remove("active");
-    }
-
-    function submitMiscMeal() {
-      const name = document.getElementById("misc-name").value.trim() || "Miscellaneous Extra";
-      const cals = parseFloat(document.getElementById("misc-calories").value);
-      const slot = document.getElementById("misc-slot").value;
-      const pro = parseFloat(document.getElementById("misc-protein").value) || 0;
-      const carb = parseFloat(document.getElementById("misc-carbs").value) || 0;
-      const fat = parseFloat(document.getElementById("misc-fat").value) || 0;
-      const sugar = parseFloat(document.getElementById("misc-sugar").value) || 0;
-      const chol = parseFloat(document.getElementById("misc-chol").value) || 0;
-
-      if (isNaN(cals) || cals <= 0) {
-        showToast("Please enter valid calories.");
-        return;
+    function getCurrentLevelInfo(xp) {
+      for (let i = XP_LEVELS.length - 1; i >= 0; i--) {
+        if (xp >= XP_LEVELS[i].minXp) {
+          return { current: XP_LEVELS[i], next: XP_LEVELS[i + 1] || null };
+        }
       }
-
-      const dayData = getDayLog(currentDateStr);
-      dayData.meals[slot].push({
-        id: "misc_" + Date.now(),
-        name: name,
-        portion: "1 serving",
-        calories: cals,
-        protein: pro,
-        carbs: carb,
-        fat: fat,
-        sugar: sugar,
-        cholesterol: chol,
-        qty: 1.0,
-        origin: "MISC"
-      });
-
-      awardXP(15, "Logged Misc Extra");
-      playDesiChime("log");
-      persistLogs();
-      closeMiscMealModal();
-      renderTodayDashboard();
-      showToast(`⚡ Logged: ${name} (${cals} kcal • ${pro}g P • ${carb}g C)`);
+      return { current: XP_LEVELS[0], next: XP_LEVELS[1] };
     }
 
-    /* ==========================================================================
-       FAT LOSS CALCULATOR & MACRO TARGETS
-       ========================================================================== */
-    function openCalcModal() {
-      document.getElementById("calc-modal").classList.add("active");
-      runFatLossCalculation();
-    }
-    function closeCalcModal() {
-      document.getElementById("calc-modal").classList.remove("active");
-    }
-
-    function setCalcMode(mode) {
-      currentCalcMode = mode;
-      document.getElementById("mode-btn-general").style.background = mode === "general" ? "var(--primary)" : "var(--surface-secondary)";
-      document.getElementById("mode-btn-general").style.color = mode === "general" ? "white" : "var(--text)";
-      document.getElementById("mode-btn-belly").style.background = mode === "belly" ? "var(--primary)" : "var(--surface-secondary)";
-      document.getElementById("mode-btn-belly").style.color = mode === "belly" ? "white" : "var(--text)";
-      document.getElementById("waist-input-group").style.display = mode === "belly" ? "block" : "none";
-      runFatLossCalculation();
-    }
-
-    function runFatLossCalculation() {
-      const currWt = parseFloat(document.getElementById("calc-current-wt").value) || 75;
-      const ht = parseFloat(document.getElementById("calc-height").value) || 170;
-      const age = parseFloat(document.getElementById("calc-age").value) || 28;
-      const gender = document.getElementById("calc-gender").value;
-
-      let bmr = (10 * currWt) + (6.25 * ht) - (5 * age) + (gender === "male" ? 5 : -161);
-      const tdee = Math.round(bmr * 1.375);
-      let targetCals = tdee - 550;
-      if (targetCals < 1400) targetCals = 1400;
-
-      let targetPro = 0, targetCarb = 0;
-      if (currentCalcMode === "belly") {
-        targetPro = Math.round((targetCals * 0.32) / 4); // 32% Protein for belly fat loss
-        targetCarb = Math.round((targetCals * 0.38) / 4); // 38% Low-GI Carbs
-      } else {
-        targetPro = Math.round((targetCals * 0.28) / 4);
-        targetCarb = Math.round((targetCals * 0.44) / 4);
-      }
-
-      document.getElementById("calc-target-cal").innerText = `${targetCals} kcal`;
-      document.getElementById("calc-meta-stats").innerText = `BMR: ${Math.round(bmr)} • TDEE: ${tdee} • Deficit: -550 kcal/day`;
-      document.getElementById("calc-macros-preview").innerHTML = `
-        <span>Target Protein: <b>${targetPro}g</b> (${currentCalcMode === 'belly' ? '32%' : '28%'})</span>
-        <span>Target Carbs: <b>${targetCarb}g</b> (${currentCalcMode === 'belly' ? '38%' : '44%'})</span>
-      `;
-      window.calculatedTargets = { calories: targetCals, protein: targetPro, carbs: targetCarb };
-    }
-
-    function applyCalculatedGoals() {
-      if (!window.calculatedTargets) return;
-      userGoals.calories = window.calculatedTargets.calories;
-      userGoals.protein = window.calculatedTargets.protein;
-      userGoals.carbs = window.calculatedTargets.carbs;
-      
-      localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
-      document.getElementById("planner-target-cals").innerText = userGoals.calories;
-      document.getElementById("setting-goal-cal").value = userGoals.calories;
-      document.getElementById("setting-goal-pro").value = userGoals.protein;
-      document.getElementById("setting-goal-carb").value = userGoals.carbs;
-
-      awardXP(25, "Calibrated Goals");
-      triggerConfetti();
-      playDesiChime("level");
-      closeCalcModal();
-      renderTodayDashboard();
-      renderRecommendedPlans();
-      showToast(`🎯 Goals updated to ${userGoals.calories} kcal (P: ${userGoals.protein}g, C: ${userGoals.carbs}g)!`);
-    }
-
-    /* ==========================================================================
-       TAB NAVIGATION
-       ========================================================================== */
-    function switchTab(tabId) {
-      document.querySelectorAll(".tab-view").forEach(el => el.classList.remove("active"));
-      document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
-      
-      document.getElementById(`tab-${tabId}`).classList.add("active");
-      const tabMap = { today: 0, database: 1, planner: 2, archive: 3, yoddha: 4 };
-      const btns = Array.from(document.querySelectorAll(".tab-btn"));
-      if (btns[tabMap[tabId]]) btns[tabMap[tabId]].classList.add("active");
-
-      if (tabId === "database") renderDatabaseView();
-      if (tabId === "planner") renderRecommendedPlans();
-      if (tabId === "archive") renderArchiveLogs();
-      if (tabId === "yoddha") renderYoddhaDashboard();
-    }
-
-    function openSettingsModal() { document.getElementById("settings-modal").classList.add("active"); }
-    function closeSettingsModal() { document.getElementById("settings-modal").classList.remove("active"); }
-    function openApiModal() { document.getElementById("api-modal").classList.add("active"); }
-    function closeApiModal() { document.getElementById("api-modal").classList.remove("active"); }
-
-    function saveGoalsFromSettings() {
-      userGoals.calories = parseInt(document.getElementById("setting-goal-cal").value) || 2000;
-      userGoals.protein = parseInt(document.getElementById("setting-goal-pro").value) || 75;
-      userGoals.carbs = parseInt(document.getElementById("setting-goal-carb").value) || 220;
-      userGoals.fat = parseInt(document.getElementById("setting-goal-fat").value) || 65;
-      userGoals.sugar = parseInt(document.getElementById("setting-goal-sugar").value) || 25;
-      userGoals.cholesterol = parseInt(document.getElementById("setting-goal-chol").value) || 300;
-      
-      localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
-      document.getElementById("planner-target-cals").innerText = userGoals.calories;
-      renderTodayDashboard();
-      renderRecommendedPlans();
-      closeSettingsModal();
-      showToast("Goals & Daily Limits saved.");
-    }
-
-    function saveApiKeys() {
-      apiKeys.ninjas = document.getElementById("key-ninjas").value.trim();
-      localStorage.setItem(STORAGE_KEY_KEYS, JSON.stringify(apiKeys));
-      closeApiModal();
-      showToast("API key saved.");
-    }
-
-    /* ==========================================================================
-       ARCHIVE LOGS (SHOWS CALS, PROTEIN, CARBS, SUGAR & CHOL)
-       ========================================================================== */
-    function renderArchiveLogs() {
-      const container = document.getElementById("archive-days-container");
-      container.innerHTML = "";
-      const yFilter = document.getElementById("archive-year-select").value;
-      const mFilter = document.getElementById("archive-month-select").value;
-      const q = document.getElementById("archive-search-query").value.trim().toLowerCase();
-
-      const dates = Object.keys(currentLogs).sort().reverse();
-      let matches = 0;
-
-      dates.forEach(dStr => {
-        const [y, m] = dStr.split("-");
-        if (yFilter !== "ALL" && y !== yFilter) return;
-        if (mFilter !== "ALL" && m !== mFilter) return;
-
-        const dayEntry = currentLogs[dStr];
-        const allItems = [];
-        let dayCals = 0;
-        let dayPro = 0;
-        let dayCarbs = 0;
-        let daySugar = 0;
-        let dayChol = 0;
-
-        ["breakfast", "lunch", "snacks", "dinner", "midnight"].forEach(s => {
-          (dayEntry.meals[s] || []).forEach(it => {
-            allItems.push(it);
-            dayCals += Math.round(it.calories * it.qty);
-            dayPro += Math.round((it.protein || 0) * it.qty);
-            dayCarbs += Math.round((it.carbs || 0) * it.qty);
-            daySugar += Math.round((it.sugar || 0) * it.qty * 10) / 10;
-            dayChol += Math.round((it.cholesterol || 0) * it.qty);
-          });
-        });
-
-        if (allItems.length === 0) return;
-        if (q && !allItems.some(it => it.name.toLowerCase().includes(q))) return;
-
-        matches++;
-        const card = document.createElement("div");
-        card.className = "card";
-        card.style.padding = "12px";
-        card.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:700;">
-            <span>📅 ${dStr}</span>
-            <span style="color:var(--primary); font-weight:800;">${dayCals} kcal</span>
-          </div>
-          <div style="display:flex; gap:6px; margin-bottom:6px; font-size:11px; font-weight:700;">
-            <span class="badge badge-macro">💪 P: ${dayPro}g / ${userGoals.protein || 75}g</span>
-            <span class="badge badge-macro">🌾 C: ${dayCarbs}g / ${userGoals.carbs || 220}g</span>
-          </div>
-          <div style="font-size:11px; color:#4B5563;">
-            🍬 Free Sugar: <b>${Math.round(daySugar*10)/10}g</b> / ${userGoals.sugar||25}g • 
-            🫀 Cholesterol: <b>${dayChol}mg</b> / ${userGoals.cholesterol||300}mg
-          </div>
-        `;
-        container.appendChild(card);
-      });
-
-      if (matches === 0) container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec);">No archive logs found.</div>`;
-    }
-
-    /* ==========================================================================
-       YODDHA GAMIFICATION
-       ========================================================================== */
     function awardXP(amt, reason) {
+      const oldLevelInfo = getCurrentLevelInfo(yoddhaProfile.xp);
       yoddhaProfile.xp += amt;
+      const newLevelInfo = getCurrentLevelInfo(yoddhaProfile.xp);
       persistYoddha();
       renderYoddhaDashboard();
+
+      if (newLevelInfo.current.level > oldLevelInfo.current.level) {
+        triggerConfetti();
+        playDesiChime("level");
+        showToast(`👑 RANK UP! You reached ${newLevelInfo.current.badge}!`);
+      }
     }
 
     function renderYoddhaDashboard() {
-      const streak = calculateCurrentStreak();
-      document.getElementById("yoddha-streak-display").innerText = streak;
-      document.getElementById("header-streak-count").innerText = streak;
-      
-      const quests = [
-        { id: "q1", title: "🌅 Pehla Nivala", sub: "Log your morning breakfast", xp: 25, done: hasMealLogged(currentDateStr, "breakfast") },
-        { id: "q2", title: "💪 Protein Pehelwan", sub: "Reach at least 80% of protein target", xp: 60, done: true }
+      const liveStreak = calculateCurrentStreak();
+      document.getElementById("yoddha-streak-display").innerText = liveStreak;
+      document.getElementById("header-streak-count").innerText = liveStreak;
+
+      // 1. Render Level & XP Progress
+      const levelInfo = getCurrentLevelInfo(yoddhaProfile.xp);
+      const curLvl = levelInfo.current;
+      const nextLvl = levelInfo.next;
+
+      document.getElementById("yoddha-level-badge").innerText = curLvl.badge;
+      document.getElementById("yoddha-title-display").innerText = curLvl.title;
+      document.getElementById("yoddha-desc-display").innerText = curLvl.desc;
+
+      if (nextLvl) {
+        document.getElementById("xp-progress-label").innerText = `${yoddhaProfile.xp} / ${curLvl.maxXp} XP`;
+        document.getElementById("next-rank-label").innerText = `Next: Level ${nextLvl.level} • ${nextLvl.title}`;
+        const range = curLvl.maxXp - curLvl.minXp + 1;
+        const progressInTier = yoddhaProfile.xp - curLvl.minXp;
+        const pct = Math.min(100, Math.max(0, Math.round((progressInTier / range) * 100)));
+        document.getElementById("xp-bar-fill").style.width = `${pct}%`;
+      } else {
+        document.getElementById("xp-progress-label").innerText = `${yoddhaProfile.xp} XP`;
+        document.getElementById("next-rank-label").innerText = `🌟 Maximum Level Achieved!`;
+        document.getElementById("xp-bar-fill").style.width = `100%`;
+      }
+
+      // 2. Render 4 Daily Quests
+      const totals = getDayNutrientTotals(currentDateStr);
+      const proteinTarget = userGoals.protein || 75;
+      const calorieTarget = userGoals.calories || 2000;
+
+      const dailyQuests = [
+        {
+          id: "q_pehla_nivala",
+          title: "🌅 Pehla Nivala",
+          sub: "Log your first meal of the day",
+          xp: 30,
+          done: totals.count >= 1
+        },
+        {
+          id: "q_protein_pehelwan",
+          title: "💪 Protein Pehelwan",
+          sub: `Reach at least 80% of protein target (Current: ${totals.pro}g / ${Math.round(proteinTarget * 0.8)}g)`,
+          xp: 60,
+          done: totals.pro >= (proteinTarget * 0.8)
+        },
+        {
+          id: "q_calorie_santulan",
+          title: "⚖️ Calorie Santulan",
+          sub: `Eat mindfully and stay within daily calorie budget (≤ ${calorieTarget} kcal)`,
+          xp: 50,
+          done: totals.count >= 1 && totals.cals <= calorieTarget
+        },
+        {
+          id: "q_tri_aahar",
+          title: "🍱 Tri-Aahar",
+          sub: `Log foods in at least 3 distinct meal slots today (${totals.activeSlots}/3 logged)`,
+          xp: 45,
+          done: totals.activeSlots >= 3
+        }
       ];
 
-      document.getElementById("quests-container").innerHTML = quests.map(q => `
-        <div class="quest-item">
-          <div>
-            <div class="quest-title">${q.title} (+${q.xp} XP)</div>
-            <div class="quest-sub">${q.sub}</div>
-          </div>
-          <button class="btn-quest-claim ${q.done ? '' : 'claimed'}" onclick="claimQuest('${q.id}', ${q.xp})">
-            ${q.done ? 'Claim +XP' : 'Locked'}
-          </button>
-        </div>
-      `).join("");
-    }
+      const claimedMap = yoddhaProfile.claimedQuests[currentDateStr] || {};
 
-    function hasMealLogged(dateStr, slot) {
-      const day = currentLogs[dateStr];
-      return !!(day && day.meals && day.meals[slot] && day.meals[slot].length > 0);
+      document.getElementById("quests-container").innerHTML = dailyQuests.map(q => {
+        const isClaimed = !!claimedMap[q.id];
+        let actionBtn = "";
+
+        if (isClaimed) {
+          actionBtn = `<button class="btn-quest-claim claimed">✓ Claimed</button>`;
+        } else if (q.done) {
+          actionBtn = `<button class="btn-quest-claim" onclick="claimQuest('${q.id}', ${q.xp})">Claim +${q.xp} XP</button>`;
+        } else {
+          actionBtn = `<button class="btn-quest-claim locked" title="Complete task first">In Progress</button>`;
+        }
+
+        return `
+          <div class="quest-item">
+            <div style="flex: 1; padding-right: 8px;">
+              <div class="quest-title">${q.title} <span style="color: var(--primary); font-size: 11px;">(+${q.xp} XP)</span></div>
+              <div class="quest-sub">${q.sub}</div>
+            </div>
+            <div>${actionBtn}</div>
+          </div>
+        `;
+      }).join("");
+
+      // 3. Render 11 Streaks / Trophy Cabinet
+      const trophyContainer = document.getElementById("trophies-container");
+      trophyContainer.innerHTML = STREAK_ACHIEVEMENTS.map(ach => {
+        let isUnlocked = false;
+        if (ach.type === "first_meal") {
+          isUnlocked = liveStreak >= 1 || hasEverLoggedMeal();
+        } else {
+          isUnlocked = liveStreak >= ach.target;
+        }
+
+        return `
+          <div class="card" style="padding: 10px; margin-bottom: 0; opacity: ${isUnlocked ? '1' : '0.55'}; border: ${isUnlocked ? '1.5px solid #F59E0B' : '0.5px solid var(--border)'}; background: ${isUnlocked ? '#FFFDF5' : 'var(--surface)'};">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 22px;">${ach.icon}</span>
+              <div>
+                <div style="font-size: 12px; font-weight: 800; color: var(--text);">${ach.title}</div>
+                <div style="font-size: 10px; font-weight: 700; color: ${isUnlocked ? '#D97706' : 'var(--text-sec)'};">
+                  ${isUnlocked ? '✓ Unlocked' : (ach.type === 'first_meal' ? '🔒 Log 1st meal' : `🔒 ${ach.target}-day streak`)}
+                </div>
+              </div>
+            </div>
+            <div style="font-size: 10px; color: var(--text-sec); line-height: 1.3;">${ach.desc}</div>
+          </div>
+        `;
+      }).join("");
     }
 
     function claimQuest(id, xp) {
+      if (!yoddhaProfile.claimedQuests[currentDateStr]) {
+        yoddhaProfile.claimedQuests[currentDateStr] = {};
+      }
+      if (yoddhaProfile.claimedQuests[currentDateStr][id]) {
+        showToast("Quest already claimed for today!");
+        return;
+      }
+      yoddhaProfile.claimedQuests[currentDateStr][id] = true;
       awardXP(xp, "Quest Complete");
       playDesiChime("quest");
-      showToast(`🎉 Claimed +${xp} XP!`);
+      triggerConfetti();
+      renderYoddhaDashboard();
+      showToast(`🎉 Quest Complete! Earned +${xp} XP!`);
     }
 
+    /* ==========================================================================
+       SOUND CHIMES & CONFETTI
+       ========================================================================== */
     function playDesiChime(type) {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -3249,7 +2901,7 @@
       const ctx = canvas.getContext("2d");
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      const particles = Array.from({ length: 40 }, () => ({
+      const particles = Array.from({ length: 45 }, () => ({
         x: Math.random() * canvas.width, y: -10, r: Math.random() * 5 + 3,
         c: ["#FF6B35", "#FFD700", "#34C759", "#007AFF"][Math.floor(Math.random() * 4)],
         vx: (Math.random() - 0.5) * 4, vy: Math.random() * 3 + 3
@@ -3272,34 +2924,788 @@
     }
 
     /* ==========================================================================
-       BACKUP & SHARING
+       CORE TRACKING & LOGGING LOGIC
        ========================================================================== */
-    async function shareOrExportLogs(mode = "sheet") {
-      const payload = {
-        app: "DesiCalorie",
-        exportDate: new Date().toISOString(),
-        goals: userGoals,
-        customFoods: customFoods,
-        logs: currentLogs
-      };
-      const str = JSON.stringify(payload, null, 2);
-      const fileName = `DesiCalorie_Backup_${getTodayDateStr()}.json`;
+    function renderTodayDashboard() {
+      const isToday = (currentDateStr === getTodayDateStr());
+      document.getElementById("display-date-label").innerText = isToday ? "Today" : currentDateStr;
 
-      if (mode === "sheet") {
-        try {
-          const file = new File([str], fileName, { type: "application/json" });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: "Desi Calorie Backup" });
-            return;
-          }
-        } catch (e) {}
+      const dayData = getDayLog(currentDateStr);
+      const slots = ["breakfast", "lunch", "snacks", "dinner", "midnight"];
+
+      let grandTotalCals = 0, grandTotalPro = 0, grandTotalCarbs = 0, grandTotalFat = 0, grandTotalSugar = 0, grandTotalChol = 0, totalItemCount = 0;
+
+      slots.forEach(slotKey => {
+        const container = document.getElementById(`items-${slotKey}`);
+        container.innerHTML = "";
+        const items = dayData.meals[slotKey] || [];
+        let slotCalSum = 0, slotProSum = 0, slotCarbSum = 0;
+
+        items.forEach((item, idx) => {
+          totalItemCount++;
+          const itemCals = Math.round(item.calories * item.qty);
+          const itemPro = Math.round((item.protein || 0) * item.qty);
+          const itemCarb = Math.round((item.carbs || 0) * item.qty);
+          const itemFat = Math.round((item.fat || 0) * item.qty);
+          const itemSugar = Math.round((item.sugar || 0) * item.qty * 10) / 10;
+          const itemChol = Math.round((item.cholesterol || 0) * item.qty);
+
+          slotCalSum += itemCals;
+          slotProSum += itemPro;
+          slotCarbSum += itemCarb;
+
+          grandTotalCals += itemCals;
+          grandTotalPro += itemPro;
+          grandTotalCarbs += itemCarb;
+          grandTotalFat += itemFat;
+          grandTotalSugar += itemSugar;
+          grandTotalChol += itemChol;
+
+          const row = document.createElement("div");
+          row.className = "food-item-row";
+          
+          let badgeTag = `<span class="badge badge-db">INDB</span>`;
+          if (item.origin === "MISC") badgeTag = `<span class="badge badge-misc">⚡ Misc</span>`;
+          if (item.origin === "CUSTOM") badgeTag = `<span class="badge badge-custom">⭐️ Custom</span>`;
+          if (item.origin === "BIHARI") badgeTag = `<span class="badge badge-bihari">🌾 Bihari</span>`;
+
+          row.innerHTML = `
+            <div>
+              <div class="food-info-name">${item.name}</div>
+              <div class="food-info-sub">
+                ${badgeTag}
+                <span>${item.qty} × ${item.portion || "srv"}</span>
+                <span>• ${itemCals} kcal</span>
+                <span class="badge badge-macro">P: ${itemPro}g</span>
+                <span class="badge badge-macro">C: ${itemCarb}g</span>
+              </div>
+            </div>
+            <button class="del-btn" onclick="deleteFoodItem('${slotKey}', ${idx})">✕</button>
+          `;
+          container.appendChild(row);
+        });
+
+        document.getElementById(`cals-${slotKey}`).innerText = `${slotCalSum} kcal`;
+        document.getElementById(`macros-${slotKey}`).innerText = `P: ${slotProSum}g • C: ${slotCarbSum}g`;
+      });
+
+      document.getElementById("consumed-cal").innerText = grandTotalCals;
+      document.getElementById("items-logged-count").innerText = totalItemCount;
+
+      const remaining = userGoals.calories - grandTotalCals;
+      const remPill = document.getElementById("remaining-pill");
+      const remLbl = document.getElementById("remaining-lbl");
+      const remNum = document.getElementById("remaining-cal");
+
+      if (remaining >= 0) {
+        remPill.className = "stat-pill deficit";
+        remNum.innerText = `${remaining} kcal`;
+        remLbl.innerText = `Remaining (Budget: ${userGoals.calories})`;
+      } else {
+        remPill.className = "stat-pill over";
+        remNum.innerText = `+${Math.abs(remaining)} kcal`;
+        remLbl.innerText = `Over Budget (${userGoals.calories})`;
       }
-      const blob = new Blob([str], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = fileName;
-      a.click();
-      showToast("Backup saved to device.");
+
+      // Protein Goal
+      const proGoal = userGoals.protein || 75;
+      document.getElementById("protein-header-val").innerText = `${grandTotalPro}g / ${proGoal}g`;
+      const proPct = Math.min(100, Math.round((grandTotalPro / proGoal) * 100));
+      const proFill = document.getElementById("protein-progress-fill");
+      proFill.style.width = `${proPct}%`;
+      const proStatus = document.getElementById("protein-status-lbl");
+      const proRem = document.getElementById("protein-rem-lbl");
+
+      if (grandTotalPro >= proGoal) {
+        proFill.style.background = "var(--success)";
+        proStatus.style.color = "var(--success)";
+        proStatus.innerText = `✓ Goal Met (${proPct}%)`;
+        proRem.innerText = `+${grandTotalPro - proGoal}g extra`;
+      } else {
+        proFill.style.background = "var(--blue)";
+        proStatus.style.color = "var(--blue)";
+        proStatus.innerText = `${proPct}% Met`;
+        proRem.innerText = `${proGoal - grandTotalPro}g left`;
+      }
+
+      // Carbs Limit
+      const carbGoal = userGoals.carbs || 220;
+      document.getElementById("carbs-header-val").innerText = `${grandTotalCarbs}g / ${carbGoal}g`;
+      const carbPct = Math.min(100, Math.round((grandTotalCarbs / carbGoal) * 100));
+      const carbFill = document.getElementById("carbs-progress-fill");
+      carbFill.style.width = `${carbPct}%`;
+      const carbStatus = document.getElementById("carbs-status-lbl");
+      const carbRem = document.getElementById("carbs-rem-lbl");
+
+      if (grandTotalCarbs > carbGoal) {
+        carbFill.style.background = "var(--danger)";
+        carbStatus.style.color = "var(--danger)";
+        carbStatus.innerText = `⚠️ Over Budget`;
+        carbRem.innerText = `+${grandTotalCarbs - carbGoal}g over`;
+      } else {
+        carbFill.style.background = "#EAB308";
+        carbStatus.style.color = "var(--success)";
+        carbStatus.innerText = `Within Budget`;
+        carbRem.innerText = `${carbGoal - grandTotalCarbs}g left`;
+      }
+
+      // Sugar & Cholesterol
+      grandTotalSugar = Math.round(grandTotalSugar * 10) / 10;
+      const sugarGoal = userGoals.sugar || 25;
+      document.getElementById("total-sugar").innerText = `${grandTotalSugar}g / ${sugarGoal}g`;
+      document.getElementById("sugar-progress-fill").style.width = `${Math.min(100, (grandTotalSugar / sugarGoal) * 100)}%`;
+
+      const cholGoal = userGoals.cholesterol || 300;
+      document.getElementById("total-chol").innerText = `${grandTotalChol}mg / ${cholGoal}mg`;
+      document.getElementById("chol-progress-fill").style.width = `${Math.min(100, (grandTotalChol / cholGoal) * 100)}%`;
+      document.getElementById("total-fat").innerText = `${grandTotalFat}g / ${userGoals.fat || 65}g`;
+
+      const circ = 2 * Math.PI * 50;
+      const calPct = Math.min(grandTotalCals / userGoals.calories, 1.0);
+      const gaugeCircle = document.getElementById("gauge-circle");
+      gaugeCircle.style.strokeDashoffset = circ - (calPct * circ);
+      gaugeCircle.style.stroke = remaining < 0 ? "var(--danger)" : "var(--primary)";
+
+      const liveStreak = calculateCurrentStreak();
+      document.getElementById("header-streak-count").innerText = liveStreak;
+      document.getElementById("yoddha-streak-display").innerText = liveStreak;
+    }
+
+    function deleteFoodItem(slotKey, idx) {
+      const dayData = getDayLog(currentDateStr);
+      dayData.meals[slotKey].splice(idx, 1);
+      persistLogs();
+      renderTodayDashboard();
+      renderYoddhaDashboard();
+      showToast("Item removed.");
+    }
+
+    function quickLogStaple(name, cals, pro, carb, fat, sugar, chol, portion) {
+      const currentHour = new Date().getHours();
+      let slot = "lunch";
+      if (currentHour < 11) slot = "breakfast";
+      else if (currentHour >= 11 && currentHour < 16) slot = "lunch";
+      else if (currentHour >= 16 && currentHour < 19) slot = "snacks";
+      else if (currentHour >= 19 && currentHour < 23) slot = "dinner";
+      else slot = "midnight";
+
+      const dayData = getDayLog(currentDateStr);
+      dayData.meals[slot].push({
+        id: "staple_" + Date.now(),
+        name: name,
+        portion: portion,
+        calories: cals,
+        protein: pro,
+        carbs: carb,
+        fat: fat,
+        sugar: sugar || 0,
+        cholesterol: chol || 0,
+        qty: 1.0,
+        origin: (name.includes("Bihari") || name.includes("Sattu")) ? "BIHARI" : "INDB"
+      });
+
+      awardXP(15, `Logged ${name}`);
+      playDesiChime("log");
+      persistLogs();
+      renderTodayDashboard();
+      renderYoddhaDashboard();
+      showToast(`⚡ 1-Tap: ${name} added to ${slot.toUpperCase()}`);
+    }
+
+    function getAllDatabaseFoods() {
+      const defaultList = ANUVAAD_INDB_DATABASE.map(item => ({
+        id: "indb_" + item[0].replace(/\s+/g, "_"),
+        name: item[0],
+        portion: item[1],
+        calories: item[2],
+        protein: item[3],
+        carbs: item[4],
+        fat: item[5],
+        sugar: 0,
+        cholesterol: 0,
+        origin: (item[0].includes("Bihari") || item[0].includes("Sattu") || item[0].includes("Litti")) ? "BIHARI" : "INDB"
+      }));
+      return [...customFoods, ...defaultList];
+    }
+
+    function renderDatabaseView() {
+      const container = document.getElementById("db-items-container");
+      const query = (document.getElementById("db-search-input").value || "").trim().toLowerCase();
+      const allList = getAllDatabaseFoods();
+
+      document.getElementById("db-total-count-lbl").innerText = 
+        `${allList.length} items available (${customFoods.length} custom, ${ANUVAAD_INDB_DATABASE.length} embedded)`;
+
+      const matches = allList.filter(item => 
+        item.name.toLowerCase().includes(query) || item.portion.toLowerCase().includes(query)
+      );
+
+      if (matches.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec);">No food items found matching "${query}".</div>`;
+        return;
+      }
+
+      container.innerHTML = matches.map(item => `
+        <div class="db-food-card">
+          <div style="flex: 1; padding-right: 10px;">
+            <div class="db-food-name">${item.name}</div>
+            <div class="db-food-stats">
+              <span>${item.portion}</span> • 
+              <span class="badge badge-macro">P: <b>${item.protein}g</b></span>
+              <span class="badge badge-macro">C: <b>${item.carbs}g</b></span>
+              <span>F: <b>${item.fat}g</b></span>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div class="db-food-cal">${item.calories} <span style="font-size: 10px; font-weight: 600; color: var(--text-sec);">kcal</span></div>
+            <button class="btn-db-log" onclick="promptLogDbFood(${JSON.stringify(item).replace(/"/g, '&quot;')})">+ Log</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function openFoodSearchModal(preferredSlot = "lunch") {
+      document.getElementById("food-search-modal").classList.add("active");
+      document.getElementById("food-query-input").value = "";
+      document.getElementById("search-results-container").innerHTML = "";
+      document.getElementById("portion-selector-box").style.display = "none";
+      document.getElementById("selected-food-slot").value = preferredSlot;
+      activeSelection = null;
+      document.getElementById("food-query-input").focus();
+    }
+
+    function closeFoodSearchModal() { document.getElementById("food-search-modal").classList.remove("active"); }
+
+    function handleFoodSearch(query) {
+      const container = document.getElementById("search-results-container");
+      query = query.trim().toLowerCase();
+      if (!query) { container.innerHTML = ""; return; }
+
+      const matches = getAllDatabaseFoods().filter(f => f.name.toLowerCase().includes(query));
+
+      container.innerHTML = matches.slice(0, 30).map(f => `
+        <div class="food-item-row" style="cursor:pointer;" onclick="selectFoodItem(${JSON.stringify(f).replace(/"/g, '&quot;')})">
+          <div>
+            <div style="font-weight: 600; font-size: 13px;">${f.name}</div>
+            <div style="font-size: 11px; color: var(--text-sec); display:flex; gap:4px; margin-top:2px;">
+              <span>${f.portion} • </span>
+              <span class="badge badge-macro">P: ${f.protein}g</span>
+              <span class="badge badge-macro">C: ${f.carbs}g</span>
+            </div>
+          </div>
+          <div style="font-weight: 700; color: var(--primary); font-size: 13px;">${f.calories} kcal</div>
+        </div>
+      `).join("");
+    }
+
+    function selectFoodItem(item) {
+      activeSelection = item;
+      document.getElementById("selected-food-title").innerText = `${item.name} (${item.calories} kcal / ${item.portion})`;
+      document.getElementById("serving-unit-label").innerText = item.portion;
+      document.getElementById("portion-selector-box").style.display = "block";
+      updateCalculatedPortion();
+    }
+
+    function updateCalculatedPortion() {
+      if (!activeSelection) return;
+      const qty = parseFloat(document.getElementById("serving-qty").value) || 1;
+      const total = Math.round(activeSelection.calories * qty);
+      const pro = Math.round(activeSelection.protein * qty);
+      const carb = Math.round(activeSelection.carbs * qty);
+      document.getElementById("portion-cals-preview").innerHTML = `
+        Total: <b>${total} kcal</b> | 
+        <span style="color:var(--blue);">P: <b>${pro}g</b></span> | 
+        <span style="color:#B45309;">C: <b>${carb}g</b></span>
+      `;
+    }
+
+    function confirmAddFood() {
+      if (!activeSelection) return;
+      const qty = parseFloat(document.getElementById("serving-qty").value) || 1;
+      const slot = document.getElementById("selected-food-slot").value;
+
+      const dayData = getDayLog(currentDateStr);
+      dayData.meals[slot].push({ ...activeSelection, qty: qty });
+
+      awardXP(15, `Logged ${activeSelection.name}`);
+      playDesiChime("log");
+      persistLogs();
+      closeFoodSearchModal();
+      renderTodayDashboard();
+      renderYoddhaDashboard();
+      showToast(`Added ${activeSelection.name} to ${slot.toUpperCase()}`);
+    }
+
+    function openMiscMealModal() {
+      document.getElementById("misc-meal-modal").classList.add("active");
+      document.getElementById("misc-calories").focus();
+    }
+    function closeMiscMealModal() { document.getElementById("misc-meal-modal").classList.remove("active"); }
+
+    function submitMiscMeal() {
+      const name = document.getElementById("misc-name").value.trim() || "Miscellaneous Extra";
+      const cals = parseFloat(document.getElementById("misc-calories").value);
+      const slot = document.getElementById("misc-slot").value;
+      const pro = parseFloat(document.getElementById("misc-protein").value) || 0;
+      const carb = parseFloat(document.getElementById("misc-carbs").value) || 0;
+      const fat = parseFloat(document.getElementById("misc-fat").value) || 0;
+
+      if (isNaN(cals) || cals <= 0) {
+        showToast("Please enter valid calories.");
+        return;
+      }
+
+      const dayData = getDayLog(currentDateStr);
+      dayData.meals[slot].push({
+        id: "misc_" + Date.now(),
+        name: name,
+        portion: "1 serving",
+        calories: cals,
+        protein: pro,
+        carbs: carb,
+        fat: fat,
+        sugar: 0,
+        cholesterol: 0,
+        qty: 1.0,
+        origin: "MISC"
+      });
+
+      awardXP(15, "Logged Misc Extra");
+      playDesiChime("log");
+      persistLogs();
+      closeMiscMealModal();
+      renderTodayDashboard();
+      renderYoddhaDashboard();
+      showToast(`⚡ Logged: ${name}`);
+    }
+
+    function renderRecommendedPlans() {
+      const container = document.getElementById("recommended-plans-list");
+      const combinedPlans = [...customPlans, ...ALL_9_MEAL_PLANS];
+
+      container.innerHTML = combinedPlans.map((p, idx) => {
+        let pTotal = 0, cTotal = 0, calTotal = 0;
+        
+        const mealsObj = p && p.meals ? p.meals : {};
+        Object.values(mealsObj).forEach(items => {
+          if (Array.isArray(items)) {
+            items.forEach(it => {
+              if (it) {
+                const cal = Number(it.calories) || 0;
+                const pro = Number(it.protein) || 0;
+                const carb = Number(it.carbs) || 0;
+                const q = Number(it.qty) || 1;
+
+                calTotal += Math.round(cal * q);
+                pTotal += Math.round(pro * q);
+                cTotal += Math.round(carb * q);
+              }
+            });
+          }
+        });
+
+        const isCustom = p.id && String(p.id).startsWith("plan_");
+
+        return `
+          <div class="card" style="margin-bottom: 12px; border: ${isCustom ? '1.5px solid var(--primary)' : '0.5px solid var(--border)'};">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <b style="font-size:15px;">${p.title || 'Plan'} ${isCustom ? '⭐' : ''}</b>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span class="badge ${p.badgeClass || 'badge-macro'}">${p.tag || 'Plan'}</span>
+                ${isCustom ? `<button class="del-btn" style="font-size:13px; padding:2px 6px;" onclick="deleteCustomPlan('${p.id}')" title="Delete Plan">🗑️</button>` : ''}
+              </div>
+            </div>
+            <div style="font-size:12px; color:var(--text-sec); margin-bottom:6px;">${p.desc || ''}</div>
+            <div style="display:flex; gap:8px; margin-bottom:8px; font-size:11px; font-weight:700;">
+              <span class="badge badge-macro">Total: ${calTotal} kcal</span>
+              <span class="badge badge-macro">💪 P: ${pTotal}g</span>
+              <span class="badge badge-macro">🌾 C: ${cTotal}g</span>
+            </div>
+            <div style="font-size:12px; white-space:pre-line; color:#4B5563; margin-bottom:12px; line-height:1.5; background:var(--surface-secondary); padding:8px 10px; border-radius:var(--radius-sm);">${p.items_preview || ''}</div>
+            <button class="btn-submit" style="margin:0; padding:10px; font-size:13px;" onclick="applyCombinedPlan(${idx})">
+              Apply Plan to Today
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+    function applyQuickPlan(planIdx) {
+      const selectedPlan = ALL_9_MEAL_PLANS[planIdx];
+      if (!selectedPlan) return;
+
+      const dayData = getDayLog(currentDateStr);
+      Object.keys(selectedPlan.meals).forEach(s => {
+        dayData.meals[s] = JSON.parse(JSON.stringify(selectedPlan.meals[s]));
+      });
+
+      persistLogs();
+      awardXP(30, `Applied ${selectedPlan.title}`);
+      triggerConfetti();
+      playDesiChime("level");
+      switchTab("today");
+      renderTodayDashboard();
+      renderYoddhaDashboard();
+      showToast(`⚡ Applied "${selectedPlan.title}"!`);
+    }
+
+    function renderArchiveLogs() {
+      const container = document.getElementById("archive-days-container");
+      container.innerHTML = "";
+      const yFilter = document.getElementById("archive-year-select").value;
+      const mFilter = document.getElementById("archive-month-select").value;
+      const q = document.getElementById("archive-search-query").value.trim().toLowerCase();
+
+      const dates = Object.keys(currentLogs).sort().reverse();
+      let matches = 0;
+
+      dates.forEach(dStr => {
+        const [y, m] = dStr.split("-");
+        if (yFilter !== "ALL" && y !== yFilter) return;
+        if (mFilter !== "ALL" && m !== mFilter) return;
+
+        const totals = getDayNutrientTotals(dStr);
+        if (totals.count === 0) return;
+
+        matches++;
+        const card = document.createElement("div");
+        card.className = "card";
+        card.style.padding = "12px";
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:700;">
+            <span>📅 ${dStr}</span>
+            <span style="color:var(--primary); font-weight:800;">${totals.cals} kcal</span>
+          </div>
+          <div style="display:flex; gap:6px; font-size:11px; font-weight:700;">
+            <span class="badge badge-macro">💪 P: ${totals.pro}g</span>
+            <span class="badge badge-macro">🌾 C: ${totals.carbs}g</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      if (matches === 0) container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec);">No archive logs found.</div>`;
+    }
+
+    function openCalcModal() { document.getElementById("calc-modal").classList.add("active"); }
+    function closeCalcModal() { document.getElementById("calc-modal").classList.remove("active"); }
+    
+
+
+    function openSettingsModal() { document.getElementById("settings-modal").classList.add("active"); }
+    function closeSettingsModal() { document.getElementById("settings-modal").classList.remove("active"); }
+    function openApiModal() { document.getElementById("api-modal").classList.add("active"); }
+    function closeApiModal() { document.getElementById("api-modal").classList.remove("active"); }
+
+    function saveGoalsFromSettings() {
+      userGoals.calories = parseInt(document.getElementById("setting-goal-cal").value) || 2000;
+      userGoals.protein = parseInt(document.getElementById("setting-goal-pro").value) || 75;
+      userGoals.carbs = parseInt(document.getElementById("setting-goal-carb").value) || 220;
+      localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
+      closeSettingsModal();
+      renderTodayDashboard();
+      renderYoddhaDashboard();
+      showToast("Targets updated.");
+    }
+
+    function saveApiKeys() {
+      apiKeys.ninjas = document.getElementById("key-ninjas").value.trim();
+      localStorage.setItem(STORAGE_KEY_KEYS, JSON.stringify(apiKeys));
+      closeApiModal();
+      showToast("Key saved.");
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-view").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+      
+      document.getElementById(`tab-${tabId}`).classList.add("active");
+      const tabMap = { today: 0, database: 1, planner: 2, archive: 3, yoddha: 4 };
+      const btns = Array.from(document.querySelectorAll(".tab-btn"));
+      if (btns[tabMap[tabId]]) btns[tabMap[tabId]].classList.add("active");
+
+      if (tabId === "database") renderDatabaseView();
+      if (tabId === "planner") renderRecommendedPlans();
+      if (tabId === "archive") renderArchiveLogs();
+      if (tabId === "yoddha") renderYoddhaDashboard();
+    }
+
+    function openAddCustomFoodModal() { document.getElementById("add-custom-food-modal").classList.add("active"); }
+    function closeAddCustomFoodModal() { document.getElementById("add-custom-food-modal").classList.remove("active"); }
+    function autoComputeCarbs() {}
+    function saveNewCustomFood() {
+      const name = document.getElementById("cust-food-name").value.trim();
+      const cals = parseFloat(document.getElementById("cust-food-cal").value);
+      if (!name || isNaN(cals)) return;
+      customFoods.push({
+        name,
+        calories: cals,
+        protein: parseFloat(document.getElementById("cust-food-pro").value) || 0,
+        carbs: parseFloat(document.getElementById("cust-food-carb").value) || 0,
+        fat: parseFloat(document.getElementById("cust-food-fat").value) || 0,
+        portion: document.getElementById("cust-food-portion").value || "1 serving",
+        origin: "CUSTOM"
+      });
+      persistCustomFoods();
+      closeAddCustomFoodModal();
+      renderDatabaseView();
+      showToast("Custom food added.");
+    }
+    function promptLogDbFood(food) {
+      openFoodSearchModal("lunch");
+      selectFoodItem(food);
+    }
+    function setCalcMode(mode) {
+  currentCalcMode = mode;
+  document.getElementById("mode-btn-general").style.background = mode === "general" ? "var(--primary)" : "var(--surface-secondary)";
+  document.getElementById("mode-btn-general").style.color = mode === "general" ? "white" : "var(--text)";
+  document.getElementById("mode-btn-belly").style.background = mode === "belly" ? "var(--primary)" : "var(--surface-secondary)";
+  document.getElementById("mode-btn-belly").style.color = mode === "belly" ? "white" : "var(--text)";
+  document.getElementById("waist-input-group").style.display = mode === "belly" ? "block" : "none";
+  runFatLossCalculation();
+}
+
+function runFatLossCalculation() {
+  const currWt = parseFloat(document.getElementById("calc-current-wt").value) || 75;
+  const goalWt = parseFloat(document.getElementById("calc-goal-wt").value) || 68;
+  const ht = parseFloat(document.getElementById("calc-height").value) || 170;
+  const age = parseFloat(document.getElementById("calc-age").value) || 28;
+  const gender = document.getElementById("calc-gender").value;
+  
+  // Safely grab the waist input element value
+  const waistInput = document.getElementById("calc-waist");
+  const waist = waistInput ? (parseFloat(waistInput.value) || 85) : 85;
+
+  let bmr = (10 * currWt) + (6.25 * ht) - (5 * age) + (gender === "male" ? 5 : -161);
+  const tdee = Math.round(bmr * 1.375); 
+
+  const totalDeltaKg = Math.max(0, currWt - goalWt);
+  let dynamicDeficit = Math.min(600, Math.max(400, Math.round(450 + (totalDeltaKg * 10))));
+  
+  let targetCals = 0, targetPro = 0, targetCarb = 0, targetFat = 0;
+
+  if (currentCalcMode === "belly") {
+    const whtr = Math.round((waist / ht) * 100) / 100;
+    const riskCard = document.getElementById("whtr-risk-card");
+    const riskLbl = document.getElementById("whtr-value-lbl");
+    const riskBadge = document.getElementById("whtr-status-badge");
+
+    if (riskLbl && riskBadge && riskCard) {
+      riskLbl.innerText = `WHtR: ${whtr.toFixed(2)} (Waist ${waist}cm / Ht ${ht}cm)`;
+
+      if (whtr < 0.40) {
+        riskCard.style.background = "#FEF3C7";
+        riskBadge.style.background = "#FDE68A";
+        riskBadge.style.color = "#92400E";
+        riskBadge.innerText = "Underweight Boundary";
+      } else if (whtr <= 0.49) {
+        riskCard.style.background = "#DCFCE7";
+        riskBadge.style.background = "#BBF7D0";
+        riskBadge.style.color = "#166534";
+        riskBadge.innerText = "✓ Healthy Visceral Range";
+      } else if (whtr <= 0.57) {
+        riskCard.style.background = "#FFEDD5";
+        riskBadge.style.background = "#FED7AA";
+        riskBadge.style.color = "#9A3412";
+        riskBadge.innerText = "⚠️ Increased Visceral Risk";
+        dynamicDeficit += 75; 
+      } else {
+        riskCard.style.background = "#FEE2E2";
+        riskBadge.style.background = "#FECACA";
+        riskBadge.style.color = "#991B1B";
+        riskBadge.innerText = "🚨 High Visceral Risk";
+        dynamicDeficit += 150; 
+      }
+    }
+
+    targetCals = tdee - dynamicDeficit;
+    if (targetCals < 1400) targetCals = 1400; 
+
+    targetPro = Math.round((targetCals * 0.32) / 4);
+    targetCarb = Math.round((targetCals * 0.38) / 4);
+    targetFat = Math.round((targetCals * 0.30) / 9);
+    
+  } else {
+    targetCals = tdee - dynamicDeficit;
+    if (targetCals < 1400) targetCals = 1400; 
+
+    targetPro = Math.round((targetCals * 0.28) / 4);
+    targetCarb = Math.round((targetCals * 0.44) / 4);
+    targetFat = Math.round((targetCals * 0.28) / 9);
+  }
+
+  document.getElementById("calc-target-cal").innerText = `${targetCals} kcal`;
+  document.getElementById("calc-meta-stats").innerText = `Target Delta: -${totalDeltaKg.toFixed(1)}kg • TDEE: ${tdee} • Deficit: -${dynamicDeficit} kcal/day`;
+  document.getElementById("calc-macros-preview").innerHTML = `
+    <span>Target Protein: <b>${targetPro}g</b> (${currentCalcMode === 'belly' ? '32%' : '28%'})</span>
+    <span>Target Carbs: <b>${targetCarb}g</b> (${currentCalcMode === 'belly' ? '38%' : '44%'})</span>
+  `;
+
+  window.calculatedTargets = { calories: targetCals, protein: targetPro, carbs: targetCarb, fat: targetFat };
+}
+
+function applyCalculatedGoals() {
+  if (!window.calculatedTargets) {
+    runFatLossCalculation();
+  }
+
+  userGoals.calories = window.calculatedTargets.calories;
+  userGoals.protein = window.calculatedTargets.protein;
+  userGoals.carbs = window.calculatedTargets.carbs;
+  if (window.calculatedTargets.fat) userGoals.fat = window.calculatedTargets.fat;
+
+  localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
+
+  document.getElementById("planner-target-cals").innerText = userGoals.calories;
+  document.getElementById("setting-goal-cal").value = userGoals.calories;
+  document.getElementById("setting-goal-pro").value = userGoals.protein;
+  document.getElementById("setting-goal-carb").value = userGoals.carbs;
+  document.getElementById("setting-goal-fat").value = userGoals.fat;
+
+  awardXP(25, "Calibrated Goals");
+  triggerConfetti();
+  playDesiChime("level");
+  closeCalcModal();
+  renderTodayDashboard();
+  renderRecommendedPlans();
+  renderYoddhaDashboard();
+  showToast(`🎯 Goals updated to ${userGoals.calories} kcal (P: ${userGoals.protein}g, C: ${userGoals.carbs}g, F: ${userGoals.fat}g)!`);
+}
+const STORAGE_KEY_CUSTOM_PLANS = "desicalorie_custom_plans_v13";
+    let customPlans = [];
+
+    // Load custom plans inside loadAllSavedData()
+    const savedPlans = localStorage.getItem(STORAGE_KEY_CUSTOM_PLANS);
+    if (savedPlans) {
+      try { customPlans = JSON.parse(savedPlans); } catch(e) {}
+    }
+
+    function openCustomPlanModal() {
+      document.getElementById("add-custom-plan-modal").classList.add("active");
+      document.getElementById("cust-plan-title").focus();
+    }
+
+    function closeCustomPlanModal() {
+      document.getElementById("add-custom-plan-modal").classList.remove("active");
+    }
+
+    function saveCustomPlan() {
+      const title = document.getElementById("cust-plan-title").value.trim();
+      const tag = document.getElementById("cust-plan-tag").value.trim() || "Custom";
+      const badgeClass = document.getElementById("cust-plan-badge").value;
+      const desc = document.getElementById("cust-plan-desc").value.trim() || "User created custom plan";
+      const preview = document.getElementById("cust-plan-preview").value.trim() || "🌅 Custom Meals Configured";
+
+      if (!title) {
+        showToast("Please enter a plan title.");
+        return;
+      }
+
+      const newPlan = {
+        id: "plan_" + Date.now(),
+        title: title,
+        tag: tag,
+        badgeClass: badgeClass,
+        desc: desc,
+        items_preview: preview,
+        meals: {
+          breakfast: [{ name: "Oatmeal Porridge", portion: "1 bowl", calories: 150, protein: 5, carbs: 27, fat: 3, origin: "CUSTOM" }],
+          lunch: [
+            { name: "Chapati/Roti", portion: "2 chapatis", calories: 170, protein: 6, carbs: 34, fat: 1, origin: "CUSTOM" },
+            { name: "Yellow Dal Tadka", portion: "1 katori", calories: 150, protein: 7.5, carbs: 20, fat: 4.5, origin: "CUSTOM" }
+          ],
+          snacks: [{ name: "Masala Chai", portion: "1 cup", calories: 95, protein: 3, carbs: 14, fat: 3, origin: "CUSTOM" }],
+          dinner: [{ name: "Steamed Basmati Rice", portion: "1 katori", calories: 180, protein: 3.5, carbs: 39, fat: 0.4, origin: "CUSTOM" }],
+          midnight: [{ name: "Warm Milk", portion: "1 cup", calories: 110, protein: 4, carbs: 10, fat: 4, origin: "CUSTOM" }]
+        }
+      };
+
+      customPlans.unshift(newPlan);
+      localStorage.setItem(STORAGE_KEY_CUSTOM_PLANS, JSON.stringify(customPlans));
+      closeCustomPlanModal();
+      renderRecommendedPlans();
+      awardXP(35, "Created Custom Meal Plan");
+      triggerConfetti();
+      playDesiChime("quest");
+      showToast(`✓ Custom Plan "${title}" saved successfully!`);
+
+      // Reset form
+      document.getElementById("cust-plan-title").value = "";
+      document.getElementById("cust-plan-desc").value = "";
+      document.getElementById("cust-plan-preview").value = "";
+    }
+
+    // Update renderRecommendedPlans to merge customPlans and ALL_9_MEAL_PLANS
+    function renderRecommendedPlans() {
+      const container = document.getElementById("recommended-plans-list");
+      const combinedPlans = [...customPlans, ...ALL_9_MEAL_PLANS];
+
+      container.innerHTML = combinedPlans.map((p, idx) => {
+        let pTotal = 0, cTotal = 0, calTotal = 0;
+        Object.values(p.meals || {}).forEach(items => {
+          if (Array.isArray(items)) {
+            items.forEach(it => {
+              const cal = parseFloat(it.calories) || 0;
+              const pro = parseFloat(it.protein) || 0;
+              const carb = parseFloat(it.carbs) || 0;
+              const q = parseFloat(it.qty) || 1;
+              calTotal += Math.round(cal * q);
+              pTotal += Math.round(pro * q);
+              cTotal += Math.round(carb * q);
+            });
+          }
+        });
+
+        const isCustom = p.id && p.id.startsWith("plan_");
+
+        return `
+          <div class="card" style="margin-bottom: 12px; border: ${isCustom ? '1.5px solid var(--primary)' : '0.5px solid var(--border)'};">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <b style="font-size:15px;">${p.title} ${isCustom ? '⭐' : ''}</b>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span class="badge ${p.badgeClass}">${p.tag}</span>
+                ${isCustom ? `<button class="del-btn" style="font-size:13px; padding:2px 6px;" onclick="deleteCustomPlan('${p.id}')" title="Delete Plan">🗑️</button>` : ''}
+              </div>
+            </div>
+            <div style="font-size:12px; color:var(--text-sec); margin-bottom:6px;">${p.desc}</div>
+            <div style="display:flex; gap:8px; margin-bottom:8px; font-size:11px; font-weight:700;">
+              <span class="badge badge-macro">Total: ${calTotal} kcal</span>
+              <span class="badge badge-macro">💪 P: ${pTotal}g</span>
+              <span class="badge badge-macro">🌾 C: ${cTotal}g</span>
+            </div>
+            <div style="font-size:12px; white-space:pre-line; color:#4B5563; margin-bottom:12px; line-height:1.5; background:var(--surface-secondary); padding:8px 10px; border-radius:var(--radius-sm);">${p.items_preview}</div>
+            <button class="btn-submit" style="margin:0; padding:10px; font-size:13px;" onclick="applyCombinedPlan(${idx})">
+              Apply Plan to Today
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function deleteCustomPlan(planId) {
+      customPlans = customPlans.filter(p => p.id !== planId);
+      localStorage.setItem(STORAGE_KEY_CUSTOM_PLANS, JSON.stringify(customPlans));
+      renderRecommendedPlans();
+      showToast("Custom plan deleted.");
+    }
+
+    function applyCombinedPlan(idx) {
+      const combinedPlans = [...customPlans, ...ALL_9_MEAL_PLANS];
+      const selectedPlan = combinedPlans[idx];
+      if (!selectedPlan) return;
+
+      const dayData = getDayLog(currentDateStr);
+      Object.keys(selectedPlan.meals).forEach(s => {
+        dayData.meals[s] = JSON.parse(JSON.stringify(selectedPlan.meals[s] || []));
+      });
+
+      persistLogs();
+      awardXP(30, `Applied ${selectedPlan.title}`);
+      triggerConfetti();
+      playDesiChime("level");
+      switchTab("today");
+      renderTodayDashboard();
+      renderYoddhaDashboard();
+      showToast(`⚡ Applied "${selectedPlan.title}" to ${currentDateStr}!`);
     }
   </script>
 </body>
