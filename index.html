@@ -1,0 +1,3110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Desi Calorie">
+  <title>Desi Calorie - Indian Food Tracker & Meal Planner</title>
+
+  <style>
+    :root {
+      --sat: env(safe-area-inset-top, 20px);
+      --sab: env(safe-area-inset-bottom, 20px);
+      --primary: #FF6B35;
+      --primary-dark: #D84A1B;
+      --primary-soft: #FFF1EB;
+      --primary-gradient: linear-gradient(135deg, #FF6B35 0%, #FF8F50 100%);
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --surface-sec: #F8F9FA;
+      --surface-tertiary: #EFEFF4;
+      --border: #E5E5EA;
+      --border-subtle: rgba(0,0,0,0.06);
+      --text: #1C1C1E;
+      --text-sec: #8E8E93;
+      --success: #34C759;
+      --success-soft: #DCFCE7;
+      --warning: #FF9500;
+      --warning-soft: #FEF3C7;
+      --danger: #FF3B30;
+      --danger-soft: #FEE2E2;
+      --indigo: #5856D6;
+      --purple: #AF52DE;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 6px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+      --shadow-card: 0 4px 14px rgba(0,0,0,0.05);
+      --shadow-float: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1C1C1E;
+        --surface-sec: #2C2C2E;
+        --surface-tertiary: #3A3A3C;
+        --border: #38383A;
+        --border-subtle: rgba(255,255,255,0.08);
+        --text: #FFFFFF;
+        --text-sec: #8E8E93;
+        --primary-soft: #331A10;
+        --success-soft: #14532D;
+        --warning-soft: #451A03;
+        --danger-soft: #450A0A;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      user-select: none;
+      -webkit-user-select: none;
+      padding-top: var(--sat);
+      padding-bottom: calc(var(--sab) + 72px);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header.app-nav {
+      position: sticky;
+      top: 0;
+      z-index: 80;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    @media (prefers-color-scheme: dark) {
+      header.app-nav { background: rgba(28, 28, 30, 0.85); }
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+    .nav-brand span.accent { color: var(--primary); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-btn {
+      background: var(--surface-sec);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      color: var(--text);
+      transition: transform 0.1s ease;
+    }
+    .pill-btn:active { transform: scale(0.95); }
+    .pill-btn.streak { color: var(--primary); border-color: rgba(255, 107, 53, 0.3); background: var(--primary-soft); }
+    .pill-btn.level { color: #8B5CF6; border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); }
+
+    main.app-viewport {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 14px 14px 0 14px;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.18s ease-out;
+    }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+      border: 0.5px solid var(--border);
+      box-shadow: var(--shadow-card);
+    }
+
+    .date-navigator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 6px 8px;
+      border: 0.5px solid var(--border);
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .date-step-btn {
+      background: var(--surface-sec);
+      border: none;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .date-step-btn:active { background: var(--border); }
+    .date-center-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+    }
+    .date-center-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .date-center-sub {
+      font-size: 11px;
+      color: var(--text-sec);
+    }
+
+    .gauge-dashboard {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 4px 0 10px 0;
+    }
+    .ring-wrap {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+    }
+    .ring-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .ring-bg {
+      fill: none;
+      stroke: var(--surface-tertiary);
+      stroke-width: 11;
+    }
+    .ring-bar {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 11;
+      stroke-linecap: round;
+      stroke-dasharray: 326.7;
+      stroke-dashoffset: 326.7;
+      transition: stroke-dashoffset 0.5s ease, stroke 0.3s ease;
+    }
+    .ring-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .ring-cals {
+      font-size: 27px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    .ring-cals-lbl {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-sec);
+      margin-top: 3px;
+    }
+
+    .budget-stats-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      max-width: 160px;
+    }
+    .stat-badge-box {
+      background: var(--surface-sec);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border-left: 3.5px solid var(--primary);
+    }
+    .stat-badge-box.deficit { border-color: var(--success); }
+    .stat-badge-box.over { border-color: var(--danger); }
+    .stat-badge-num { font-size: 16px; font-weight: 800; line-height: 1.2; }
+    .stat-badge-lbl { font-size: 10.5px; color: var(--text-sec); font-weight: 600; text-transform: uppercase; }
+
+    .macro-tracker-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--border);
+    }
+    .macro-bar-card {
+      background: var(--surface-sec);
+      border-radius: var(--radius-sm);
+      padding: 8px 8px;
+      text-align: center;
+    }
+    .macro-title-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .macro-track-line {
+      height: 5px;
+      background: var(--surface-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .macro-fill-line {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .fill-pro { background: #10B981; }
+    .fill-carb { background: #F59E0B; }
+    .fill-fat { background: #EF4444; }
+
+    .fast-tap-container {
+      margin-bottom: 14px;
+    }
+    .fast-tap-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-sec);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .fast-tap-scroll {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .fast-tap-scroll::-webkit-scrollbar { display: none; }
+    .fast-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.1s ease, border-color 0.15s ease;
+      flex-shrink: 0;
+    }
+    .fast-chip:active { transform: scale(0.94); border-color: var(--primary); }
+    .fast-chip-cals { font-size: 10.5px; color: var(--primary); font-weight: 800; }
+
+    .action-tiles-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .action-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.12s ease;
+    }
+    .action-tile:active { transform: scale(0.97); }
+    .action-tile.search-tile { border-color: rgba(99, 102, 241, 0.25); background: linear-gradient(180deg, var(--surface) 0%, rgba(99, 102, 241, 0.04) 100%); }
+    .action-tile.misc-tile { border-color: rgba(245, 158, 11, 0.3); background: linear-gradient(180deg, var(--surface) 0%, rgba(245, 158, 11, 0.05) 100%); }
+    .action-tile.calc-tile {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, rgba(255, 107, 53, 0.08) 0%, rgba(255, 143, 80, 0.04) 100%);
+      border-color: rgba(255, 107, 53, 0.3);
+    }
+    .tile-icon { font-size: 22px; flex-shrink: 0; }
+    .tile-title { font-size: 13.5px; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .tile-sub { font-size: 11px; color: var(--text-sec); margin-top: 2px; }
+
+    .meal-slot-group {
+      margin-bottom: 12px;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .meal-slot-header {
+      padding: 10px 14px;
+      background: var(--surface-sec);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 0.5px solid var(--border-subtle);
+    }
+    .slot-title-area {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .slot-icon { font-size: 16px; }
+    .slot-name { font-size: 14px; font-weight: 800; color: var(--text); }
+    .slot-right-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .slot-cal-badge {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .btn-slot-inline-add {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--primary);
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 4px 9px;
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.12s ease;
+    }
+    .btn-slot-inline-add:active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .meal-items-container {
+      padding: 0 12px;
+    }
+    .meal-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 0.5px solid var(--border-subtle);
+    }
+    .meal-item-row:last-child { border-bottom: none; }
+    .item-primary-info { flex: 1; }
+    .item-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+    .item-meta {
+      font-size: 11px;
+      color: var(--text-sec);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+    .origin-tag {
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 1.5px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .tag-db { background: var(--success-soft); color: #15803D; }
+    .tag-api { background: #E0F2FE; color: #0284C7; }
+    .tag-misc { background: var(--warning-soft); color: #B45309; }
+    .tag-plan { background: #F3E8FF; color: #7E22CE; }
+
+    .btn-item-del {
+      background: none;
+      border: none;
+      color: var(--text-sec);
+      font-size: 15px;
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+    .btn-item-del:active { color: var(--danger); }
+
+    .slot-empty-msg {
+      padding: 12px 0;
+      text-align: center;
+      font-size: 11.5px;
+      color: var(--text-sec);
+      font-style: italic;
+    }
+
+    .yoddha-hero-card {
+      background: linear-gradient(135deg, #1C1917 0%, #292524 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+    .yoddha-hero-card::after {
+      content: "🔱";
+      position: absolute;
+      right: -10px;
+      bottom: -15px;
+      font-size: 90px;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    .yoddha-rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 107, 53, 0.2);
+      border: 1px solid rgba(255, 107, 53, 0.4);
+      color: #FF8F50;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .yoddha-title { font-size: 22px; font-weight: 900; letter-spacing: -0.4px; }
+    .yoddha-tagline { font-size: 12.5px; color: #D6D3D1; margin-top: 3px; line-height: 1.4; }
+
+    .xp-track-box {
+      margin-top: 14px;
+    }
+    .xp-stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #A8A29E;
+      margin-bottom: 5px;
+    }
+    .xp-bar-outer {
+      height: 8px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .xp-bar-fill {
+      height: 100%;
+      background: var(--primary-gradient);
+      border-radius: 6px;
+      transition: width 0.4s ease;
+    }
+
+    .quest-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .quest-icon { font-size: 22px; }
+    .quest-info { flex: 1; }
+    .quest-title { font-size: 13px; font-weight: 800; color: var(--text); }
+    .quest-desc { font-size: 11px; color: var(--text-sec); margin-top: 1px; }
+    .btn-quest-claim {
+      background: var(--primary-soft);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .btn-quest-claim.done {
+      background: var(--surface-sec);
+      border-color: var(--border);
+      color: var(--text-sec);
+      cursor: default;
+    }
+
+    .trophy-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .trophy-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 4px;
+      text-align: center;
+      transition: transform 0.1s ease;
+    }
+    .trophy-item.locked {
+      opacity: 0.45;
+      filter: grayscale(1);
+    }
+    .trophy-icon { font-size: 24px; margin-bottom: 4px; }
+    .trophy-name { font-size: 10px; font-weight: 700; line-height: 1.2; }
+
+    .archive-banner {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .archive-banner-title { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .archive-banner-sub { font-size: 12px; color: #94A3B8; margin-top: 3px; line-height: 1.4; }
+
+    .filter-pills-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .ios-select {
+      flex: 1;
+      padding: 9px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      outline: none;
+    }
+    .search-input-clearable {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 13.5px;
+      color: var(--text);
+      margin-bottom: 12px;
+      outline: none;
+    }
+    .search-input-clearable:focus { border-color: var(--primary); }
+
+    .archive-day-entry {
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .archive-day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 0.5px solid var(--border-subtle);
+      margin-bottom: 8px;
+    }
+    .archive-date-lbl { font-size: 14px; font-weight: 800; }
+    .archive-cal-sum { font-size: 14px; font-weight: 900; color: var(--primary); }
+    .archive-food-bullet {
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+      color: var(--text);
+    }
+    .archive-food-bullet span:last-child { color: var(--text-sec); font-size: 11px; }
+
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .sheet-backdrop.active { display: flex; }
+    .sheet-modal {
+      background: var(--surface);
+      width: 100%;
+      max-width: 600px;
+      border-radius: 24px 24px 0 0;
+      padding: 14px 18px calc(var(--sab) + 18px) 18px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-float);
+      animation: sheetUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes sheetUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .sheet-pill {
+      width: 36px;
+      height: 4.5px;
+      background: var(--border);
+      border-radius: 3px;
+      margin: 0 auto 12px auto;
+    }
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 0.5px solid var(--border-subtle);
+    }
+    .sheet-title { font-size: 17px; font-weight: 800; }
+    .btn-close-sheet {
+      background: var(--surface-sec);
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 14px;
+      color: var(--text-sec);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .calc-segmented-control {
+      display: flex;
+      background: var(--surface-sec);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 12px;
+    }
+    .calc-seg-btn {
+      flex: 1;
+      padding: 8px 6px;
+      font-size: 12px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--text-sec);
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .calc-seg-btn.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      font-weight: 800;
+    }
+
+    .form-group { margin-bottom: 11px; }
+    .form-label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-sec); margin-bottom: 4px; text-transform: uppercase; }
+    .form-input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-sec);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+    }
+    .form-input:focus { border-color: var(--primary); background: var(--surface); }
+
+    .btn-primary-action {
+      width: 100%;
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 3px 12px rgba(255, 107, 53, 0.3);
+      transition: opacity 0.15s ease;
+    }
+    .btn-primary-action:active { opacity: 0.88; }
+
+    .rate-chips-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .rate-chip {
+      background: var(--surface-sec);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text);
+      transition: all 0.15s ease;
+    }
+    .rate-chip.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 800;
+    }
+    .rate-chip-val { font-size: 12px; font-weight: 800; display: block; }
+    .rate-chip-sub { font-size: 9.5px; color: var(--text-sec); text-transform: uppercase; font-weight: 700; margin-top: 2px; }
+    .rate-chip.active .rate-chip-sub { color: var(--primary); }
+
+    .whtr-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+    .whtr-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .whtr-val { font-size: 18px; font-weight: 900; }
+    .whtr-lbl { font-size: 10.5px; font-weight: 700; color: var(--text-sec); text-transform: uppercase; }
+    .whtr-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .whtr-healthy { background: #DCFCE7; color: #15803D; }
+    .whtr-elevated { background: #FEF3C7; color: #B45309; }
+    .whtr-high { background: #FEE2E2; color: #B91C1C; }
+    .whtr-desc { font-size: 11px; color: var(--text-sec); line-height: 1.4; margin-top: 4px; }
+
+    .calc-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .calc-metric-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      text-align: center;
+    }
+    .calc-metric-val { font-size: 18px; font-weight: 900; color: var(--text); }
+    .calc-metric-lbl { font-size: 10px; font-weight: 700; color: var(--text-sec); text-transform: uppercase; }
+    .calc-metric-box.tdee .calc-metric-val { color: var(--primary); }
+
+    .floor-warn-banner {
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      color: #92400E;
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    .desi-rule-item {
+      display: flex;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 0.5px solid rgba(0,0,0,0.06);
+    }
+    .desi-rule-item:last-child { border-bottom: none; }
+    .desi-rule-icon { font-size: 18px; line-height: 1.2; flex-shrink: 0; }
+    .desi-rule-title { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 2px; }
+    .desi-rule-desc { font-size: 11px; color: var(--text-sec); line-height: 1.45; }
+
+    .notif-schedule-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .notif-schedule-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 0.5px solid var(--border-subtle);
+    }
+    .notif-schedule-row:last-child { border-bottom: none; }
+    .notif-time-badge {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--primary);
+      background: var(--primary-soft);
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.2px;
+    }
+    .notif-no-badge {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--text-sec);
+      background: var(--surface-sec);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .ios-switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 28px;
+    }
+    .ios-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .ios-switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #E5E5EA;
+      transition: .25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 28px;
+    }
+    .ios-switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input:checked + .ios-switch-slider {
+      background-color: #34C759;
+    }
+    input:checked + .ios-switch-slider:before {
+      transform: translateX(20px);
+    }
+
+    nav.bottom-tabbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(var(--sab) + 56px);
+      padding-bottom: var(--sab);
+      background: rgba(255, 255, 255, 0.90);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 0.5px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 90;
+    }
+    @media (prefers-color-scheme: dark) {
+      nav.bottom-tabbar { background: rgba(28, 28, 30, 0.90); }
+    }
+    .tabbar-btn {
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: var(--text-sec);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      flex: 1;
+      padding: 4px 0;
+      transition: color 0.12s ease;
+    }
+    .tabbar-icon { font-size: 19px; }
+    .tabbar-btn.active { color: var(--primary); }
+
+    .toast-alert {
+      position: fixed;
+      top: calc(var(--sat) + 12px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-60px);
+      background: #1C1917;
+      color: white;
+      padding: 9px 16px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 700;
+      z-index: 200;
+      box-shadow: var(--shadow-float);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast-alert.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 250;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="toast-alert" id="app-toast">
+    <span id="toast-icon">✨</span>
+    <span id="toast-msg">Notification</span>
+  </div>
+
+  <header class="app-nav">
+    <div class="nav-brand">
+      <span>🍛</span>
+      <span>Desi <span class="accent">Calorie</span></span>
+    </div>
+    <div class="nav-actions">
+      <div class="pill-btn streak" onclick="switchTab('yoddha')">
+        <span>🔥</span>
+        <span id="header-streak-val">3 Days</span>
+      </div>
+      <div class="pill-btn level" onclick="switchTab('yoddha')">
+        <span id="header-lvl-icon">🥉</span>
+        <span id="header-lvl-name">Lvl 1</span>
+      </div>
+      <button class="pill-btn" onclick="openCalculatorModal()" title="Calorie Calculator">
+        <span>🧮</span>
+      </button>
+      <button class="pill-btn" onclick="openApiModal()" title="API Settings">
+        <span>🔑</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="app-viewport">
+    
+    <div id="tab-today" class="tab-content active">
+      
+      <div class="date-navigator">
+        <button class="date-step-btn" onclick="stepDate(-1)">‹</button>
+        <button class="date-center-btn" onclick="openDatePicker()">
+          <span style="font-size: 15px;">📅</span>
+          <div>
+            <div class="date-center-title" id="lbl-active-date">Today</div>
+            <div class="date-center-sub" id="lbl-active-sub">Tap to select past date</div>
+          </div>
+          <input type="date" id="native-date-input" style="position: absolute; opacity: 0; pointer-events: none;" onchange="onDateSelected(this.value)">
+        </button>
+        <button class="date-step-btn" onclick="stepDate(1)">›</button>
+      </div>
+
+      <div class="card">
+        <div class="gauge-dashboard">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-bar" id="ring-progress-bar" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="ring-inner">
+              <div class="ring-cals" id="val-consumed-cals">0</div>
+              <div class="ring-cals-lbl">kcal eaten</div>
+            </div>
+          </div>
+
+          <div class="budget-stats-stack">
+            <div class="stat-badge-box deficit" id="box-remaining-cals">
+              <div class="stat-badge-num" id="val-remaining-cals">1,800</div>
+              <div class="stat-badge-lbl" id="lbl-remaining-status">Remaining</div>
+            </div>
+            <div class="stat-badge-box">
+              <div class="stat-badge-num" id="val-daily-budget">1,800</div>
+              <div class="stat-badge-lbl">Daily Budget</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="macro-tracker-row">
+          <div class="macro-bar-card">
+            <div class="macro-title-row">
+              <span style="color:#10B981;">Protein</span>
+              <span id="val-macro-pro">0/144g</span>
+            </div>
+            <div class="macro-track-line">
+              <div class="macro-fill-line fill-pro" id="bar-macro-pro" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div class="macro-bar-card">
+            <div class="macro-title-row">
+              <span style="color:#F59E0B;">Carbs</span>
+              <span id="val-macro-carb">0/171g</span>
+            </div>
+            <div class="macro-track-line">
+              <div class="macro-fill-line fill-carb" id="bar-macro-carb" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div class="macro-bar-card">
+            <div class="macro-title-row">
+              <span style="color:#EF4444;">Fat</span>
+              <span id="val-macro-fat">0/60g</span>
+            </div>
+            <div class="macro-track-line">
+              <div class="macro-fill-line fill-fat" id="bar-macro-fat" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fast-tap-container">
+        <div class="fast-tap-label">
+          <span>⚡ Fast-Tap Quick Desi Staples</span>
+          <span style="font-size: 10px; color: var(--primary);">Instant 1-Tap Add</span>
+        </div>
+        <div class="fast-tap-scroll">
+          <div class="fast-chip" onclick="quickAddStaple('Roti / Phulka', 85, 3, 17, 0.5, '1 piece')">
+            <span>🫓 Roti</span>
+            <span class="fast-chip-cals">85k</span>
+          </div>
+          <div class="fast-chip" onclick="quickAddStaple('Yellow Dal Tadka', 150, 7.5, 20, 4.5, '1 katori')">
+            <span>🥣 Dal Tadka</span>
+            <span class="fast-chip-cals">150k</span>
+          </div>
+          <div class="fast-chip" onclick="quickAddStaple('Steamed Basmati Rice', 180, 3.5, 39, 0.4, '1 katori')">
+            <span>🍚 White Rice</span>
+            <span class="fast-chip-cals">180k</span>
+          </div>
+          <div class="fast-chip" onclick="quickAddStaple('Masala Chai with Milk', 115, 3.2, 16, 4.2, '1 cup')">
+            <span>☕️ Chai</span>
+            <span class="fast-chip-cals">115k</span>
+          </div>
+          <div class="fast-chip" onclick="quickAddStaple('Plain Curd / Dahi', 100, 4, 6, 6.5, '1 katori')">
+            <span>🥛 Dahi</span>
+            <span class="fast-chip-cals">100k</span>
+          </div>
+          <div class="fast-chip" onclick="quickAddStaple('Aloo Gobi Sabzi', 130, 3, 16, 6, '1 katori')">
+            <span>🥔 Sabzi</span>
+            <span class="fast-chip-cals">130k</span>
+          </div>
+          <div class="fast-chip" onclick="quickAddStaple('Paneer Bhurji', 220, 14, 4, 16, '1 katori')">
+            <span>🧀 Paneer</span>
+            <span class="fast-chip-cals">220k</span>
+          </div>
+          <div class="fast-chip" onclick="quickAddStaple('Boiled Eggs', 155, 13, 1.1, 11, '2 eggs')">
+            <span>🥚 2 Boiled Eggs</span>
+            <span class="fast-chip-cals">155k</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-tiles-grid">
+        <div class="action-tile search-tile" onclick="openFoodSearchModal()">
+          <div class="tile-icon">🔍</div>
+          <div>
+            <div class="tile-title">Search Food</div>
+            <div class="tile-sub">55+ Indian DB & Dual API</div>
+          </div>
+        </div>
+        <div class="action-tile misc-tile" onclick="openMiscMealModal()">
+          <div class="tile-icon">⚡</div>
+          <div>
+            <div class="tile-title">+ Misc Extra</div>
+            <div class="tile-sub">Sweets, chai, street snacks</div>
+          </div>
+        </div>
+        <div class="action-tile calc-tile" onclick="openCalculatorModal()">
+          <div class="tile-icon">🔥</div>
+          <div>
+            <div class="tile-title">Belly Fat & Calorie Calculator</div>
+            <div class="tile-sub">Weekly rate (0.25 - 1.0 kg/wk) • WHtR Diagnostics • 5 Desi Rules</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="meal-slots-container">
+        <!-- 1. Breakfast -->
+        <div class="meal-slot-group">
+          <div class="meal-slot-header">
+            <div class="slot-title-area">
+              <span class="slot-icon">🌅</span>
+              <span class="slot-name">Breakfast</span>
+            </div>
+            <div class="slot-right-actions">
+              <span class="slot-cal-badge" id="cals-breakfast">0 kcal</span>
+              <button class="btn-slot-inline-add" onclick="openFoodSearchModal('breakfast')">+ Add</button>
+            </div>
+          </div>
+          <div class="meal-items-container" id="items-breakfast"></div>
+        </div>
+
+        <!-- 2. Lunch -->
+        <div class="meal-slot-group">
+          <div class="meal-slot-header">
+            <div class="slot-title-area">
+              <span class="slot-icon">🍛</span>
+              <span class="slot-name">Lunch</span>
+            </div>
+            <div class="slot-right-actions">
+              <span class="slot-cal-badge" id="cals-lunch">0 kcal</span>
+              <button class="btn-slot-inline-add" onclick="openFoodSearchModal('lunch')">+ Add</button>
+            </div>
+          </div>
+          <div class="meal-items-container" id="items-lunch"></div>
+        </div>
+
+        <!-- 3. Evening Snacks -->
+        <div class="meal-slot-group">
+          <div class="meal-slot-header">
+            <div class="slot-title-area">
+              <span class="slot-icon">☕️</span>
+              <span class="slot-name">Evening Snacks</span>
+            </div>
+            <div class="slot-right-actions">
+              <span class="slot-cal-badge" id="cals-snacks">0 kcal</span>
+              <button class="btn-slot-inline-add" onclick="openFoodSearchModal('snacks')">+ Add</button>
+            </div>
+          </div>
+          <div class="meal-items-container" id="items-snacks"></div>
+        </div>
+
+        <!-- 4. Dinner -->
+        <div class="meal-slot-group">
+          <div class="meal-slot-header">
+            <div class="slot-title-area">
+              <span class="slot-icon">🍲</span>
+              <span class="slot-name">Dinner</span>
+            </div>
+            <div class="slot-right-actions">
+              <span class="slot-cal-badge" id="cals-dinner">0 kcal</span>
+              <button class="btn-slot-inline-add" onclick="openFoodSearchModal('dinner')">+ Add</button>
+            </div>
+          </div>
+          <div class="meal-items-container" id="items-dinner"></div>
+        </div>
+
+        <!-- 5. Midnight Cravings -->
+        <div class="meal-slot-group">
+          <div class="meal-slot-header">
+            <div class="slot-title-area">
+              <span class="slot-icon">🌙</span>
+              <span class="slot-name">Midnight Cravings</span>
+            </div>
+            <div class="slot-right-actions">
+              <span class="slot-cal-badge" id="cals-midnight">0 kcal</span>
+              <button class="btn-slot-inline-add" onclick="openFoodSearchModal('midnight')">+ Add</button>
+            </div>
+          </div>
+          <div class="meal-items-container" id="items-midnight"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="tab-planner" class="tab-content">
+      <div class="card" style="margin-bottom: 12px;">
+        <div style="font-size: 18px; font-weight: 900; margin-bottom: 4px;">🍱 Culturally Scaled Indian Meal Plans</div>
+        <p style="font-size: 12px; color: var(--text-sec); line-height: 1.4;">
+          Automatically calibrated to your target of <strong id="planner-target-cal" style="color:var(--primary);">1,800 kcal</strong> across all 5 meal slots.
+        </p>
+      </div>
+      <div id="recommended-plans-container" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+
+    <div id="tab-archive" class="tab-content">
+      <div class="archive-banner">
+        <div class="archive-banner-title">
+          <span>📜</span>
+          <span>5-Year Logbook Archive</span>
+        </div>
+        <div class="archive-banner-sub">
+          Daily calorie counts and itemized meals preserved locally for up to 5+ years without cloud dependency.
+        </div>
+      </div>
+
+      <div class="filter-pills-row">
+        <select id="sel-archive-year" class="ios-select" onchange="renderArchiveLogList()">
+          <option value="ALL">All Years</option>
+          <option value="2026" selected>2026</option>
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+          <option value="2023">2023</option>
+          <option value="2022">2022</option>
+        </select>
+        <select id="sel-archive-month" class="ios-select" onchange="renderArchiveLogList()">
+          <option value="ALL">All Months</option>
+          <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
+          <option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option>
+          <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option>
+          <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+        </select>
+      </div>
+
+      <input type="text" id="input-archive-search" class="search-input-clearable"
+             placeholder="🔍 Search all 5 years (e.g. Biryani, Samosa, Dal)..." oninput="renderArchiveLogList()">
+
+      <div id="archive-entries-container"></div>
+    </div>
+
+    <div id="tab-yoddha" class="tab-content">
+      <div class="yoddha-hero-card">
+        <div class="yoddha-rank-badge" id="card-yoddha-rank-badge">Level 1 • Desi Yoddha</div>
+        <div class="yoddha-title" id="card-yoddha-name">Halwai Ka Yaar</div>
+        <div class="yoddha-tagline" id="card-yoddha-desc">
+          Warm-up stage! Breaking free from daily jalebis and samosas.
+        </div>
+
+        <div class="xp-track-box">
+          <div class="xp-stats-row">
+            <span>Experience Points</span>
+            <span id="card-xp-stats">120 / 250 XP</span>
+          </div>
+          <div class="xp-bar-outer">
+            <div class="xp-bar-fill" id="card-xp-bar-fill" style="width: 48%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div style="font-size: 15px; font-weight: 800;">🎯 Daily Desi Quests</div>
+          <div style="font-size: 11px; color: var(--primary); font-weight: 800;" id="quests-completed-count">1/4 Done</div>
+        </div>
+        <div id="daily-quests-list"></div>
+      </div>
+
+      <div class="card">
+        <div style="font-size: 15px; font-weight: 800; margin-bottom: 4px;">🏆 Desi Trophy Cabinet</div>
+        <div style="font-size: 11.5px; color: var(--text-sec); margin-bottom: 10px;">Unlock traditional milestone badges through disciplined logging.</div>
+        <div class="trophy-grid" id="trophy-cabinet-container"></div>
+      </div>
+    </div>
+
+    <div id="tab-settings" class="tab-content">
+      
+      <!-- NEW: Silent Indian Meal Reminders in IST -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div>
+            <div style="font-size: 16px; font-weight: 800;">⏰ Silent Meal Reminders (IST)</div>
+            <div style="font-size: 11px; color: var(--text-sec);">Indian Standard Time (UTC+5:30) • 100% Silent</div>
+          </div>
+          <label class="ios-switch">
+            <input type="checkbox" id="toggle-silent-reminders" onchange="toggleMealReminders(this.checked)">
+            <span class="ios-switch-slider"></span>
+          </label>
+        </div>
+
+        <p style="font-size: 12px; color: var(--text-sec); margin-bottom: 12px; line-height: 1.4;">
+          Get non-intrusive reminders at standard Indian meal hours. <em>Strictly zero sound & no midnight craving alert.</em>
+        </p>
+
+        <div class="notif-schedule-card">
+          <div class="notif-schedule-row">
+            <div>
+              <div style="font-weight: 800; font-size: 13px;">🌅 Breakfast (नाश्ता)</div>
+              <div style="font-size: 11px; color: var(--text-sec);">Morning fuel & digestion</div>
+            </div>
+            <span class="notif-time-badge">09:00 AM IST</span>
+          </div>
+          <div class="notif-schedule-row">
+            <div>
+              <div style="font-weight: 800; font-size: 13px;">🍛 Lunch (दोपहर का भोजन)</div>
+              <div style="font-size: 11px; color: var(--text-sec);">Peak digestive fire (Agni)</div>
+            </div>
+            <span class="notif-time-badge">01:30 PM IST</span>
+          </div>
+          <div class="notif-schedule-row">
+            <div>
+              <div style="font-weight: 800; font-size: 13px;">☕️ Chai & Snacks (चाय-नाश्ता)</div>
+              <div style="font-size: 11px; color: var(--text-sec);">Mindful portion control</div>
+            </div>
+            <span class="notif-time-badge">05:30 PM IST</span>
+          </div>
+          <div class="notif-schedule-row">
+            <div>
+              <div style="font-weight: 800; font-size: 13px;">🍲 Dinner (रात का भोजन)</div>
+              <div style="font-size: 11px; color: var(--text-sec);">Early dinner for belly fat loss</div>
+            </div>
+            <span class="notif-time-badge">08:30 PM IST</span>
+          </div>
+          <div class="notif-schedule-row">
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: var(--text-sec);">🌙 Midnight Cravings</div>
+              <div style="font-size: 11px; color: var(--text-sec);">Ayurvedic Rest & Fasting</div>
+            </div>
+            <span class="notif-no-badge">🚫 NO ALERT</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <button class="pill-btn" style="flex:1; justify-content:center; padding:9px;" id="btn-notif-perm" onclick="requestNotifPermission()">
+            🔔 Permission: <span id="lbl-notif-status">Check</span>
+          </button>
+          <button class="pill-btn" style="flex:1; justify-content:center; padding:9px; background:var(--primary-soft); color:var(--primary); border-color:var(--primary);" onclick="triggerTestSilentNotification()">
+            🧪 Test Silent Alert
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px;">🎯 Daily Targets</div>
+        <div class="form-group">
+          <label class="form-label">Calorie Budget (kcal)</label>
+          <input type="number" id="input-goal-cal" class="form-input" value="1800">
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <div class="form-group">
+            <label class="form-label">Protein (g)</label>
+            <input type="number" id="input-goal-pro" class="form-input" value="144">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Carbs (g)</label>
+            <input type="number" id="input-goal-carb" class="form-input" value="171">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fat (g)</label>
+            <input type="number" id="input-goal-fat" class="form-input" value="60">
+          </div>
+        </div>
+        <button class="btn-primary-action" onclick="saveManualGoals()">Save Daily Goals</button>
+      </div>
+
+      <div class="card">
+        <div style="font-size: 16px; font-weight: 800; margin-bottom: 4px;">📤 WhatsApp / Telegram & 5-Year Backup</div>
+        <p style="font-size: 12px; color: var(--text-sec); margin-bottom: 12px; line-height: 1.4;">
+          Export your complete 5-year log file directly to chat apps or save to iCloud/Files.
+        </p>
+        <button class="btn-primary-action" style="background: #22C55E; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="shareLogsViaSheet()">
+          <span style="font-size: 18px;">📤</span>
+          <span>Send via WhatsApp / Telegram</span>
+        </button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+          <button class="pill-btn" style="padding: 10px; justify-content: center;" onclick="downloadJsonFile()">
+            ⬇️ Save .json File
+          </button>
+          <button class="pill-btn" style="padding: 10px; justify-content: center;" onclick="copyJsonClipboard()">
+            📋 Copy JSON
+          </button>
+        </div>
+        <input type="file" id="file-restore-input" style="display:none;" accept=".json" onchange="restoreJsonFile(event)">
+        <button class="pill-btn" style="width: 100%; padding: 9px; justify-content: center; border-style: dashed;" onclick="document.getElementById('file-restore-input').click()">
+          ⬆️ Restore 5-Year Backup (.json)
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <nav class="bottom-tabbar">
+    <button class="tabbar-btn active" onclick="switchTab('today')">
+      <span class="tabbar-icon">📅</span>
+      <span>Today</span>
+    </button>
+    <button class="tabbar-btn" onclick="switchTab('planner')">
+      <span class="tabbar-icon">🍱</span>
+      <span>Planner</span>
+    </button>
+    <button class="tabbar-btn" onclick="switchTab('archive')">
+      <span class="tabbar-icon">📜</span>
+      <span>5-Yr Log</span>
+    </button>
+    <button class="tabbar-btn" onclick="switchTab('yoddha')">
+      <span class="tabbar-icon">⚔️</span>
+      <span>Yoddha</span>
+    </button>
+    <button class="tabbar-btn" onclick="switchTab('settings')">
+      <span class="tabbar-icon">⚙️</span>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <div class="sheet-backdrop" id="modal-fatloss-calculator">
+    <div class="sheet-modal">
+      <div class="sheet-pill"></div>
+      <div class="sheet-header">
+        <div class="sheet-title">🧮 Calorie & Fat Loss Calculator</div>
+        <button class="btn-close-sheet" onclick="closeCalculatorModal()">✕</button>
+      </div>
+
+      <div class="calc-segmented-control">
+        <button class="calc-seg-btn active" id="btn-mode-overall" onclick="switchCalcMode('overall')">
+          🏃 Overall Body Fat
+        </button>
+        <button class="calc-seg-btn" id="btn-mode-belly" onclick="switchCalcMode('belly')">
+          🔥 Belly & Visceral Fat
+        </button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Biological Gender</label>
+          <select id="calc-gender" class="ios-select" onchange="recalculateFatLoss()">
+            <option value="male" selected>Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Age (Years)</label>
+          <input type="number" id="calc-age" class="form-input" value="28" min="15" max="99" oninput="recalculateFatLoss()">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Height (cm)</label>
+          <input type="number" id="calc-height" class="form-input" value="172" min="100" max="230" oninput="recalculateFatLoss()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weight (kg)</label>
+          <input type="number" id="calc-weight" class="form-input" value="78" min="30" max="250" step="0.5" oninput="recalculateFatLoss()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Goal Wt (kg)</label>
+          <input type="number" id="calc-target-weight" class="form-input" value="68" min="30" max="250" step="0.5" oninput="recalculateFatLoss()">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Waist Circumference (cm) — measured at navel</label>
+        <input type="number" id="calc-waist" class="form-input" value="88" min="40" max="180" step="0.5" oninput="recalculateFatLoss()">
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+          <label class="form-label" style="margin-bottom:0;">Target Fat Loss Rate (kg/week)</label>
+          <span id="target-rate-badge" style="font-size: 11px; font-weight: 800; color: var(--primary);">0.50 kg/wk (Deficit: 550 kcal)</span>
+        </div>
+        <div class="rate-chips-grid">
+          <div class="rate-chip" id="rate-025" onclick="setFatLossRate(0.25)">
+            <span class="rate-chip-val">0.25 kg</span>
+            <span class="rate-chip-sub">Gentle</span>
+          </div>
+          <div class="rate-chip active" id="rate-050" onclick="setFatLossRate(0.50)">
+            <span class="rate-chip-val">0.50 kg</span>
+            <span class="rate-chip-sub">Recommended</span>
+          </div>
+          <div class="rate-chip" id="rate-075" onclick="setFatLossRate(0.75)">
+            <span class="rate-chip-val">0.75 kg</span>
+            <span class="rate-chip-sub">Intense</span>
+          </div>
+          <div class="rate-chip" id="rate-100" onclick="setFatLossRate(1.00)">
+            <span class="rate-chip-val">1.00 kg</span>
+            <span class="rate-chip-sub">Maximum</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Daily Physical Activity Level</label>
+        <select id="calc-activity" class="ios-select" onchange="recalculateFatLoss()">
+          <option value="1.2">Sedentary (Desk job, minimal walking)</option>
+          <option value="1.375" selected>Light Active (1-3 days light exercise / 6k steps)</option>
+          <option value="1.55">Moderate Active (3-5 days gym / 10k steps)</option>
+          <option value="1.725">Very Active (6-7 days intense workouts)</option>
+          <option value="1.9">Athlete / Heavy Labor (2x intense training)</option>
+        </select>
+      </div>
+
+      <div style="background: var(--surface-sec); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px;">
+        <div class="whtr-card" id="whtr-box">
+          <div class="whtr-row">
+            <div>
+              <div class="whtr-val" id="res-whtr">0.51</div>
+              <div class="whtr-lbl">Waist-to-Height Ratio (WHtR)</div>
+            </div>
+            <span class="whtr-badge whtr-elevated" id="res-whtr-badge">Elevated Visceral Risk</span>
+          </div>
+          <div class="whtr-desc" id="res-whtr-desc">
+            South Asian cutoff: &lt; 0.50 is healthy. Above 0.50 indicates excess visceral adiposity surrounding vital organs.
+          </div>
+        </div>
+
+        <div class="calc-stat-grid">
+          <div class="calc-metric-box">
+            <div class="calc-metric-val" id="res-bmr">1,710</div>
+            <div class="calc-metric-lbl">BMR (Basal Rate)</div>
+          </div>
+          <div class="calc-metric-box tdee">
+            <div class="calc-metric-val" id="res-tdee">2,351</div>
+            <div class="calc-metric-lbl">TDEE (Daily Burn)</div>
+          </div>
+        </div>
+
+        <div class="floor-warn-banner" id="res-floor-warn">
+          ⚠️ Adjusted: Calories capped at the metabolic floor (1,500 kcal men / 1,200 kcal women) to protect metabolic rate.
+        </div>
+
+        <div style="background: var(--surface); border-radius: var(--radius-sm); padding: 12px; border: 1px solid var(--border); text-align: center; margin-bottom: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-sec); text-transform: uppercase;">
+            Recommended Daily Target (<span id="res-deficit-badge" style="color:var(--primary);">-550 kcal Deficit</span>)
+          </div>
+          <div style="font-size: 28px; font-weight: 900; color: var(--primary); margin: 3px 0;" id="res-target-cals">
+            1,801 kcal
+          </div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-sec);" id="res-timeline-label">
+            Est. Loss: ~0.50 kg/wk • ~20 Weeks to reach 68 kg
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; margin-bottom: 8px;">
+          <div style="background: var(--surface); padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            <div style="font-size: 10px; font-weight: 700; color: #10B981;">Protein</div>
+            <div style="font-size: 14px; font-weight: 800;" id="res-pro-g">144g</div>
+            <div style="font-size: 9.5px; color: var(--text-sec);" id="res-pro-pct">(32%)</div>
+          </div>
+          <div style="background: var(--surface); padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            <div style="font-size: 10px; font-weight: 700; color: #F59E0B;">Carbs</div>
+            <div style="font-size: 14px; font-weight: 800;" id="res-carb-g">171g</div>
+            <div style="font-size: 9.5px; color: var(--text-sec);" id="res-carb-pct">(38%)</div>
+          </div>
+          <div style="background: var(--surface); padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+            <div style="font-size: 10px; font-weight: 700; color: #EF4444;">Fat</div>
+            <div style="font-size: 14px; font-weight: 800;" id="res-fat-g">60g</div>
+            <div style="font-size: 9.5px; color: var(--text-sec);" id="res-fat-pct">(30%)</div>
+          </div>
+        </div>
+
+        <div id="res-advice-box" style="font-size: 11.5px; line-height: 1.45; color: var(--text);"></div>
+      </div>
+
+      <button class="btn-primary-action" onclick="applyCalculatedGoals()">
+        ⚡ Apply to My Daily Goals & Meal Plans (+25 XP)
+      </button>
+    </div>
+  </div>
+
+  <div class="sheet-backdrop" id="modal-food-search">
+    <div class="sheet-modal">
+      <div class="sheet-pill"></div>
+      <div class="sheet-header">
+        <div class="sheet-title">🔍 Search Indian Food</div>
+        <button class="btn-close-sheet" onclick="closeFoodSearchModal()">✕</button>
+      </div>
+
+      <input type="text" id="input-search-food-query" class="search-input-clearable"
+             placeholder="Search paneer, roti, dal, biryani..." oninput="handleFoodSearch(this.value)">
+
+      <div id="search-food-results-container" style="max-height: 240px; overflow-y: auto; margin-bottom: 12px;"></div>
+
+      <div id="box-food-portion-selector" style="display: none; background: var(--surface-sec); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px;">
+        <div style="font-size: 14px; font-weight: 800; margin-bottom: 6px;" id="lbl-selected-food-title">Food Name</div>
+        <div class="form-group">
+          <label class="form-label">Select Meal Slot</label>
+          <select id="sel-target-meal-slot" class="ios-select" style="width: 100%;">
+            <option value="breakfast">🌅 Breakfast</option>
+            <option value="lunch">🍛 Lunch</option>
+            <option value="snacks">☕️ Evening Snacks</option>
+            <option value="dinner">🍲 Dinner</option>
+            <option value="midnight">🌙 Midnight Cravings</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Serving Quantity (<span id="lbl-selected-serving-unit">serving</span>)</label>
+          <input type="number" id="input-serving-qty" class="form-input" value="1.0" step="0.25" min="0.25" oninput="updateCalculatedPortionPreview()">
+        </div>
+        <div style="font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 10px;" id="lbl-portion-cals-preview">
+          Total: 0 kcal
+        </div>
+        <button class="btn-primary-action" onclick="commitAddFoodToLog()">Log This Dish</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-backdrop" id="modal-misc-meal">
+    <div class="sheet-modal">
+      <div class="sheet-pill"></div>
+      <div class="sheet-header">
+        <div class="sheet-title">⚡ Quick / Misc Extra Meal</div>
+        <button class="btn-close-sheet" onclick="closeMiscMealModal()">✕</button>
+      </div>
+      <p style="font-size: 12px; color: var(--text-sec); margin-bottom: 12px;">
+        Log wedding sweets, roadside chaat, extra chai, or office biscuits directly.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Item Description</label>
+        <input type="text" id="input-misc-name" class="form-input" placeholder="e.g. 2 Gulab Jamun, 1 Samosa" value="Miscellaneous Extra">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Calories (kcal) *Required</label>
+        <input type="number" id="input-misc-cals" class="form-input" placeholder="e.g. 260" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Meal Slot</label>
+        <select id="sel-misc-slot" class="ios-select" style="width: 100%;">
+          <option value="snacks">☕️ Evening Snacks</option>
+          <option value="breakfast">🌅 Breakfast</option>
+          <option value="lunch">🍛 Lunch</option>
+          <option value="dinner">🍲 Dinner</option>
+          <option value="midnight">🌙 Midnight Cravings</option>
+        </select>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Protein (g)</label>
+          <input type="number" id="input-misc-pro" class="form-input" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Carbs (g)</label>
+          <input type="number" id="input-misc-carb" class="form-input" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fat (g)</label>
+          <input type="number" id="input-misc-fat" class="form-input" value="0">
+        </div>
+      </div>
+
+      <button class="btn-primary-action" onclick="commitMiscMealToLog()">Log Miscellaneous Item</button>
+    </div>
+  </div>
+
+  <div class="sheet-backdrop" id="modal-api-keys">
+    <div class="sheet-modal">
+      <div class="sheet-pill"></div>
+      <div class="sheet-header">
+        <div class="sheet-title">🔑 Live API Integration</div>
+        <button class="btn-close-sheet" onclick="closeApiModal()">✕</button>
+      </div>
+      <p style="font-size: 12px; color: var(--text-sec); margin-bottom: 12px;">
+        Searches fetch from API-Ninjas or FatSecret/RapidAPI and automatically cache to your 5-year local database.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">API-Ninjas Key (Primary)</label>
+        <input type="password" id="input-key-ninjas" class="form-input" placeholder="Paste API-Ninjas API Key...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">FatSecret / RapidAPI Key (Backup)</label>
+        <input type="password" id="input-key-fatsecret" class="form-input" placeholder="Paste backup API Key...">
+      </div>
+
+      <button class="btn-primary-action" onclick="saveApiKeys()">Save Keys Locally</button>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY_LOGS = "desicalorie_5yr_logs_v7";
+    const STORAGE_KEY_GOALS = "desicalorie_goals_v7";
+    const STORAGE_KEY_CACHED_API = "desicalorie_cached_api_v7";
+    const STORAGE_KEY_KEYS = "desicalorie_apikeys_v7";
+    const STORAGE_KEY_YODDHA = "desicalorie_yoddha_v7";
+    const STORAGE_KEY_NOTIF_SETTINGS = "desicalorie_notif_settings_v7";
+
+    // Indian Standard Time (IST) 4 core meal reminder schedule (ZERO NOTIFICATION FOR MIDNIGHT)
+    const IST_MEAL_REMINDERS = [
+      { key: "breakfast", hour: 9, min: 0, title: "🌅 Time for Breakfast (नाश्ता)!", desc: "Log your morning poha, idli, or paratha to fuel your metabolic rate." },
+      { key: "lunch", hour: 13, min: 30, title: "🍛 Time for Lunch (दोपहर का भोजन)!", desc: "Track your rotis, dal, and sabzi. Remember the kachumber salad first!" },
+      { key: "snacks", hour: 17, min: 30, title: "☕️ Evening Chai & Snack Time!", desc: "Enjoy your masala chai with roasted makhana or chana. Keep it mindful." },
+      { key: "dinner", hour: 20, min: 30, title: "🍲 Early Dinner Reminder (रात का भोजन)!", desc: "Wrap up dinner for deeper sleep and faster belly fat oxidation." }
+    ];
+
+    const DEFAULT_INDIAN_FOODS = [
+      { id: "f1", name: "Roti / Phulka (No ghee)", portion: "1 piece (35g)", calories: 85, protein: 3, carbs: 17, fat: 0.5, category: "Breads" },
+      { id: "f2", name: "Roti with 1/2 tsp Ghee", portion: "1 piece", calories: 110, protein: 3, carbs: 17, fat: 3.5, category: "Breads" },
+      { id: "f3", name: "Plain Paratha (Shallow fried)", portion: "1 piece (60g)", calories: 230, protein: 4.5, carbs: 30, fat: 10, category: "Breads" },
+      { id: "f4", name: "Aloo Paratha with Butter", portion: "1 piece (100g)", calories: 290, protein: 5.5, carbs: 38, fat: 13, category: "Breads" },
+      { id: "f5", name: "Paneer Paratha", portion: "1 piece (110g)", calories: 320, protein: 11, carbs: 34, fat: 15, category: "Breads" },
+      { id: "f6", name: "Yellow Dal Tadka (Toor/Arhar)", portion: "1 katori (150g)", calories: 150, protein: 7.5, carbs: 20, fat: 4.5, category: "Dals" },
+      { id: "f7", name: "Dal Makhani", portion: "1 katori (150g)", calories: 260, protein: 8, carbs: 22, fat: 15, category: "Dals" },
+      { id: "f8", name: "Moong Dal (Light home-style)", portion: "1 katori (150g)", calories: 125, protein: 8, carbs: 18, fat: 2.5, category: "Dals" },
+      { id: "f9", name: "Chole Masala", portion: "1 katori (150g)", calories: 240, protein: 9, carbs: 32, fat: 8, category: "Curries" },
+      { id: "f10", name: "Rajma Masala", portion: "1 katori (150g)", calories: 210, protein: 8.5, carbs: 30, fat: 6, category: "Curries" },
+      { id: "f11", name: "Paneer Butter Masala", portion: "1 katori (150g)", calories: 340, protein: 11, carbs: 12, fat: 28, category: "Curries" },
+      { id: "f12", name: "Palak Paneer", portion: "1 katori (150g)", calories: 230, protein: 10, carbs: 8, fat: 18, category: "Curries" },
+      { id: "f13", name: "Steamed White Basmati Rice", portion: "1 katori (150g)", calories: 180, protein: 3.5, carbs: 39, fat: 0.4, category: "Rice" },
+      { id: "f14", name: "Jeera Rice", portion: "1 katori (150g)", calories: 215, protein: 3.8, carbs: 40, fat: 4.5, category: "Rice" },
+      { id: "f15", name: "Chicken Biryani", portion: "1 plate (300g)", calories: 520, protein: 26, carbs: 58, fat: 20, category: "Non-Veg" },
+      { id: "f16", name: "Chicken Curry (Home style)", portion: "1 katori (150g)", calories: 240, protein: 22, carbs: 5, fat: 14, category: "Non-Veg" },
+      { id: "f17", name: "Egg Curry (2 Boiled eggs)", portion: "1 bowl", calories: 230, protein: 14, carbs: 6, fat: 16, category: "Non-Veg" },
+      { id: "f18", name: "Tandoori Chicken (1 leg quarter)", portion: "1 piece (150g)", calories: 260, protein: 30, carbs: 3, fat: 14, category: "Non-Veg" },
+      { id: "f19", name: "Steamed Idli", portion: "2 pieces", calories: 130, protein: 4, carbs: 28, fat: 0.5, category: "South Indian" },
+      { id: "f20", name: "Plain Dosa with Sambar", portion: "1 medium", calories: 220, protein: 4.5, carbs: 36, fat: 6, category: "South Indian" },
+      { id: "f21", name: "Masala Dosa", portion: "1 piece", calories: 340, protein: 6, carbs: 48, fat: 14, category: "South Indian" },
+      { id: "f22", name: "Kanda Poha with Peanuts", portion: "1 bowl (150g)", calories: 250, protein: 5, carbs: 42, fat: 7.5, category: "Breakfast" },
+      { id: "f23", name: "Upma (Semolina/Rava)", portion: "1 bowl (150g)", calories: 210, protein: 5, carbs: 34, fat: 6, category: "Breakfast" },
+      { id: "f24", name: "Dhokla (Khaman)", portion: "2 square pieces", calories: 120, protein: 4.5, carbs: 21, fat: 2, category: "Snacks" },
+      { id: "f25", name: "Masala Chai with Milk & Sugar", portion: "1 cup (150ml)", calories: 115, protein: 3.2, carbs: 16, fat: 4.2, category: "Beverages" },
+      { id: "f26", name: "Masala Chai (No sugar, half milk)", portion: "1 cup (150ml)", calories: 45, protein: 2, carbs: 3, fat: 2.2, category: "Beverages" },
+      { id: "f27", name: "Samosa", portion: "1 piece (80g)", calories: 260, protein: 3.8, carbs: 30, fat: 14, category: "Snacks" },
+      { id: "f28", name: "Roasted Makhana (Foxnuts)", portion: "1 bowl (30g)", calories: 110, protein: 3, carbs: 20, fat: 2, category: "Snacks" },
+      { id: "f29", name: "Gulab Jamun", portion: "1 piece (45g)", calories: 150, protein: 2, carbs: 24, fat: 5.5, category: "Sweets" },
+      { id: "f30", name: "Kheer (Rice Pudding)", portion: "1 katori (120g)", calories: 210, protein: 5, carbs: 32, fat: 7, category: "Sweets" }
+    ];
+
+    const DESI_LEVELS = [
+      { lvl: 1, name: "Halwai Ka Yaar", minXp: 0, maxXp: 250, icon: "🥉", desc: "Warm-up stage! Breaking free from daily jalebis and samosas." },
+      { lvl: 2, name: "Chai-Biscuit Tyagi", minXp: 251, maxXp: 650, icon: "🥉", desc: "Quit dipping sweet rusks in sugary tea. Embracing black chai & roasted makhana!" },
+      { lvl: 3, name: "Phulka Parakrami", minXp: 651, maxXp: 1300, icon: "🥈", desc: "Portion control champion. Knowing exact katori and roti limits with surgical precision." },
+      { lvl: 4, name: "Sattu-Dal Senapati", minXp: 1301, maxXp: 2300, icon: "🥈", desc: "Commander of clean desi protein, sprouted kala chana, and gut-healing fiber." },
+      { lvl: 5, name: "Vyayam Veeryodaya", minXp: 2301, maxXp: 3800, icon: "🥇", desc: "Belly fat in full retreat! 10,000 steps and early dinners locked in as a daily ritual." },
+      { lvl: 6, name: "Akhada Mahavira", minXp: 3801, maxXp: 5800, icon: "👑", desc: "Legendary metabolic resilience. An unshakeable fortress of nutrition discipline." },
+      { lvl: 7, name: "Mahabali Param Yoddha", minXp: 5801, maxXp: 99999, icon: "🔱", desc: "Supreme master of mind, body, and timeless Indian wellness heritage!" }
+    ];
+
+    let currentDateStr = getTodayDateStr();
+    let currentLogs = {};
+    let userGoals = { calories: 1800, protein: 144, carbs: 171, fat: 60 };
+    let apiKeys = { ninjas: "", fatsecret: "" };
+    let yoddhaState = { xp: 120, streak: 3, lastLoggedDate: "", claimedQuests: {} };
+    let notifSettings = { enabled: true };
+    let activeFoodSelection = null;
+    let preselectedMealSlot = "breakfast";
+
+    let activeCalcMode = "belly";
+    let targetWeeklyLossRate = 0.50;
+    let calculatedTargets = { calories: 1800, protein: 144, carbs: 171, fat: 60 };
+
+    function getTodayDateStr() {
+      const now = new Date();
+      return now.toISOString().split("T")[0];
+    }
+
+    // Convert any device time to accurate Indian Standard Time (UTC+5:30)
+    function getISTDate() {
+      const now = new Date();
+      const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+      return new Date(utcTime + (5.5 * 3600000));
+    }
+
+    function getISTDateStr() {
+      return getISTDate().toISOString().split("T")[0];
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadAllSavedStorage();
+      renderTodayDashboard();
+      renderRecommendedMealPlans();
+      renderArchiveLogList();
+      renderYoddhaDashboard();
+      initAudio();
+      initSilentRemindersEngine();
+    });
+
+    function loadAllSavedStorage() {
+      try {
+        const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
+        if (savedLogs) currentLogs = JSON.parse(savedLogs);
+
+        const savedGoals = localStorage.getItem(STORAGE_KEY_GOALS);
+        if (savedGoals) {
+          userGoals = JSON.parse(savedGoals);
+          document.getElementById("input-goal-cal").value = userGoals.calories;
+          document.getElementById("input-goal-pro").value = userGoals.protein;
+          document.getElementById("input-goal-carb").value = userGoals.carbs;
+          document.getElementById("input-goal-fat").value = userGoals.fat;
+          document.getElementById("planner-target-cal").innerText = `${userGoals.calories} kcal`;
+        }
+
+        const savedKeys = localStorage.getItem(STORAGE_KEY_KEYS);
+        if (savedKeys) {
+          apiKeys = JSON.parse(savedKeys);
+          document.getElementById("input-key-ninjas").value = apiKeys.ninjas || "";
+          document.getElementById("input-key-fatsecret").value = apiKeys.fatsecret || "";
+        }
+
+        const savedYoddha = localStorage.getItem(STORAGE_KEY_YODDHA);
+        if (savedYoddha) {
+          yoddhaState = { ...yoddhaState, ...JSON.parse(savedYoddha) };
+        }
+
+        const savedNotif = localStorage.getItem(STORAGE_KEY_NOTIF_SETTINGS);
+        if (savedNotif) {
+          notifSettings = { ...notifSettings, ...JSON.parse(savedNotif) };
+        }
+        document.getElementById("toggle-silent-reminders").checked = notifSettings.enabled;
+        updateNotifPermissionUI();
+      } catch (e) {
+        console.error("Storage load error", e);
+      }
+    }
+
+    function persistLogs() {
+      try {
+        localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(currentLogs));
+      } catch (e) {
+        showToast("Storage quota warning!");
+      }
+    }
+
+    function persistYoddha() {
+      try {
+        localStorage.setItem(STORAGE_KEY_YODDHA, JSON.stringify(yoddhaState));
+      } catch (e) {}
+    }
+
+    function getDayLog(dStr) {
+      if (!currentLogs[dStr]) {
+        currentLogs[dStr] = {
+          meals: { breakfast: [], lunch: [], snacks: [], dinner: [], midnight: [] }
+        };
+      }
+      return currentLogs[dStr];
+    }
+
+    function initSilentRemindersEngine() {
+      checkISTMealReminders();
+      // Check every 45 seconds for scheduled meal windows
+      setInterval(checkISTMealReminders, 45000);
+    }
+
+    function checkISTMealReminders() {
+      if (!notifSettings.enabled) return;
+
+      const ist = getISTDate();
+      const currentHours = ist.getHours();
+      const currentMins = ist.getMinutes();
+      const todayISTStr = getISTDateStr();
+
+      IST_MEAL_REMINDERS.forEach(reminder => {
+        // Trigger window: within 15 minutes of scheduled time
+        const isInWindow = (currentHours === reminder.hour && currentMins >= reminder.min && currentMins < reminder.min + 15);
+        if (!isInWindow) return;
+
+        const sentKey = `desicalorie_notif_sent_${todayISTStr}_${reminder.key}`;
+        if (localStorage.getItem(sentKey)) return;
+
+        // Mark sent for today to prevent duplicates
+        localStorage.setItem(sentKey, "true");
+        dispatchSilentMealNotification(reminder.title, reminder.desc, reminder.key);
+      });
+    }
+
+    function dispatchSilentMealNotification(title, body, mealKey) {
+      // 1. Silent native Web Notification (silent: true flag MUST be passed)
+      if ("Notification" in window && Notification.permission === "granted") {
+        try {
+          const notif = new Notification(title, {
+            body: body,
+            icon: "https://placehold.co/128x128/FF6B35/FFFFFF?text=🍛",
+            silent: true, // 100% SILENT (no sound)
+            tag: `desi-meal-${mealKey}`
+          });
+          notif.onclick = function() {
+            window.focus();
+            switchTab("today");
+            openFoodSearchModal(mealKey);
+            notif.close();
+          };
+        } catch (e) {
+          console.warn("Notification constructor error", e);
+        }
+      }
+
+      // 2. In-App silent toast reminder fallback
+      showToast(`${title} • Tap to log`);
+    }
+
+    function updateNotifPermissionUI() {
+      const lbl = document.getElementById("lbl-notif-status");
+      if (!("Notification" in window)) {
+        lbl.innerText = "Unsupported";
+        return;
+      }
+      if (Notification.permission === "granted") {
+        lbl.innerText = "✓ Granted";
+        lbl.style.color = "var(--success)";
+      } else if (Notification.permission === "denied") {
+        lbl.innerText = "✗ Blocked";
+        lbl.style.color = "var(--danger)";
+      } else {
+        lbl.innerText = "Enable";
+        lbl.style.color = "var(--text)";
+      }
+    }
+
+    async function requestNotifPermission() {
+      if (!("Notification" in window)) {
+        showToast("Web Notifications not supported on this browser.");
+        return;
+      }
+      try {
+        const perm = await Notification.requestPermission();
+        updateNotifPermissionUI();
+        if (perm === "granted") {
+          showToast("Silent notifications granted! ⏰");
+        } else {
+          showToast("Notification permission denied/dismissed.");
+        }
+      } catch (e) {
+        showToast("Could not request notification permission.");
+      }
+    }
+
+    function triggerTestSilentNotification() {
+      dispatchSilentMealNotification(
+        "🍛 Test Reminder: Lunch (दोपहर का भोजन)!",
+        "This is a 100% silent reminder test. No sound is played!",
+        "lunch"
+      );
+    }
+
+    function toggleMealReminders(checked) {
+      notifSettings.enabled = checked;
+      localStorage.setItem(STORAGE_KEY_NOTIF_SETTINGS, JSON.stringify(notifSettings));
+      if (checked && "Notification" in window && Notification.permission === "default") {
+        requestNotifPermission();
+      }
+      showToast(checked ? "Silent IST reminders active! ⏰" : "Reminders paused.");
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      document.querySelectorAll(".tabbar-btn").forEach(b => b.classList.remove("active"));
+
+      const target = document.getElementById(`tab-${tabId}`);
+      if (target) target.classList.add("active");
+
+      const tabIndexMap = { today: 0, planner: 1, archive: 2, yoddha: 3, settings: 4 };
+      const btns = document.querySelectorAll(".tabbar-btn");
+      if (btns[tabIndexMap[tabId]]) btns[tabIndexMap[tabId]].classList.add("active");
+
+      if (tabId === "archive") renderArchiveLogList();
+      if (tabId === "yoddha") renderYoddhaDashboard();
+    }
+
+    function stepDate(days) {
+      const parts = currentDateStr.split("-");
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      d.setDate(d.getDate() + days);
+      currentDateStr = d.toISOString().split("T")[0];
+      renderTodayDashboard();
+    }
+
+    function openDatePicker() {
+      const el = document.getElementById("native-date-input");
+      el.value = currentDateStr;
+      el.showPicker ? el.showPicker() : el.focus();
+    }
+
+    function onDateSelected(val) {
+      if (val) {
+        currentDateStr = val;
+        renderTodayDashboard();
+      }
+    }
+
+    function renderTodayDashboard() {
+      const isToday = (currentDateStr === getTodayDateStr());
+      document.getElementById("lbl-active-date").innerText = isToday ? "Today" : currentDateStr;
+      document.getElementById("lbl-active-sub").innerText = isToday ? "Tap to select past date" : "Reviewing past log";
+
+      const dayData = getDayLog(currentDateStr);
+      const slots = ["breakfast", "lunch", "snacks", "dinner", "midnight"];
+
+      let sumCals = 0;
+      let sumPro = 0;
+      let sumCarb = 0;
+      let sumFat = 0;
+
+      slots.forEach(slot => {
+        const container = document.getElementById(`items-${slot}`);
+        container.innerHTML = "";
+        const items = dayData.meals[slot] || [];
+        let slotCal = 0;
+
+        if (items.length === 0) {
+          container.innerHTML = `<div class="slot-empty-msg">No items logged yet. Tap '+ Add' above.</div>`;
+        } else {
+          items.forEach((item, idx) => {
+            const itemCals = Math.round(item.calories * item.qty);
+            const itemPro = Math.round((item.protein || 0) * item.qty);
+            const itemCarb = Math.round((item.carbs || 0) * item.qty);
+            const itemFat = Math.round((item.fat || 0) * item.qty);
+
+            slotCal += itemCals;
+            sumCals += itemCals;
+            sumPro += itemPro;
+            sumCarb += itemCarb;
+            sumFat += itemFat;
+
+            let tagClass = "tag-db";
+            let tagText = "DB";
+            if (item.origin === "API") { tagClass = "tag-api"; tagText = "⚡ API"; }
+            if (item.origin === "MISC") { tagClass = "tag-misc"; tagText = "⚡ Misc"; }
+            if (item.origin === "PLAN") { tagClass = "tag-plan"; tagText = "Plan"; }
+
+            const row = document.createElement("div");
+            row.className = "meal-item-row";
+            row.innerHTML = `
+              <div class="item-primary-info">
+                <div class="item-name">${item.name}</div>
+                <div class="item-meta">
+                  <span class="origin-tag ${tagClass}">${tagText}</span>
+                  <span>${item.qty} × ${item.portion || "serving"}</span>
+                  <span>• ${itemCals} kcal</span>
+                  <span>(P:${itemPro}g C:${itemCarb}g F:${itemFat}g)</span>
+                </div>
+              </div>
+              <button class="btn-item-del" onclick="deleteFoodItem('${slot}', ${idx})">✕</button>
+            `;
+            container.appendChild(row);
+          });
+        }
+
+        document.getElementById(`cals-${slot}`).innerText = `${slotCal} kcal`;
+      });
+
+      document.getElementById("val-consumed-cals").innerText = sumCals;
+      document.getElementById("val-daily-budget").innerText = userGoals.calories;
+
+      const remaining = userGoals.calories - sumCals;
+      const remBox = document.getElementById("box-remaining-cals");
+      const remNum = document.getElementById("val-remaining-cals");
+      const remLbl = document.getElementById("lbl-remaining-status");
+
+      if (remaining >= 0) {
+        remBox.className = "stat-badge-box deficit";
+        remNum.innerText = `${remaining} kcal`;
+        remLbl.innerText = "Remaining";
+      } else {
+        remBox.className = "stat-badge-box over";
+        remNum.innerText = `+${Math.abs(remaining)} kcal`;
+        remLbl.innerText = "Over Budget";
+      }
+
+      const circ = 2 * Math.PI * 52;
+      const pct = Math.min(sumCals / userGoals.calories, 1.0);
+      const offset = circ - (pct * circ);
+      const ringBar = document.getElementById("ring-progress-bar");
+      ringBar.style.strokeDashoffset = offset;
+      ringBar.style.stroke = remaining < 0 ? "var(--danger)" : "var(--primary)";
+
+      document.getElementById("val-macro-pro").innerText = `${sumPro}/${userGoals.protein}g`;
+      document.getElementById("val-macro-carb").innerText = `${sumCarb}/${userGoals.carbs}g`;
+      document.getElementById("val-macro-fat").innerText = `${sumFat}/${userGoals.fat}g`;
+
+      const proPct = Math.min((sumPro / userGoals.protein) * 100, 100);
+      const carbPct = Math.min((sumCarb / userGoals.carbs) * 100, 100);
+      const fatPct = Math.min((sumFat / userGoals.fat) * 100, 100);
+
+      document.getElementById("bar-macro-pro").style.width = `${proPct}%`;
+      document.getElementById("bar-macro-carb").style.width = `${carbPct}%`;
+      document.getElementById("bar-macro-fat").style.width = `${fatPct}%`;
+
+      updateQuestsProgress(sumCals, sumPro);
+    }
+
+    function deleteFoodItem(slot, idx) {
+      const dayData = getDayLog(currentDateStr);
+      dayData.meals[slot].splice(idx, 1);
+      persistLogs();
+      renderTodayDashboard();
+      playSound('pop');
+    }
+
+    function inferCurrentMealSlot() {
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour < 11) return "breakfast";
+      if (hour >= 11 && hour < 15) return "lunch";
+      if (hour >= 15 && hour < 19) return "snacks";
+      if (hour >= 19 && hour < 23) return "dinner";
+      return "midnight";
+    }
+
+    function quickAddStaple(name, cals, pro, carb, fat, portion) {
+      const slot = inferCurrentMealSlot();
+      const dayData = getDayLog(currentDateStr);
+
+      dayData.meals[slot].push({
+        id: "staple_" + Date.now(),
+        name: name,
+        portion: portion,
+        calories: cals,
+        protein: pro,
+        carbs: carb,
+        fat: fat,
+        qty: 1.0,
+        origin: "DB"
+      });
+
+      persistLogs();
+      renderTodayDashboard();
+      playSound('pop');
+      awardXP(15, `Logged ${name}`);
+      showToast(`Added ${name} to ${slot.toUpperCase()}! ⚡`);
+    }
+
+    function openFoodSearchModal(targetSlot = null) {
+      preselectedMealSlot = targetSlot || inferCurrentMealSlot();
+      document.getElementById("sel-target-meal-slot").value = preselectedMealSlot;
+      document.getElementById("modal-food-search").classList.add("active");
+      document.getElementById("input-search-food-query").value = "";
+      document.getElementById("box-food-portion-selector").style.display = "none";
+      activeFoodSelection = null;
+      handleFoodSearch("");
+      setTimeout(() => document.getElementById("input-search-food-query").focus(), 150);
+    }
+
+    function closeFoodSearchModal() {
+      document.getElementById("modal-food-search").classList.remove("active");
+    }
+
+    async function handleFoodSearch(query) {
+      query = query.trim().toLowerCase();
+      const container = document.getElementById("search-food-results-container");
+
+      const cachedList = JSON.parse(localStorage.getItem(STORAGE_KEY_CACHED_API) || "[]");
+      const fullList = [...DEFAULT_INDIAN_FOODS, ...cachedList];
+
+      const matches = query === "" ? fullList.slice(0, 12) : fullList.filter(f => f.name.toLowerCase().includes(query));
+
+      let html = matches.map(f => `
+        <div class="meal-item-row" style="cursor:pointer; padding: 10px 4px;" onclick='selectFoodForPortion(${JSON.stringify(f).replace(/'/g, "&apos;")})'>
+          <div>
+            <div style="font-weight: 800; font-size: 13.5px;">${f.name}</div>
+            <div style="font-size: 11px; color: var(--text-sec);">${f.portion} • P:${f.protein}g C:${f.carbs}g F:${f.fat}g</div>
+          </div>
+          <div style="font-weight: 900; color: var(--primary); font-size: 14px;">${f.calories} kcal ›</div>
+        </div>
+      `).join("");
+
+      if (apiKeys.ninjas && query.length > 2) {
+        html += `<div style="padding: 10px; font-size: 11.5px; color: var(--indigo); text-align: center;">⚡ Searching online nutrition...</div>`;
+        fetchOnlineApiFood(query);
+      }
+
+      container.innerHTML = html || `<div style="text-align:center; padding: 20px; font-size: 12px; color: var(--text-sec);">No foods found. Type to search.</div>`;
+    }
+
+    async function fetchOnlineApiFood(query) {
+      try {
+        const res = await fetch(`https://api.api-ninjas.com/v1/nutrition?query=${encodeURIComponent(query)}`, {
+          headers: { "X-Api-Key": apiKeys.ninjas }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const item = data[0];
+          const newDish = {
+            id: "api_" + Date.now(),
+            name: item.name.charAt(0).toUpperCase() + item.name.slice(1),
+            portion: `${item.serving_size_g || 100}g`,
+            calories: Math.round(item.calories),
+            protein: Math.round(item.protein_g),
+            carbs: Math.round(item.carbohydrates_total_g),
+            fat: Math.round(item.fat_total_g),
+            category: "API Auto-Saved",
+            origin: "API"
+          };
+
+          const cached = JSON.parse(localStorage.getItem(STORAGE_KEY_CACHED_API) || "[]");
+          if (!cached.some(c => c.name.toLowerCase() === newDish.name.toLowerCase())) {
+            cached.push(newDish);
+            localStorage.setItem(STORAGE_KEY_CACHED_API, JSON.stringify(cached));
+          }
+
+          const container = document.getElementById("search-food-results-container");
+          const apiRow = document.createElement("div");
+          apiRow.className = "meal-item-row";
+          apiRow.style.background = "#EFF6FF";
+          apiRow.style.padding = "10px 8px";
+          apiRow.style.borderRadius = "8px";
+          apiRow.style.marginBottom = "6px";
+          apiRow.onclick = () => selectFoodForPortion(newDish);
+          apiRow.innerHTML = `
+            <div>
+              <div style="font-weight: 800; font-size: 13.5px; color: #1D4ED8;">⚡ ${newDish.name} (Live API)</div>
+              <div style="font-size: 11px; color: var(--text-sec);">${newDish.portion} • Cached for offline use</div>
+            </div>
+            <div style="font-weight: 900; color: var(--primary); font-size: 14px;">${newDish.calories} kcal ›</div>
+          `;
+          container.prepend(apiRow);
+        }
+      } catch (e) {}
+    }
+
+    function selectFoodForPortion(item) {
+      activeFoodSelection = item;
+      document.getElementById("lbl-selected-food-title").innerText = `${item.name} (${item.calories} kcal / ${item.portion})`;
+      document.getElementById("lbl-selected-serving-unit").innerText = item.portion;
+      document.getElementById("input-serving-qty").value = "1.0";
+      document.getElementById("box-food-portion-selector").style.display = "block";
+      updateCalculatedPortionPreview();
+    }
+
+    function updateCalculatedPortionPreview() {
+      if (!activeFoodSelection) return;
+      const qty = parseFloat(document.getElementById("input-serving-qty").value) || 1;
+      const total = Math.round(activeFoodSelection.calories * qty);
+      document.getElementById("lbl-portion-cals-preview").innerText = `Total: ${total} kcal (${qty} × ${activeFoodSelection.portion})`;
+    }
+
+    function commitAddFoodToLog() {
+      if (!activeFoodSelection) return;
+      const qty = parseFloat(document.getElementById("input-serving-qty").value) || 1;
+      const slot = document.getElementById("sel-target-meal-slot").value;
+
+      const dayData = getDayLog(currentDateStr);
+      dayData.meals[slot].push({
+        ...activeFoodSelection,
+        qty: qty
+      });
+
+      persistLogs();
+      closeFoodSearchModal();
+      renderTodayDashboard();
+      playSound('pop');
+      awardXP(20, `Logged ${activeFoodSelection.name}`);
+      showToast(`Added ${activeFoodSelection.name} to ${slot.toUpperCase()}! 🍛`);
+    }
+
+    function openMiscMealModal() {
+      document.getElementById("modal-misc-meal").classList.add("active");
+      document.getElementById("sel-misc-slot").value = inferCurrentMealSlot();
+      setTimeout(() => document.getElementById("input-misc-cals").focus(), 150);
+    }
+
+    function closeMiscMealModal() {
+      document.getElementById("modal-misc-meal").classList.remove("active");
+    }
+
+    function commitMiscMealToLog() {
+      const name = document.getElementById("input-misc-name").value.trim() || "Miscellaneous Extra";
+      const cals = parseFloat(document.getElementById("input-misc-cals").value);
+      const slot = document.getElementById("sel-misc-slot").value;
+      const pro = parseFloat(document.getElementById("input-misc-pro").value) || 0;
+      const carb = parseFloat(document.getElementById("input-misc-carb").value) || 0;
+      const fat = parseFloat(document.getElementById("input-misc-fat").value) || 0;
+
+      if (isNaN(cals) || cals <= 0) {
+        showToast("Please enter a valid calorie amount.");
+        return;
+      }
+
+      const dayData = getDayLog(currentDateStr);
+      dayData.meals[slot].push({
+        id: "misc_" + Date.now(),
+        name: name,
+        portion: "1 serving",
+        calories: cals,
+        protein: pro,
+        carbs: carb,
+        fat: fat,
+        qty: 1.0,
+        origin: "MISC"
+      });
+
+      persistLogs();
+      closeMiscMealModal();
+      renderTodayDashboard();
+      playSound('pop');
+      awardXP(15, `Logged extra meal`);
+      showToast(`Logged extra: ${name}! ⚡`);
+      document.getElementById("input-misc-cals").value = "";
+    }
+
+    function openCalculatorModal() {
+      document.getElementById("modal-fatloss-calculator").classList.add("active");
+      recalculateFatLoss();
+    }
+
+    function closeCalculatorModal() {
+      document.getElementById("modal-fatloss-calculator").classList.remove("active");
+    }
+
+    function setFatLossRate(rate) {
+      targetWeeklyLossRate = rate;
+      document.querySelectorAll(".rate-chip").forEach(c => c.classList.remove("active"));
+      const rateIdMap = { 0.25: "rate-025", 0.50: "rate-050", 0.75: "rate-075", 1.00: "rate-100" };
+      const el = document.getElementById(rateIdMap[rate]);
+      if (el) el.classList.add("active");
+
+      const deficit = Math.round(rate * 1100);
+      document.getElementById("target-rate-badge").innerText = `${rate.toFixed(2)} kg/wk (Deficit: ${deficit} kcal)`;
+      recalculateFatLoss();
+    }
+
+    function switchCalcMode(mode) {
+      activeCalcMode = mode;
+      document.getElementById("btn-mode-overall").classList.toggle("active", mode === "overall");
+      document.getElementById("btn-mode-belly").classList.toggle("active", mode === "belly");
+      recalculateFatLoss();
+    }
+
+    function recalculateFatLoss() {
+      const gender = document.getElementById("calc-gender").value;
+      const age = parseFloat(document.getElementById("calc-age").value) || 28;
+      const height = parseFloat(document.getElementById("calc-height").value) || 172;
+      const weight = parseFloat(document.getElementById("calc-weight").value) || 78;
+      const targetWeight = parseFloat(document.getElementById("calc-target-weight").value) || 68;
+      const waist = parseFloat(document.getElementById("calc-waist").value) || 88;
+      const activityMult = parseFloat(document.getElementById("calc-activity").value) || 1.375;
+
+      let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+      bmr += (gender === "male") ? 5 : -161;
+      bmr = Math.round(bmr);
+
+      const tdee = Math.round(bmr * activityMult);
+      const whtr = parseFloat((waist / height).toFixed(2));
+      const whtrBadge = document.getElementById("res-whtr-badge");
+      const whtrDesc = document.getElementById("res-whtr-desc");
+      document.getElementById("res-whtr").innerText = whtr.toFixed(2);
+
+      if (whtr < 0.50) {
+        whtrBadge.className = "whtr-badge whtr-healthy";
+        whtrBadge.innerText = "Healthy Visceral Profile";
+        whtrDesc.innerText = `WHtR ${whtr}: Optimal visceral fat levels. Low cardiometabolic risk.`;
+      } else if (whtr >= 0.50 && whtr < 0.60) {
+        whtrBadge.className = "whtr-badge whtr-elevated";
+        whtrBadge.innerText = "Elevated Visceral Risk";
+        whtrDesc.innerText = `WHtR ${whtr}: Excess deep intra-abdominal fat around organs. Highly responsive to early dinners and insulin control.`;
+      } else {
+        whtrBadge.className = "whtr-badge whtr-high";
+        whtrBadge.innerText = "High Visceral Risk";
+        whtrDesc.innerText = `WHtR ${whtr}: Central adiposity present. Focus on eliminating refined seed oils and post-dinner snacking.`;
+      }
+
+      const rawDeficit = Math.round(targetWeeklyLossRate * 1100);
+      let targetCals = tdee - rawDeficit;
+      const minFloor = (gender === "male") ? 1500 : 1200;
+      const floorWarn = document.getElementById("res-floor-warn");
+      let effectiveDeficit = rawDeficit;
+      let effectiveRate = targetWeeklyLossRate;
+
+      if (targetCals < minFloor) {
+        targetCals = minFloor;
+        effectiveDeficit = Math.max(0, tdee - minFloor);
+        effectiveRate = parseFloat(((effectiveDeficit * 7) / 7700).toFixed(2));
+        floorWarn.style.display = "block";
+      } else {
+        floorWarn.style.display = "none";
+      }
+
+      const weightToLose = Math.max(0, weight - targetWeight);
+      const weeksToGoal = effectiveRate > 0 ? Math.ceil(weightToLose / effectiveRate) : 0;
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + (weeksToGoal * 7));
+      const targetDateStr = targetDate.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+      document.getElementById("res-deficit-badge").innerText = `-${effectiveDeficit} kcal Deficit`;
+      document.getElementById("res-timeline-label").innerText = weightToLose > 0
+        ? `Est. Loss: ~${effectiveRate} kg/wk • ~${weeksToGoal} Weeks to reach ${targetWeight} kg (by ${targetDateStr})`
+        : `Already at goal of ${targetWeight} kg! Operating on maintenance.`;
+
+      let proGrams = 0, carbGrams = 0, fatGrams = 0;
+      let adviceHtml = "";
+
+      if (activeCalcMode === "overall") {
+        proGrams = Math.round((targetCals * 0.28) / 4);
+        fatGrams = Math.round((targetCals * 0.28) / 9);
+        carbGrams = Math.round((targetCals * 0.44) / 4);
+
+        adviceHtml = `
+          <div style="font-weight: 800; font-size: 12px; color: var(--primary); margin-bottom: 4px;">
+            🎯 Overall Fat Loss Strategy (${effectiveRate} kg/week)
+          </div>
+          <p style="margin: 0 0 6px 0; font-size: 11px; color: var(--text-sec);">
+            Targeting a sustainable ${effectiveDeficit} kcal deficit. Prioritize protein and portion-measured rotis.
+          </p>
+        `;
+      } else {
+        proGrams = Math.round((targetCals * 0.32) / 4);
+        fatGrams = Math.round((targetCals * 0.30) / 9);
+        carbGrams = Math.round((targetCals * 0.38) / 4);
+
+        adviceHtml = `
+          <div style="font-weight: 800; font-size: 12px; color: #C2410C; margin-bottom: 6px;">
+            🔥 The 5 Desi Belly & Visceral Fat Clinical Rules
+          </div>
+          <div class="desi-rule-item">
+            <div class="desi-rule-icon">🥗</div>
+            <div>
+              <div class="desi-rule-title">1. Kachumber-First Fiber Mesh</div>
+              <div class="desi-rule-desc">Eat 1 katori of raw cucumber, kakdi, or mooli 10 mins before roti or rice. This soluble mesh blunts glucose spikes by 35%.</div>
+            </div>
+          </div>
+          <div class="desi-rule-item">
+            <div class="desi-rule-icon">🌾</div>
+            <div>
+              <div class="desi-rule-title">2. Low-GI Millets & Cooled Rice</div>
+              <div class="desi-rule-desc">Swap refined wheat for jowar or bajra rotis. When eating rice, cool cooked basmati for 4 hrs to create gut-friendly resistant starch.</div>
+            </div>
+          </div>
+          <div class="desi-rule-item">
+            <div class="desi-rule-icon">🪔</div>
+            <div>
+              <div class="desi-rule-title">3. Anti-Visceral Oil Protocol</div>
+              <div class="desi-rule-desc">Eliminate commercial palm oil and reheated vanaspati. Limit cooking to 2-3 measured teaspoons of mustard oil or A2 ghee daily.</div>
+            </div>
+          </div>
+          <div class="desi-rule-item">
+            <div class="desi-rule-icon">☕</div>
+            <div>
+              <div class="desi-rule-title">4. Morning Fenugreek / Jeera Elixir</div>
+              <div class="desi-rule-desc">Drink warm soaked methi-dana or cinnamon-jeera water upon waking to enhance visceral adipocyte insulin sensitivity.</div>
+            </div>
+          </div>
+          <div class="desi-rule-item">
+            <div class="desi-rule-icon">🚶</div>
+            <div>
+              <div class="desi-rule-title">5. 7:30 PM Dinner & Shatapawali</div>
+              <div class="desi-rule-desc">Finish dinner before 7:30 PM (0 midnight carbs). Take a 1,000-step <em>Shatapawali</em> walk to trigger overnight visceral lipid oxidation.</div>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById("res-bmr").innerText = bmr.toLocaleString();
+      document.getElementById("res-tdee").innerText = tdee.toLocaleString();
+      document.getElementById("res-target-cals").innerText = `${targetCals.toLocaleString()} kcal`;
+      document.getElementById("res-pro-g").innerText = `${proGrams}g`;
+      document.getElementById("res-carb-g").innerText = `${carbGrams}g`;
+      document.getElementById("res-fat-g").innerText = `${fatGrams}g`;
+      document.getElementById("res-pro-pct").innerText = `(${Math.round((proGrams * 4 / targetCals) * 100)}%)`;
+      document.getElementById("res-carb-pct").innerText = `(${Math.round((carbGrams * 4 / targetCals) * 100)}%)`;
+      document.getElementById("res-fat-pct").innerText = `(${Math.round((fatGrams * 9 / targetCals) * 100)}%)`;
+      document.getElementById("res-advice-box").innerHTML = adviceHtml;
+
+      calculatedTargets = { calories: targetCals, protein: proGrams, carbs: carbGrams, fat: fatGrams };
+    }
+
+    function applyCalculatedGoals() {
+      userGoals = { ...calculatedTargets };
+      localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
+
+      document.getElementById("input-goal-cal").value = userGoals.calories;
+      document.getElementById("input-goal-pro").value = userGoals.protein;
+      document.getElementById("input-goal-carb").value = userGoals.carbs;
+      document.getElementById("input-goal-fat").value = userGoals.fat;
+      document.getElementById("planner-target-cal").innerText = `${userGoals.calories} kcal`;
+
+      renderTodayDashboard();
+      renderRecommendedMealPlans();
+      closeCalculatorModal();
+      playSound('quest');
+      triggerConfetti();
+      awardXP(25, `Applied ${activeCalcMode === 'overall' ? 'Body Fat' : 'Belly Fat'} targets`);
+      showToast(`Applied ${userGoals.calories} kcal target! 🎯`);
+    }
+
+    function renderRecommendedMealPlans() {
+      const container = document.getElementById("recommended-plans-container");
+      const target = userGoals.calories;
+
+      const plans = [
+        {
+          title: "Classic Ghar Ka Khana",
+          tag: "North Indian Balanced",
+          desc: "Comforting home-cooked rotis, lentils, seasonal sabzis, and golden milk.",
+          slots: [
+            "🌅 Breakfast: 2 Aloo Parathas with curd (550 kcal)",
+            "🍛 Lunch: 2 Phulkas, Dal Tadka, White Rice, Salad (520 kcal)",
+            "☕️ Snacks: 1 cup Masala Chai + Roasted Makhana (180 kcal)",
+            "🍲 Dinner: 2 Rotis with Paneer Butter Masala (420 kcal)",
+            "🌙 Midnight: Warm Haldi Doodh (130 kcal)"
+          ]
+        },
+        {
+          title: "High Protein Desi Vegetarian",
+          tag: "30% Protein Target",
+          desc: "Rich in paneer, soya chunks, kala chana sprouts, and Greek-style curd.",
+          slots: [
+            "🌅 Breakfast: 2 Besan Chilla with grated paneer (420 kcal)",
+            "🍛 Lunch: Soya Bhurji, 2 Rotis, Curd, Cucumbers (500 kcal)",
+            "☕️ Snacks: Sprouted Kala Chana Chaat + Green Tea (200 kcal)",
+            "🍲 Dinner: 150g Palak Paneer with 2 Jowar rotis (510 kcal)",
+            "🌙 Midnight: 15 Soaked Almonds & Walnuts (170 kcal)"
+          ]
+        },
+        {
+          title: "South Indian Fermented & Light",
+          tag: "Gut Health & Probiotic",
+          desc: "Steamed fermented idlis, mor kuzhambu, digestive rasam, and poriyal.",
+          slots: [
+            "🌅 Breakfast: 3 Steamed Idlis with drumstick sambar (380 kcal)",
+            "🍛 Lunch: Red Matta Rice, Mor Kuzhambu, Beans Poriyal (520 kcal)",
+            "☕️ Snacks: 1 glass Spiced Buttermilk / Chaas (80 kcal)",
+            "🍲 Dinner: 1 Sada Dosa with Vegetable Kurma (480 kcal)",
+            "🌙 Midnight: Warm Spiced Milk (120 kcal)"
+          ]
+        },
+        {
+          title: "Lean Desi Non-Veg Muscle",
+          tag: "High Protein / Lean",
+          desc: "Skinless chicken curry, boiled eggs, fish curry, and tandoori roasts.",
+          slots: [
+            "🌅 Breakfast: 3 Whole Egg Bhurji + 2 Multigrain toasts (440 kcal)",
+            "🍛 Lunch: Chicken Curry (200g) + 1 cup Steamed Rice (530 kcal)",
+            "☕️ Snacks: Boiled Chickpea Salad with lemon & jeera (180 kcal)",
+            "🍲 Dinner: 2 pieces Tandoori Chicken + Green Salad (490 kcal)",
+            "🌙 Midnight: 1 glass Skimmed Milk (110 kcal)"
+          ]
+        },
+        {
+          title: "Satvik Gut Healer & Detox",
+          tag: "Ayurvedic Balancing",
+          desc: "Easy-to-digest khichdi with pure cow ghee, steamed gourd, and buttermilk.",
+          slots: [
+            "🌅 Breakfast: Kanda Poha with curry leaves & peanuts (350 kcal)",
+            "🍛 Lunch: Moong Dal Khichdi with 1 tsp Desi Ghee (480 kcal)",
+            "☕️ Snacks: Roasted Makhana with Rock Salt (110 kcal)",
+            "🍲 Dinner: Lauki Sabzi + 2 Soft Phulkas (420 kcal)",
+            "🌙 Midnight: Fennel & Chamomile Herbal Tea (40 kcal)"
+          ]
+        },
+        {
+          title: "Quick Professional / Student",
+          tag: "Under 15 Mins Prep",
+          desc: "Fast, minimal cleanup Indian meals for busy workdays and exams.",
+          slots: [
+            "🌅 Breakfast: Semolina Rava Upma with roasted nuts (360 kcal)",
+            "🍛 Lunch: 2 Rotis with Yellow Dal & Kachumber (460 kcal)",
+            "☕️ Snacks: Bhel Puri (No sev) + Black Coffee (190 kcal)",
+            "🍲 Dinner: Quick Veg Biryani with Onion Raita (520 kcal)",
+            "🌙 Midnight: 1 cup Haldi Milk (120 kcal)"
+          ]
+        },
+        {
+          title: "Desi Low-Carb / Keto Friendly",
+          tag: "Under 60g Net Carbs",
+          desc: "Generous healthy fats, paneer tikka, egg varieties, and almond flour phulkas.",
+          slots: [
+            "🌅 Breakfast: 3 Boiled Eggs + 1 cup Bulletproof Coffee (380 kcal)",
+            "🍛 Lunch: 200g Paneer Butter Masala + Cucumber Salad (540 kcal)",
+            "☕️ Snacks: Roasted Peanuts & Walnuts (210 kcal)",
+            "🍲 Dinner: Tandoori Chicken Roast with Mint Chutney (480 kcal)",
+            "🌙 Midnight: Warm Almond Milk with Cardamom (120 kcal)"
+          ]
+        },
+        {
+          title: "Maharashtrian & Regional Balanced",
+          tag: "Traditional Nutrition",
+          desc: "Methi thepla, pithla bhakri, and comforting spiced legumes.",
+          slots: [
+            "🌅 Breakfast: 2 Methi Theplas with homemade dahi (400 kcal)",
+            "🍛 Lunch: Jowar Bhakri with Pithla & Thecha (510 kcal)",
+            "☕️ Snacks: Khaman Dhokla with Green Chutney (160 kcal)",
+            "🍲 Dinner: Usal (Sprouted Matki) with 2 Rotis (490 kcal)",
+            "🌙 Midnight: Warm Milk with Nutmeg (130 kcal)"
+          ]
+        }
+      ];
+
+      container.innerHTML = plans.map(p => `
+        <div class="card" style="margin-bottom: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+            <div>
+              <div style="font-size: 15px; font-weight: 800;">${p.title}</div>
+              <div style="font-size: 11px; color: var(--text-sec); margin-top: 1px;">${p.desc}</div>
+            </div>
+            <span class="origin-tag tag-plan">${p.tag}</span>
+          </div>
+          <div style="font-size: 11.5px; color: var(--text); line-height: 1.5; margin: 8px 0; background: var(--surface-sec); padding: 8px; border-radius: 8px;">
+            ${p.slots.map(s => `<div>${s}</div>`).join("")}
+          </div>
+          <button class="btn-primary-action" style="padding: 9px; font-size: 13px;" onclick="applyMealPlanToToday('${p.title}')">
+            ⚡ Apply to Today (${target} kcal Target)
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function applyMealPlanToToday(title) {
+      const dayData = getDayLog(currentDateStr);
+      dayData.meals.breakfast = [{ id: "p1", name: "Aloo Paratha with Curd", portion: "2 pieces", calories: 550, protein: 12, carbs: 75, fat: 22, qty: 1, origin: "PLAN" }];
+      dayData.meals.lunch = [
+        { id: "p2", name: "Roti / Phulka", portion: "2 pieces", calories: 170, protein: 6, carbs: 34, fat: 1, qty: 1, origin: "PLAN" },
+        { id: "p3", name: "Yellow Dal Tadka", portion: "1 katori", calories: 150, protein: 7.5, carbs: 20, fat: 4.5, qty: 1, origin: "PLAN" },
+        { id: "p4", name: "Steamed White Basmati Rice", portion: "1 katori", calories: 180, protein: 3.5, carbs: 39, fat: 0.4, qty: 1, origin: "PLAN" }
+      ];
+      dayData.meals.snacks = [
+        { id: "p5", name: "Masala Chai with Milk", portion: "1 cup", calories: 115, protein: 3.2, carbs: 16, fat: 4.2, qty: 1, origin: "PLAN" },
+        { id: "p6", name: "Roasted Makhana", portion: "1 bowl", calories: 110, protein: 3, carbs: 20, fat: 2, qty: 1, origin: "PLAN" }
+      ];
+      dayData.meals.dinner = [
+        { id: "p7", name: "Palak Paneer", portion: "1 katori", calories: 230, protein: 10, carbs: 8, fat: 18, qty: 1, origin: "PLAN" },
+        { id: "p8", name: "Roti / Phulka", portion: "2 pieces", calories: 170, protein: 6, carbs: 34, fat: 1, qty: 1, origin: "PLAN" }
+      ];
+      dayData.meals.midnight = [
+        { id: "p9", name: "Warm Haldi Doodh", portion: "1 cup", calories: 130, protein: 4, carbs: 12, fat: 4, qty: 1, origin: "PLAN" }
+      ];
+
+      persistLogs();
+      switchTab("today");
+      renderTodayDashboard();
+      playSound('quest');
+      triggerConfetti();
+      awardXP(50, `Applied ${title}`);
+      showToast(`Applied "${title}" to ${currentDateStr}! 🍱`);
+    }
+
+    function renderArchiveLogList() {
+      const container = document.getElementById("archive-entries-container");
+      container.innerHTML = "";
+
+      const yFilter = document.getElementById("sel-archive-year").value;
+      const mFilter = document.getElementById("sel-archive-month").value;
+      const query = (document.getElementById("input-archive-search").value || "").trim().toLowerCase();
+
+      const dates = Object.keys(currentLogs).sort().reverse();
+      let matchesFound = 0;
+
+      dates.forEach(dStr => {
+        const [y, m] = dStr.split("-");
+        if (yFilter !== "ALL" && y !== yFilter) return;
+        if (mFilter !== "ALL" && m !== mFilter) return;
+
+        const dayEntry = currentLogs[dStr];
+        const allFoods = [];
+        let dayCals = 0;
+
+        ["breakfast", "lunch", "snacks", "dinner", "midnight"].forEach(slot => {
+          (dayEntry.meals[slot] || []).forEach(item => {
+            allFoods.push(item);
+            dayCals += Math.round(item.calories * item.qty);
+          });
+        });
+
+        if (allFoods.length === 0) return;
+
+        if (query) {
+          const match = allFoods.some(f => f.name.toLowerCase().includes(query));
+          if (!match) return;
+        }
+
+        matchesFound++;
+
+        const entryEl = document.createElement("div");
+        entryEl.className = "archive-day-entry";
+
+        const bulletsHtml = allFoods.slice(0, 6).map(f => `
+          <div class="archive-food-bullet">
+            <span>• ${f.name} (${f.qty} × ${f.portion || 'srv'})</span>
+            <span>${Math.round(f.calories * f.qty)} kcal</span>
+          </div>
+        `).join("");
+
+        const moreCount = allFoods.length - 6;
+
+        entryEl.innerHTML = `
+          <div class="archive-day-header">
+            <span class="archive-date-lbl">📅 ${dStr}</span>
+            <span class="archive-cal-sum">${dayCals} kcal</span>
+          </div>
+          <div>${bulletsHtml}</div>
+          ${moreCount > 0 ? `<div style="font-size:11px; color:var(--text-sec); margin-top:3px;">+ ${moreCount} more item(s)...</div>` : ''}
+          <div style="text-align: right; margin-top: 8px;">
+            <button style="background:none; border:none; color:var(--primary); font-size:12px; font-weight:800; cursor:pointer;" onclick="jumpToDate('${dStr}')">
+              Edit in Tracker ›
+            </button>
+          </div>
+        `;
+        container.appendChild(entryEl);
+      });
+
+      if (matchesFound === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; color:var(--text-sec); padding: 30px; font-size: 13px;">
+            No logged days found matching the selected filters.
+          </div>
+        `;
+      }
+    }
+
+    function jumpToDate(dStr) {
+      currentDateStr = dStr;
+      switchTab("today");
+      renderTodayDashboard();
+    }
+
+    function getCurrentDesiLevel() {
+      const xp = yoddhaState.xp;
+      for (let i = DESI_LEVELS.length - 1; i >= 0; i--) {
+        if (xp >= DESI_LEVELS[i].minXp) return DESI_LEVELS[i];
+      }
+      return DESI_LEVELS[0];
+    }
+
+    function renderYoddhaDashboard() {
+      const curLvl = getCurrentDesiLevel();
+
+      document.getElementById("header-streak-val").innerText = `${yoddhaState.streak} Days`;
+      document.getElementById("header-lvl-icon").innerText = curLvl.icon;
+      document.getElementById("header-lvl-name").innerText = `Lvl ${curLvl.lvl}`;
+
+      document.getElementById("card-yoddha-rank-badge").innerText = `Level ${curLvl.lvl} • ${curLvl.icon} Desi Yoddha`;
+      document.getElementById("card-yoddha-name").innerText = curLvl.name;
+      document.getElementById("card-yoddha-desc").innerText = curLvl.desc;
+
+      const nextLvl = DESI_LEVELS.find(l => l.lvl === curLvl.lvl + 1);
+      const spanXp = nextLvl ? (nextLvl.minXp - curLvl.minXp) : 1000;
+      const progressXp = yoddhaState.xp - curLvl.minXp;
+      const pct = nextLvl ? Math.min((progressXp / spanXp) * 100, 100) : 100;
+
+      document.getElementById("card-xp-stats").innerText = nextLvl ? `${yoddhaState.xp} / ${nextLvl.minXp} XP` : `${yoddhaState.xp} XP (Max Level)`;
+      document.getElementById("card-xp-bar-fill").style.width = `${pct}%`;
+
+      const trophies = [
+        { icon: "🥇", name: "Pehla Kadam", unlocked: yoddhaState.xp > 0 },
+        { icon: "🔥", name: "Shaktiman Streak", unlocked: yoddhaState.streak >= 3 },
+        { icon: "⚡", name: "Centurion", unlocked: yoddhaState.streak >= 7 },
+        { icon: "🥩", name: "Protein Pehelwan", unlocked: yoddhaState.xp >= 300 },
+        { icon: "🍱", name: "Panch-Aahar", unlocked: Object.keys(currentLogs).length >= 1 },
+        { icon: "🌙", name: "Sanskari Night", unlocked: yoddhaState.xp >= 150 },
+        { icon: "⚡", name: "API Khoji", unlocked: (JSON.parse(localStorage.getItem(STORAGE_KEY_CACHED_API) || "[]")).length > 0 },
+        { icon: "📜", name: "5-Yr Scribe", unlocked: Object.keys(currentLogs).length >= 2 }
+      ];
+
+      const trophyContainer = document.getElementById("trophy-cabinet-container");
+      trophyContainer.innerHTML = trophies.map(t => `
+        <div class="trophy-item ${t.unlocked ? '' : 'locked'}">
+          <div class="trophy-icon">${t.icon}</div>
+          <div class="trophy-name">${t.name}</div>
+        </div>
+      `).join("");
+    }
+
+    function awardXP(amount, reason) {
+      const prevLvl = getCurrentDesiLevel();
+      yoddhaState.xp += amount;
+      persistYoddha();
+      renderYoddhaDashboard();
+
+      const newLvl = getCurrentDesiLevel();
+      if (newLvl.lvl > prevLvl.lvl) {
+        playSound('levelup');
+        triggerConfetti();
+        showToast(`🎉 Level Up! You are now "${newLvl.name}"!`);
+      }
+    }
+
+    function updateQuestsProgress(sumCals, sumPro) {
+      const dayData = getDayLog(currentDateStr);
+      const hasBreakfast = (dayData.meals.breakfast || []).length > 0;
+      const isCalOnTarget = Math.abs(sumCals - userGoals.calories) <= 100 && sumCals > 0;
+      const isProteinHit = sumPro >= (userGoals.protein * 0.8) && sumPro > 0;
+      const isNoMidnight = (dayData.meals.midnight || []).length === 0 && sumCals > 0;
+
+      const quests = [
+        { id: "q1", title: "🌅 Pehla Nivala", desc: "Log your morning breakfast", xp: 25, ready: hasBreakfast },
+        { id: "q2", title: "🎯 Calorie Santulan", desc: "Stay within ±100 kcal of budget", xp: 80, ready: isCalOnTarget },
+        { id: "q3", title: "💪 Protein Pehelwan", desc: "Hit 80%+ of your daily protein target", xp: 60, ready: isProteinHit },
+        { id: "q4", title: "🌙 Sanskari Night", desc: "Zero midnight cravings logged today", xp: 40, ready: isNoMidnight }
+      ];
+
+      const container = document.getElementById("daily-quests-list");
+      let completed = 0;
+
+      container.innerHTML = quests.map(q => {
+        const questKey = `${currentDateStr}_${q.id}`;
+        const isClaimed = !!yoddhaState.claimedQuests[questKey];
+        if (isClaimed) completed++;
+
+        return `
+          <div class="quest-card">
+            <div class="quest-icon">${q.ready ? '✅' : '⏳'}</div>
+            <div class="quest-info">
+              <div class="quest-title">${q.title} (+${q.xp} XP)</div>
+              <div class="quest-desc">${q.desc}</div>
+            </div>
+            ${isClaimed
+              ? `<button class="btn-quest-claim done">✓ Claimed</button>`
+              : `<button class="btn-quest-claim" ${q.ready ? '' : 'disabled style="opacity:0.5; cursor:not-allowed;"'} onclick="claimQuest('${q.id}', ${q.xp})">Claim</button>`
+            }
+          </div>
+        `;
+      }).join("");
+
+      document.getElementById("quests-completed-count").innerText = `${completed}/4 Done`;
+    }
+
+    function claimQuest(qId, xp) {
+      const questKey = `${currentDateStr}_${qId}`;
+      yoddhaState.claimedQuests[questKey] = true;
+      awardXP(xp, "Completed quest");
+      playSound('quest');
+      triggerConfetti();
+      showToast(`Claimed +${xp} XP! 🎯`);
+      renderTodayDashboard();
+    }
+
+    async function shareLogsViaSheet() {
+      const payload = {
+        app: "Desi Calorie",
+        version: "7.0",
+        exportDate: new Date().toISOString(),
+        totalDays: Object.keys(currentLogs).length,
+        goals: userGoals,
+        logs: currentLogs,
+        cachedFoods: JSON.parse(localStorage.getItem(STORAGE_KEY_CACHED_API) || "[]")
+      };
+
+      const jsonStr = JSON.stringify(payload, null, 2);
+      const filename = `DesiCalorie_5Yr_Backup_${getTodayDateStr()}.json`;
+
+      try {
+        const file = new File([jsonStr], filename, { type: "application/json" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: "Desi Calorie 5-Year Meal Log",
+            text: `Attached is my 5-year Indian food and calorie log backup (${payload.totalDays} days logged).`
+          });
+          return;
+        } else if (navigator.share) {
+          await navigator.share({
+            title: "Desi Calorie Summary",
+            text: `Desi Calorie 5-Year Log: ${payload.totalDays} days recorded. Daily goal: ${userGoals.calories} kcal.`
+          });
+          downloadJsonFile();
+          return;
+        }
+      } catch (err) {
+        if (err.name === "AbortError") return;
+      }
+      downloadJsonFile();
+    }
+
+    function downloadJsonFile() {
+      const payload = {
+        app: "Desi Calorie",
+        version: "7.0",
+        exportDate: new Date().toISOString(),
+        goals: userGoals,
+        logs: currentLogs
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `DesiCalorie_5Yr_Backup_${getTodayDateStr()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast("Backup file downloaded! 💾");
+    }
+
+    async function copyJsonClipboard() {
+      const payload = { app: "Desi Calorie", goals: userGoals, logs: currentLogs };
+      try {
+        const txt = JSON.stringify(payload, null, 2);
+        const input = document.createElement("textarea");
+        input.value = txt;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+        showToast("✓ Copied JSON to clipboard! Paste into WhatsApp or Notes.");
+      } catch (e) {
+        showToast("Could not copy JSON.");
+      }
+    }
+
+    function restoreJsonFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.logs) {
+            currentLogs = { ...currentLogs, ...data.logs };
+            persistLogs();
+          }
+          if (data.goals) {
+            userGoals = data.goals;
+            localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
+          }
+          showToast("5-Year log archive restored! 🎉");
+          renderTodayDashboard();
+          renderArchiveLogList();
+        } catch (err) {
+          showToast("Invalid backup file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function saveManualGoals() {
+      userGoals.calories = parseInt(document.getElementById("input-goal-cal").value) || 1800;
+      userGoals.protein = parseInt(document.getElementById("input-goal-pro").value) || 144;
+      userGoals.carbs = parseInt(document.getElementById("input-goal-carb").value) || 171;
+      userGoals.fat = parseInt(document.getElementById("input-goal-fat").value) || 60;
+
+      localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
+      document.getElementById("planner-target-cal").innerText = `${userGoals.calories} kcal`;
+
+      renderTodayDashboard();
+      renderRecommendedMealPlans();
+      playSound('quest');
+      showToast("Saved daily targets! 🎯");
+    }
+
+    function openApiModal() { document.getElementById("modal-api-keys").classList.add("active"); }
+    function closeApiModal() { document.getElementById("modal-api-keys").classList.remove("active"); }
+
+    function saveApiKeys() {
+      apiKeys.ninjas = document.getElementById("input-key-ninjas").value.trim();
+      apiKeys.fatsecret = document.getElementById("input-key-fatsecret").value.trim();
+      localStorage.setItem(STORAGE_KEY_KEYS, JSON.stringify(apiKeys));
+      closeApiModal();
+      showToast("API keys saved locally! 🔑");
+    }
+
+    let audioCtx = null;
+    function initAudio() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      } catch (e) {}
+    }
+
+    function playSound(type) {
+      if (!audioCtx) initAudio();
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'pop') {
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'quest') {
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.09);
+        osc.frequency.setValueAtTime(783.99, now + 0.18);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'levelup') {
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554.37, now + 0.1);
+        osc.frequency.setValueAtTime(659.25, now + 0.2);
+        osc.frequency.setValueAtTime(880, now + 0.3);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.45);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      }
+    }
+
+    function triggerConfetti() {
+      const canvas = document.getElementById("confetti-canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const colors = ["#FF6B35", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#EC4899"];
+
+      for (let i = 0; i < 60; i++) {
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height / 3,
+          vx: (Math.random() - 0.5) * 14,
+          vy: (Math.random() - 0.8) * 12,
+          size: Math.random() * 7 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          vRot: (Math.random() - 0.5) * 10
+        });
+      }
+
+      let frames = 0;
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.35;
+          p.rotation += p.vRot;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        });
+
+        frames++;
+        if (frames < 75) requestAnimationFrame(render);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      render();
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById("app-toast");
+      document.getElementById("toast-msg").innerText = msg;
+      toast.classList.add("show");
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+  </script>
+</body>
+</html>
