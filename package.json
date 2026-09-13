@@ -1,0 +1,20 @@
+{
+  "name": "Desi Calorie",
+  "short_name": "Desi Calorie",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F2F2F7",
+  "theme_color": "#FF6B35",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/fluency/192/curry.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://img.icons8.com/fluency/512/curry.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
