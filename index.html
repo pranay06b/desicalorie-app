@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Desi Calorie">
-  <title>Desi Calorie - Indian Food Tracker & Meal Planner</title>
+  <title>Desi Calorie - Indian Food Tracker & Embedded Anuvaad Database</title>
   
   <style>
     :root {
@@ -201,22 +201,43 @@
     .stat-num { font-size: 15px; font-weight: 700; }
     .stat-title { font-size: 11px; color: var(--text-sec); }
 
-    .macro-row {
+    /* Macro & Health Limits Grid */
+    .macro-tracker-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
       margin-top: 14px;
       padding-top: 12px;
       border-top: 0.5px solid var(--border);
     }
-    .macro-item {
-      text-align: center;
+    .limit-box {
       background: var(--surface-secondary);
-      padding: 8px 4px;
       border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      border: 1px solid var(--border);
     }
-    .macro-label { font-size: 11px; font-weight: 600; color: var(--text-sec); }
-    .macro-val { font-size: 13px; font-weight: 700; margin-top: 2px; }
+    .limit-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 5px;
+    }
+    .limit-title { font-size: 11px; font-weight: 700; color: var(--text-sec); display: flex; align-items: center; gap: 4px; }
+    .limit-val { font-size: 12px; font-weight: 800; }
+    .limit-track {
+      background: rgba(0,0,0,0.06);
+      height: 6px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .limit-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease, background 0.3s ease;
+      background: var(--primary);
+    }
+    .limit-status-lbl { font-size: 10px; font-weight: 700; display: flex; justify-content: space-between; }
 
     /* Fast-Tap Tray */
     .staples-tray-label {
@@ -293,7 +314,8 @@
     }
     .slot-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
     .slot-header-right { display: flex; align-items: center; gap: 8px; }
-    .slot-cals { font-size: 13px; font-weight: 700; color: var(--primary); }
+    .slot-macros-summary { font-size: 11px; font-weight: 700; color: var(--text-sec); }
+    .slot-cals { font-size: 13px; font-weight: 800; color: var(--primary); }
     .btn-slot-add {
       background: #FFFFFF;
       border: 1px solid #D1D5DB;
@@ -316,7 +338,7 @@
     }
     .food-item-row:last-child { border-bottom: none; }
     .food-info-name { font-size: 13px; font-weight: 600; }
-    .food-info-sub { font-size: 11px; color: var(--text-sec); display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+    .food-info-sub { font-size: 11px; color: var(--text-sec); display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; margin-top: 3px; }
     
     .badge {
       font-size: 9px;
@@ -330,6 +352,7 @@
     .badge-db { background: #DCFCE7; color: #15803D; }
     .badge-custom { background: #FEF08A; color: #854D0E; }
     .badge-bihari { background: #FED7AA; color: #9A3412; }
+    .badge-macro { background: #EEF2FF; color: #4338CA; border: 0.5px solid #C7D2FE; }
 
     .del-btn {
       background: none;
@@ -351,8 +374,8 @@
       justify-content: space-between;
       align-items: center;
     }
-    .db-food-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-    .db-food-stats { font-size: 11px; color: var(--text-sec); }
+    .db-food-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .db-food-stats { font-size: 11px; color: var(--text-sec); line-height: 1.4; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
     .db-food-cal { font-size: 15px; font-weight: 800; color: var(--primary); text-align: right; }
     .btn-db-log {
       background: var(--primary-soft);
@@ -624,7 +647,7 @@
         <button class="date-nav-btn" onclick="changeDate(1)" title="Next Day">›</button>
       </div>
 
-      <!-- Calorie Dashboard Card -->
+      <!-- Calorie & Daily Goal Card -->
       <div class="card">
         <div class="calorie-dashboard">
           <div class="gauge-wrap">
@@ -649,34 +672,87 @@
           </div>
         </div>
 
-        <div class="macro-row">
-          <div class="macro-item">
-            <div class="macro-label">Protein</div>
-            <div class="macro-val" id="total-protein">0g / 75g</div>
+        <!-- Full Daily Target & Limit Tracker Grid (Protein, Carbs, Fat, Sugar, Chol) -->
+        <div class="macro-tracker-grid">
+          <!-- Protein Target -->
+          <div class="limit-box">
+            <div class="limit-header">
+              <span class="limit-title">💪 Protein Goal</span>
+              <span class="limit-val" id="protein-header-val">0g / 75g</span>
+            </div>
+            <div class="limit-track">
+              <div class="limit-fill" id="protein-progress-fill" style="background: var(--blue);"></div>
+            </div>
+            <div class="limit-status-lbl">
+              <span id="protein-status-lbl" style="color: var(--blue);">0% Met</span>
+              <span id="protein-rem-lbl" style="color: var(--text-sec);">75g left</span>
+            </div>
           </div>
-          <div class="macro-item">
-            <div class="macro-label">Carbs</div>
-            <div class="macro-val" id="total-carbs">0g / 220g</div>
+
+          <!-- Carbohydrates Target / Limit -->
+          <div class="limit-box">
+            <div class="limit-header">
+              <span class="limit-title">🌾 Carbs Limit</span>
+              <span class="limit-val" id="carbs-header-val">0g / 220g</span>
+            </div>
+            <div class="limit-track">
+              <div class="limit-fill" id="carbs-progress-fill" style="background: #EAB308;"></div>
+            </div>
+            <div class="limit-status-lbl">
+              <span id="carbs-status-lbl" style="color: var(--success);">Within Budget</span>
+              <span id="carbs-rem-lbl" style="color: var(--text-sec);">220g left</span>
+            </div>
           </div>
-          <div class="macro-item">
-            <div class="macro-label">Fat</div>
-            <div class="macro-val" id="total-fat">0g / 65g</div>
+
+          <!-- Free Sugar Limit (25g WHO standard) -->
+          <div class="limit-box">
+            <div class="limit-header">
+              <span class="limit-title">🍬 Free Sugar</span>
+              <span class="limit-val" id="total-sugar">0g / 25g</span>
+            </div>
+            <div class="limit-track">
+              <div class="limit-fill" id="sugar-progress-fill"></div>
+            </div>
+            <div class="limit-status-lbl">
+              <span id="sugar-status-lbl" style="color: var(--success);">Safe (&le;25g)</span>
+              <span id="sugar-rem-lbl" style="color: var(--text-sec);">25g left</span>
+            </div>
           </div>
+
+          <!-- Dietary Cholesterol Limit (300mg AHA standard) -->
+          <div class="limit-box">
+            <div class="limit-header">
+              <span class="limit-title">🫀 Cholesterol</span>
+              <span class="limit-val" id="total-chol">0mg / 300mg</span>
+            </div>
+            <div class="limit-track">
+              <div class="limit-fill" id="chol-progress-fill"></div>
+            </div>
+            <div class="limit-status-lbl">
+              <span id="chol-status-lbl" style="color: var(--success);">Safe (&le;300mg)</span>
+              <span id="chol-rem-lbl" style="color: var(--text-sec);">300mg left</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Fat Sub-stat -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 0.5px solid var(--border); font-size: 11px; color: var(--text-sec);">
+          <span>🥑 Total Healthy Fat: <b id="total-fat" style="color: var(--text);">0g / 65g</b></span>
+          <span style="font-weight: 600; color: var(--indigo); cursor: pointer;" onclick="openSettingsModal()">Edit Limits &rsaquo;</span>
         </div>
       </div>
 
       <!-- Quick Fast-Tap Staples Tray -->
       <div class="staples-tray-label">⚡ Fast-Tap 1-Touch Desi Staples</div>
       <div class="staples-scroll-wrap">
-        <div class="staple-chip" onclick="quickLogStaple('Roti / Phulka (plain)', 85, 3, 17, 0.5, '1 piece')">🫓 Roti (85k)</div>
-        <div class="staple-chip" onclick="quickLogStaple('Yellow Dal Tadka (Arhar/Toor)', 150, 7.5, 20, 4.5, '1 katori')">🥣 Dal (150k)</div>
-        <div class="staple-chip" onclick="quickLogStaple('Steamed Basmati Rice', 180, 3.5, 39, 0.4, '1 katori')">🍚 Rice (180k)</div>
-        <div class="staple-chip" onclick="quickLogStaple('Masala Chai (with milk & sugar)', 115, 3.2, 16, 4.2, '1 cup')">☕️ Chai (115k)</div>
-        <div class="staple-chip" onclick="quickLogStaple('Curd / Dahi (Whole milk)', 100, 4, 6, 6.5, '1 katori')">🥛 Dahi (100k)</div>
-        <div class="staple-chip" onclick="quickLogStaple('Bihari Sattu Sharbat (Namkeen)', 140, 7.5, 22, 2.5, '1 glass')">🥤 Sattu (140k)</div>
-        <div class="staple-chip" onclick="quickLogStaple('Mixed Vegetable Sabzi', 130, 3, 14, 7, '1 katori')">🥔 Sabzi (130k)</div>
-        <div class="staple-chip" onclick="quickLogStaple('Paneer Bhurji', 220, 12, 6, 17, '1 katori')">🧀 Paneer (220k)</div>
-        <div class="staple-chip" onclick="quickLogStaple('Boiled Eggs (2 pcs)', 155, 13, 1.1, 10.6, '2 eggs')">🥚 2 Eggs (155k)</div>
+        <div class="staple-chip" onclick="quickLogStaple('Roti / Phulka (plain)', 85, 3, 17, 0.5, 0.4, 0, '1 piece')">🫓 Roti (85k • 3P 17C)</div>
+        <div class="staple-chip" onclick="quickLogStaple('Yellow Dal Tadka (Arhar/Toor)', 150, 7.5, 20, 4.5, 0.8, 0, '1 katori')">🥣 Dal (150k • 7.5P 20C)</div>
+        <div class="staple-chip" onclick="quickLogStaple('Steamed Basmati Rice', 180, 3.5, 39, 0.4, 0.2, 0, '1 katori')">🍚 Rice (180k • 3.5P 39C)</div>
+        <div class="staple-chip" onclick="quickLogStaple('Masala Chai (with milk & sugar)', 115, 3.2, 16, 4.2, 9.0, 8, '1 cup')">☕️ Chai (115k • 3P 16C)</div>
+        <div class="staple-chip" onclick="quickLogStaple('Curd / Dahi (Whole milk)', 100, 4, 6, 6.5, 5.0, 12, '1 katori')">🥛 Dahi (100k • 4P 6C)</div>
+        <div class="staple-chip" onclick="quickLogStaple('Bihari Sattu Sharbat (Namkeen)', 140, 7.5, 22, 2.5, 0.5, 0, '1 glass')">🥤 Sattu (140k • 7.5P 22C)</div>
+        <div class="staple-chip" onclick="quickLogStaple('Paneer Bhurji', 220, 12, 6, 17, 1.0, 22, '1 katori')">🧀 Paneer (220k • 12P 6C)</div>
+        <div class="staple-chip" onclick="quickLogStaple('Boiled Eggs (2 pcs)', 155, 13, 1.1, 10.6, 0.8, 366, '2 eggs')">🥚 2 Eggs (155k • 13P 1C)</div>
       </div>
 
       <div class="quick-actions-grid">
@@ -690,11 +766,12 @@
         </button>
       </div>
 
-      <!-- 5 Meal Slots with Inline +Add Button -->
+      <!-- 5 Meal Slots with Inline +Add Button & Macro Subtotals -->
       <div class="slot-card">
         <div class="slot-header">
           <div class="slot-title">🌅 Breakfast</div>
           <div class="slot-header-right">
+            <span class="slot-macros-summary" id="macros-breakfast">P: 0g • C: 0g</span>
             <span class="slot-cals" id="cals-breakfast">0 kcal</span>
             <button class="btn-slot-add" onclick="openFoodSearchModal('breakfast')">+ Add</button>
           </div>
@@ -706,6 +783,7 @@
         <div class="slot-header">
           <div class="slot-title">🍛 Lunch</div>
           <div class="slot-header-right">
+            <span class="slot-macros-summary" id="macros-lunch">P: 0g • C: 0g</span>
             <span class="slot-cals" id="cals-lunch">0 kcal</span>
             <button class="btn-slot-add" onclick="openFoodSearchModal('lunch')">+ Add</button>
           </div>
@@ -717,6 +795,7 @@
         <div class="slot-header">
           <div class="slot-title">☕️ Evening Snacks</div>
           <div class="slot-header-right">
+            <span class="slot-macros-summary" id="macros-snacks">P: 0g • C: 0g</span>
             <span class="slot-cals" id="cals-snacks">0 kcal</span>
             <button class="btn-slot-add" onclick="openFoodSearchModal('snacks')">+ Add</button>
           </div>
@@ -728,6 +807,7 @@
         <div class="slot-header">
           <div class="slot-title">🍲 Dinner</div>
           <div class="slot-header-right">
+            <span class="slot-macros-summary" id="macros-dinner">P: 0g • C: 0g</span>
             <span class="slot-cals" id="cals-dinner">0 kcal</span>
             <button class="btn-slot-add" onclick="openFoodSearchModal('dinner')">+ Add</button>
           </div>
@@ -739,6 +819,7 @@
         <div class="slot-header">
           <div class="slot-title">🌙 Midnight Cravings</div>
           <div class="slot-header-right">
+            <span class="slot-macros-summary" id="macros-midnight">P: 0g • C: 0g</span>
             <span class="slot-cals" id="cals-midnight">0 kcal</span>
             <button class="btn-slot-add" onclick="openFoodSearchModal('midnight')">+ Add</button>
           </div>
@@ -747,14 +828,14 @@
       </div>
     </div>
 
-    <!-- TAB 2: FOOD DATABASE (ANUVAAD INDB 2024.11 & CUSTOM) -->
+    <!-- TAB 2: FOOD DATABASE (PRE-EMBEDDED ANUVAAD INDB 2024.11 & CUSTOM) -->
     <div id="tab-database" class="tab-view">
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
           <div>
             <h3 style="margin: 0;">🍲 Food & Calorie Database</h3>
             <div style="font-size: 12px; color: var(--text-sec); margin-top: 2px;" id="db-total-count-lbl">
-              Loading Anuvaad INDB 2024.11 database...
+              Loading embedded database...
             </div>
           </div>
           <button class="btn-submit" style="margin: 0; padding: 7px 12px; font-size: 12px; width: auto;" onclick="openAddCustomFoodModal()">
@@ -762,26 +843,25 @@
           </button>
         </div>
 
-        <input type="text" class="form-input" id="db-search-input" placeholder="🔍 Search all foods, rotis, dals, fruits..." oninput="renderDatabaseView()" style="margin-bottom: 10px;">
+        <input type="text" class="form-input" id="db-search-input" placeholder="🔍 Search foods, rotis, dals, litti, sattu..." oninput="renderDatabaseView()" style="margin-bottom: 10px;">
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <span style="font-size: 11px; color: var(--text-sec); font-weight: 600;">PORTION & NUTRITIONAL PROFILE</span>
-          <label style="font-size: 11px; color: var(--primary); font-weight: 700; cursor: pointer;">
-            📂 Upload Anuvaad CSV
-            <input type="file" id="csv-file-loader" accept=".csv" style="display: none;" onchange="handleCsvFileSelected(event)">
-          </label>
+          <span style="font-size: 11px; color: var(--text-sec); font-weight: 600;">CALORIES • PROTEIN • CARBS • FAT • SUGAR • CHOL</span>
+          <span style="font-size: 11px; color: var(--success); font-weight: 700; background: #DCFCE7; padding: 2px 6px; border-radius: 4px;">
+            ✓ Pre-Embedded Offline
+          </span>
         </div>
 
         <div id="db-items-container" style="max-height: 550px; overflow-y: auto;"></div>
       </div>
     </div>
 
-    <!-- TAB 3: MEAL PLANNER (9 REGIONAL & GOAL-SCALED OPTIONS) -->
+    <!-- TAB 3: MEAL PLANNER (9 REGIONAL & TARGETED OPTIONS) -->
     <div id="tab-planner" class="tab-view">
       <div class="card">
         <h3 style="margin: 0 0 6px 0;">🎯 9 Regional & Targeted Indian Plans</h3>
         <p style="font-size: 13px; color: var(--text-sec); margin: 0 0 12px 0;">
-          Scaled automatically to your goal (<span id="planner-target-cals">2000</span> kcal) across all 5 daily meal slots. Tap <b>Apply Plan</b> to populate any plan directly into today's log.
+          Scaled automatically to your goal (<span id="planner-target-cals">2000</span> kcal) across all 5 daily meal slots with complete Protein and Carb profiles. Tap <b>Apply Plan</b> to populate any plan directly into today's log.
         </p>
         <div id="recommended-plans-list"></div>
       </div>
@@ -791,7 +871,7 @@
     <div id="tab-archive" class="tab-view">
       <div class="card" style="background: linear-gradient(135deg, #1C1C1E, #2C2C2E); color: white;">
         <div style="font-size: 17px; font-weight: 800; margin-bottom: 4px;">📜 5-Year Logbook Archive</div>
-        <div style="font-size: 11px; color: #A1A1AA;">Daily calorie totals and exact foods are retained for up to 5+ years without cloud dependency.</div>
+        <div style="font-size: 11px; color: #A1A1AA;">Daily calories, protein, carbs, sugar, cholesterol, and meals stored locally without cloud dependency.</div>
       </div>
 
       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
@@ -812,7 +892,7 @@
         </select>
       </div>
 
-      <input type="text" class="form-input" id="archive-search-query" placeholder="🔍 Search past logged foods (e.g. Biryani, Halwa)..." oninput="renderArchiveLogs()" style="margin-bottom: 14px;">
+      <input type="text" class="form-input" id="archive-search-query" placeholder="🔍 Search past logged foods (e.g. Biryani, Sattu)..." oninput="renderArchiveLogs()" style="margin-bottom: 14px;">
       <div id="archive-days-container"></div>
     </div>
 
@@ -858,7 +938,7 @@
 
       <div class="form-group">
         <label class="form-label">Food Name *Required</label>
-        <input type="text" id="cust-food-name" class="form-input" placeholder="e.g. Ghar Ki Rabri, Soya Chunks Curry" required>
+        <input type="text" id="cust-food-name" class="form-input" placeholder="e.g. Soya Chaap, Besan Halwa" required>
       </div>
 
       <div class="form-group">
@@ -883,8 +963,19 @@
           <input type="number" step="0.1" id="cust-food-pro" class="form-input" placeholder="e.g. 12" oninput="autoComputeCarbs()" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Carbohydrates (g)</label>
-          <input type="number" step="0.1" id="cust-food-carb" class="form-input" placeholder="Auto or enter" value="0">
+          <label class="form-label">Carbohydrates (g) *Required</label>
+          <input type="number" step="0.1" id="cust-food-carb" class="form-input" placeholder="Auto or enter" value="0" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Free Sugar (g)</label>
+          <input type="number" step="0.1" id="cust-food-sugar" class="form-input" placeholder="e.g. 2.0" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cholesterol (mg)</label>
+          <input type="number" step="1" id="cust-food-chol" class="form-input" placeholder="e.g. 0 or 60" value="0">
         </div>
       </div>
 
@@ -900,7 +991,7 @@
         <button class="close-modal" onclick="closeFoodSearchModal()">✕</button>
       </div>
 
-      <input type="text" id="food-query-input" class="form-input" placeholder="e.g. Paneer, Roti, Dal, Litti..." onkeyup="handleFoodSearch(this.value)">
+      <input type="text" id="food-query-input" class="form-input" placeholder="e.g. Paneer, Roti, Dal, Litti, Sattu..." onkeyup="handleFoodSearch(this.value)">
       <div id="search-results-container" style="max-height: 240px; overflow-y: auto; margin-top: 8px;"></div>
 
       <div id="portion-selector-box" style="display: none; margin-top: 12px; border-top: 0.5px solid var(--border); padding-top: 10px;">
@@ -919,7 +1010,9 @@
           <label class="form-label">Serving Multiplier (<span id="serving-unit-label">serving</span>)</label>
           <input type="number" step="0.25" id="serving-qty" class="form-input" value="1.0" oninput="updateCalculatedPortion()">
         </div>
-        <div style="font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 10px;" id="portion-cals-preview">Total: 0 kcal</div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 10px; line-height: 1.4;" id="portion-cals-preview">
+          Total: 0 kcal
+        </div>
         <button class="btn-submit" onclick="confirmAddFood()">Add to Log</button>
       </div>
     </div>
@@ -952,7 +1045,7 @@
         </select>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
         <div class="form-group">
           <label class="form-label">Protein (g)</label>
           <input type="number" id="misc-protein" class="form-input" value="0">
@@ -966,6 +1059,18 @@
           <input type="number" id="misc-fat" class="form-input" value="0">
         </div>
       </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Sugar (g) [Opt]</label>
+          <input type="number" step="0.1" id="misc-sugar" class="form-input" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cholesterol (mg) [Opt]</label>
+          <input type="number" step="1" id="misc-chol" class="form-input" value="0">
+        </div>
+      </div>
+
       <button class="btn-submit" onclick="submitMiscMeal()">Log Miscellaneous Item</button>
     </div>
   </div>
@@ -1027,27 +1132,55 @@
           <span style="font-size: 20px; font-weight: 800; color: var(--primary);" id="calc-target-cal">1,650 kcal</span>
         </div>
         <div style="font-size: 11px; color: var(--text-sec); margin-top: 4px;" id="calc-meta-stats">BMR: 1,680 • TDEE: 2,310 • Deficit: -550 kcal</div>
+        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; font-weight: 700; color: var(--indigo);" id="calc-macros-preview">
+          <span>Target Protein: ~124g</span>
+          <span>Target Carbs: ~157g</span>
+        </div>
       </div>
 
-      <button class="btn-submit" onclick="applyCalculatedGoals()">Apply to My Daily Goals</button>
+      <button class="btn-submit" onclick="applyCalculatedGoals()">Apply to My Daily Goals & Macros</button>
     </div>
   </div>
 
-  <!-- MODAL: SETTINGS & BACKUP -->
+  <!-- MODAL: SETTINGS & DAILY LIMITS -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">⚙️ App Settings & Backup</div>
+        <div class="modal-title">⚙️ App Settings & Daily Targets</div>
         <button class="close-modal" onclick="closeSettingsModal()">✕</button>
       </div>
 
       <div class="card">
-        <h4>🎯 Daily Targets</h4>
+        <h4>🎯 Daily Budgets & Limits</h4>
         <div class="form-group">
-          <label class="form-label">Calorie Goal (kcal)</label>
+          <label class="form-label">Calorie Budget (kcal)</label>
           <input type="number" id="setting-goal-cal" class="form-input" value="2000">
         </div>
-        <button class="btn-submit" onclick="saveGoalsFromSettings()">Save Goals</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="form-group">
+            <label class="form-label">Protein Goal (g)</label>
+            <input type="number" id="setting-goal-pro" class="form-input" value="75">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Carbs Limit/Budget (g)</label>
+            <input type="number" id="setting-goal-carb" class="form-input" value="220">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+          <div class="form-group">
+            <label class="form-label">Fat Budget (g)</label>
+            <input type="number" id="setting-goal-fat" class="form-input" value="65">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sugar Limit (g)</label>
+            <input type="number" id="setting-goal-sugar" class="form-input" value="25">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Chol Limit (mg)</label>
+            <input type="number" id="setting-goal-chol" class="form-input" value="300">
+          </div>
+        </div>
+        <button class="btn-submit" onclick="saveGoalsFromSettings()">Save Goals & Limits</button>
       </div>
 
       <div class="card">
@@ -1103,347 +1236,1041 @@
 
   <script>
     /* ==========================================================================
-       AUTHENTIC ANUVAAD INDB 2024.11 EMBEDDED DATABASE (220+ DISHES)
-       Format: [Food Name, Portion Unit, Calories (kcal), Protein (g), Carbs (g), Fat (g)]
+       AUTHENTIC ANUVAAD INDB 2024.11 EMBEDDED DATABASE (270 FOODS WITH MACROS)
+       Format: [Food Name, Portion Unit, Calories (kcal), Protein (g), Carbs (g), Fat (g), Sugar (g), Cholesterol (mg)]
        ========================================================================== */
-    const ANUVAAD_INDB_DATABASE = [
-      ["Bihari Sattu Paratha (with green chilli & dhaniya)","1 piece (75g)",210,7,29,6],
-      ["Litti Chokha with Desi Ghee","2 pieces + chokha",440,12,64,14],
-      ["Bihari Sattu Sharbat (Namkeen)","1 glass (250ml)",140,7.5,22,2.5],
-      ["Bihari Lauki Chana Dal","1 katori (150g)",145,7,21,3.5],
-      ["Bihari Aloo Bhujia (crisp dry sabzi)","1 katori (100g)",180,2.5,24,8.5],
-      ["Bihari Jhalmuri (Roasted chana & murmura)","1 bowl (80g)",140,5.5,25,2.5],
-      ["Roti / Phulka (plain)","1 piece (35g)",85,3,17,0.5],
-      ["Roti with Ghee","1 piece",110,3,17,3.5],
-      ["Plain Paratha","1 piece (60g)",230,4.5,30,10],
-      ["Aloo Paratha with Butter","1 piece (100g)",290,5.5,38,13],
-      ["Paneer Paratha","1 piece (110g)",320,11,34,15],
-      ["Yellow Dal Tadka (Arhar/Toor)","1 katori (150g)",150,7.5,20,4.5],
-      ["Dal Makhani","1 katori (150g)",260,8,22,15],
-      ["Moong Dal (Home-style)","1 katori (150g)",125,8,18,2.5],
-      ["Chole Masala (Chickpeas)","1 katori (150g)",240,9,32,8],
-      ["Rajma Masala (Kidney beans)","1 katori (150g)",210,8.5,30,6],
-      ["Paneer Butter Masala","1 katori (150g)",340,11,12,28],
-      ["Palak Paneer","1 katori (150g)",230,10,8,18],
-      ["Steamed Basmati Rice","1 katori (150g)",180,3.5,39,0.4],
-      ["Jeera Rice","1 katori (150g)",215,3.8,40,4.5],
-      ["Chicken Biryani","1 plate (300g)",520,26,58,20],
-      ["Chicken Curry (Home-style)","1 katori (150g)",240,22,5,14],
-      ["Egg Curry (2 boiled eggs)","1 bowl",230,14,6,16],
-      ["Tandoori Chicken","1 piece (150g)",260,30,3,14],
-      ["Steamed Idli","2 pieces",130,4,28,0.5],
-      ["Plain Dosa with Sambar","1 medium",220,4.5,36,6],
-      ["Masala Dosa","1 piece",340,6,48,14],
-      ["Medu Vada","1 piece (50g)",145,3.5,14,8.5],
-      ["Kanda Poha with Peanuts","1 bowl (150g)",250,5,42,7.5],
-      ["Rava Upma","1 bowl (150g)",210,5,34,6],
-      ["Dhokla (Khaman)","2 pieces",120,4.5,21,2],
-      ["Masala Chai (with milk & sugar)","1 cup (150ml)",115,3.2,16,4.2],
-      ["Roasted Makhana (Foxnuts)","1 bowl (30g)",110,3,20,2],
-      ["Samosa (Potato)","1 piece (80g)",260,3.8,30,14],
-      ["Gulab Jamun","1 piece (45g)",150,2,24,5.5],
-      ["Curd / Dahi (Whole milk)","1 katori (150g)",100,4,6,6.5],
-      ["Mixed Vegetable Sabzi","1 katori (150g)",130,3,14,7],
-      ["Paneer Bhurji","1 katori (150g)",220,12,6,17],
-      ["Boiled Eggs (2 pcs)","2 eggs (100g)",155,13,1.1,10.6],
-      ["Spiced Chaas (Buttermilk)","1 glass (200ml)",45,2.2,4.8,1.8],
-      ["Moong Dal Khichdi with Ghee","1 bowl (200g)",260,8.5,42,6.5],
-      ["Besan Chilla","1 piece (80g)",140,6.2,18,4.5],
-      ["Kala Chana Chaat","1 bowl (150g)",190,8.8,28,3.2],
-      ["Methi Thepla","1 piece (45g)",125,3.2,19,4.2],
-      ["Hot tea (Garam Chai)","1 tea cup",34,0.8,5.4,1.1],
-      ["Instant coffee","1 tea cup",104.2,2.9,16.4,3.4],
-      ["Raw mango drink (Aam panna)","1 tall glass",96.4,0.4,24.3,0.1],
-      ["Sweet lassi","1 glass",216.5,7.5,28.8,8],
-      ["Salted lassi","1 glass",129.5,7.5,6.9,8],
-      ["Tomato soup","1 soup bowl",84.9,2.6,13.6,2.3],
-      ["Sweet corn chicken soup","1 soup bowl",115.1,5.3,15.7,3.5],
-      ["Mushroom soup","1 soup bowl",123.6,3.4,12.7,6.6],
-      ["Fish curry (Machli curry)","1 bowl",168.4,14.9,7.5,8.8],
-      ["Fish tikka","1 piece",78.3,9.5,1.9,3.6],
-      ["Butter chicken","1 bowl",262.3,18.2,9,17.1],
-      ["Kadahi chicken","1 bowl",228,21.9,8,12],
-      ["Rogan josh","1 bowl",212.4,14.6,6.3,14.3],
-      ["Sarson ka saag","1 bowl",175,6,10.7,11.7],
-      ["Aloo methi","1 bowl",128,2.7,16.5,5.7],
-      ["Aloo gobi","1 bowl",136.2,3.1,14.4,7.4],
-      ["Baingan bharta","1 bowl",121.5,2.4,11.8,7.2],
-      ["Bhindi masala","1 bowl",115,2.5,10.8,6.8],
-      ["Dum aloo","1 bowl",184,3.2,21.4,9.6],
-      ["Matar paneer","1 bowl",242,10.2,12.4,16.5],
-      ["Shahi paneer","1 bowl",298,11.5,11.2,23.6],
-      ["Kadai paneer","1 bowl",265,11.8,9.8,20.5],
-      ["Paneer tikka","1 plate (150g)",220,14,7,15],
-      ["Dal fry","1 bowl",165,7.8,21.2,5.4],
-      ["Panchmel dal","1 bowl",158,8.2,21,4.6],
-      ["Sambar (vegetable)","1 bowl (150g)",110,4.2,18,2.6],
-      ["Tomato Rasam","1 bowl (150g)",45,1.2,7.5,1.1],
-      ["Curd rice with tadka","1 bowl (200g)",240,5.5,38,7.5],
-      ["Vegetable Pulao","1 plate (250g)",310,6.2,54,7.8],
-      ["Missi roti","1 piece (50g)",145,5.2,22,4.1],
-      ["Makki ki roti","1 piece (60g)",165,3.6,32,2.5],
-      ["Bajra roti","1 piece (60g)",155,4.1,30,2.1],
-      ["Jowar roti / Bhakri","1 piece (60g)",140,3.8,29,1.2],
-      ["Bhatura","1 piece (80g)",290,5.8,38,13],
-      ["Poori","1 piece (35g)",135,2.1,16,7.2],
-      ["Butter Naan","1 piece (90g)",285,7.5,42,9.8],
-      ["Garlic Naan","1 piece (90g)",295,7.8,43,10.5],
-      ["Aloo tikki","1 piece (60g)",135,2.2,18,6.2],
-      ["Bhel puri","1 plate (150g)",210,4.8,38,4.5],
-      ["Sev puri","1 plate",260,5.2,36,10.8],
-      ["Pani puri / Golgappa","6 pieces",180,3.2,32,4.5],
-      ["Pav bhaji","2 pav + bhaji",440,9.5,62,17],
-      ["Vada pav","1 piece",290,5.6,41,11.5],
-      ["Gajar ka halwa","1 small bowl (100g)",260,4.2,36,11],
-      ["Moong dal halwa","1 small bowl (100g)",340,7.2,38,18],
-      ["Rice kheer","1 bowl (150g)",220,5.4,34,7.2],
-      ["Besan ladoo","1 piece (40g)",190,4.1,24,9],
-      ["Motichoor ladoo","1 piece (45g)",185,2.2,28,7.5],
-      ["Kaju katli","1 diamond piece (20g)",85,1.8,11,4],
-      ["Rasgulla","1 piece (50g)",120,2.5,26,0.5],
-      ["Jalebi","2 pieces (50g)",220,1.8,42,5.2]
-    ];
+    const ANUVAAD_INDB_DATABASE  = [
+  ["Hot tea (Garam Chai)","1 tea cup",16,0.4,2.6,0.5],
+  ["Instant coffee","1 tea cup",23,0.6,3.6,0.8],
+  ["Espreso coffee","1 tea cup",52,1.8,6.6,2.1],
+  ["Iced tea","1 tall glass",10,0.0,2.7,0.0],
+  ["Raw mango drink (Aam panna)","1 tall glass",36,0.2,9.1,0.0],
+  ["Fruit Punch (with fresh juices)","1 tall glass",36,0.1,9.4,0.0],
+  ["Fruit Punch (with squashes)","1 tall glass",23,0.1,6.0,0.0],
+  ["Lemonade","1 glass",21,0.0,5.5,0.0],
+  ["Lem-o-gin","1 glass",22,0.1,5.5,0.0],
+  ["Cumin infused water (Jeere/Zeere ka pani)","1 glass",9,0.2,1.9,0.1],
+  ["Coco pine cooler","1 tall glass",33,0.6,5.7,1.0],
+  ["Summer cooler","1 tall glass",22,0.4,5.4,0.0],
+  ["Hot cocoa","1 cup",90,3.4,9.2,4.6],
+  ["Cold coffee with ice cream","1 tall glass",68,1.6,11.2,2.1],
+  ["Banana milkshake (Kele milkshake)","1 tall glass",65,1.8,9.2,2.4],
+  ["Mango milkshake (Aam milkshake)","1 tall glass",57,1.7,7.2,2.4],
+  ["Pineapple milkshake (Ananas milkshake)","1 tall glass",56,1.7,7.6,2.2],
+  ["Orange milkshake (Narangi milkshake)","1 tall glass",57,1.9,7.1,2.5],
+  ["Egg nog","1 tall glass",97,4.8,8.2,5.1],
+  ["Sweet Lassi (Meethi lassi)","1 tall glass",36,1.3,6.5,0.7],
+  ["Lassi (salted)","1 tall glass",19,1.4,1.9,0.7],
+  ["Cheese and chilli sandwich","1 triangle",218,6.8,27.4,9.8],
+  ["Egg sandwich (Ande ka sandwich)","1 triangle",286,8.7,29.2,15.8],
+  ["Cucumber sandwich (Kheere ka sandwich)","1 triangle",189,4.8,25.8,8.0],
+  ["Cheese and pineapple sandwich (Cheese aur ananas ka sandwich)","1 triangle",258,8.2,29.1,12.8],
+  ["Cheese and tomato sandwich (Cheese aur tamatar ke sandwich)","1 triangle",243,7.9,26.9,12.3],
+  ["Chicken sandwich","1 triangle",253,13.1,25.4,11.8],
+  ["Peanut and tomato sandwich (Moongfali aur tamatar ka sandwich)","1 triangle",291,9.5,28.5,16.1],
+  ["Rainbow sandwich","1 triangle",273,7.8,34.3,12.5],
+  ["Club sandwich","1 triangle",235,7.3,18.5,15.1],
+  ["Vegetarian club sandwich","1 triangle",198,5.5,19.7,11.3],
+  ["Pin wheel sandwich","1 triangle",312,8.8,14.0,24.9],
+  ["Carrot apple sandwich (Gajar aur seb ka sandwich)","1 triangle",214,5.3,29.0,9.1],
+  ["Salami sandwich","1 triangle",256,8.7,21.5,15.5],
+  ["Vegetable and mayonnaise sandwich","1 triangle",244,4.5,23.2,15.4],
+  ["Egg and tomato sandwich (Ande aur tamatar ka sandwich)","1 triangle",222,7.7,25.9,10.5],
+  ["Sweet open sandwich","1 triangle",244,5.0,39.2,8.2],
+  ["Mushroom and cheese sandwich (toasted)","1 triangle",227,7.8,21.0,13.0],
+  ["Cheese and tomato sandwich (toasted) (Cheese aur tamatar ke sandwich (toasted))","1 triangle",225,6.8,21.4,12.9],
+  ["Pea potato sandwich (toasted) (Matar aloo ka sandwich)","1 toasted triangle",165,4.6,25.2,5.4],
+  ["Paneer pea sandwich (toasted) (Paneer matar ka sandwich)","1 toasted triangle",250,12.4,24.1,12.0],
+  ["Chicken sandwich (toasted)","1 toasted triangle",167,12.1,18.8,5.3],
+  ["Pea keema sandwich (toasted) (Matar aur keema ka sandwich)","1 toasted triangle",172,11.1,20.3,5.6],
+  ["Classic club sandwich","1 triangle",201,6.7,18.5,11.6],
+  ["Sesame toast","1 toasted triangle",495,1.9,11.2,49.4],
+  ["Cracked wheat porridge (Meetha daliya)","1 bowl",82,2.6,8.9,4.1],
+  ["Semolina porridge (Suji/Rava daliya)","1 bowl",101,3.8,12.4,4.1],
+  ["Oatmeal Porridge","1 bowl",73,2.6,8.8,3.2],
+  ["Cornflakes with milk","1 bowl",117,3.6,14.9,5.1],
+  ["Rice flakes (Chiwda/Aval)","1 bowl",112,3.6,15.6,4.0],
+  ["Wheat flakes","1 bowl",112,3.6,15.6,4.0],
+  ["Murmura (Puffed rice)","1 bowl",113,3.6,15.7,4.0],
+  ["Puffed wheat (Murmure/Moori)","1 bowl",113,3.6,15.7,4.0],
+  ["Boiled egg (Ubla anda)","1 egg",45,4.4,0.1,3.0],
+  ["Fried Egg","1 egg",224,11.6,0.3,19.6],
+  ["Poached egg","1 egg",124,12.0,0.4,8.2],
+  ["Scrambled egg (Ande ki bhurji)","1 egg",156,10.3,1.4,12.2],
+  ["Baked egg","1 egg",219,11.9,15.4,12.7],
+  ["Plain omelette/omlet","1 omelette",272,9.7,0.6,25.7],
+  ["Stuffed egg omelette/omlet","1 omelette",204,8.6,2.3,17.8],
+  ["Pancake","1 pancake",203,5.7,20.5,10.8],
+  ["Keema pancake","1 pancake",176,9.0,9.6,11.2],
+  ["Vegetable pancake","1 pancake",125,3.9,12.2,6.6],
+  ["Jam and fruit pancake","1 pancake",162,3.8,20.7,7.0],
+  ["Khoa and coconut pancake","1 pancake",272,7.0,27.3,15.3],
+  ["Brown stock","1 cup",21,1.9,0.2,1.4],
+  ["Vegetable stock","1 cup",18,0.3,1.0,1.4],
+  ["Chicken stock","1 cup",30,3.7,0.4,1.5],
+  ["Clear tomato soup (Tamatar ka soup)","1 soup bowl",80,4.8,3.5,12.2],
+  ["Lentil soup","1 soup bowl",31,9.7,3.9,11.7],
+  ["Chicken consomme (Clear chicken soup)","1 soup bowl",48,11.5,1.2,12.0],
+  ["Cream of tomato soup","1 soup bowl",98,4.6,3.9,13.1],
+  ["Cream of green peas soup","1 soup bowl",128,7.1,6.8,14.8],
+  ["Cream of spinach soup","1 soup bowl",101,5.2,3.5,13.3],
+  ["Cream of mixed vegetable soup","1 soup bowl",60,6.8,4.9,9.1],
+  ["Cream of mushroom soup","1 soup bowl",117,6.6,3.7,15.5],
+  ["Chicken sweet corn soup","1 soup bowl",28,14.5,1.6,12.6],
+  ["Minestrone soup","1 soup bowl",43,9.3,3.7,11.1],
+  ["Egg drop soup","1 soup bowl",27,12.9,1.1,13.5],
+  ["Chinese cabbage and meat ball soup","1 soup bowl",484,5.2,1.4,56.6],
+  ["French onion soup","1 soup bowl",56,11.4,4.3,14.4],
+  ["Hot and sour soup","1 soup bowl",32,3.1,1.8,1.3],
+  ["Talaumein soup","1 soup bowl",36,10.1,4.2,12.8],
+  ["Cold cucumber soup (Thanda kheere ka soup)","1 soup bowl",48,3.0,4.6,2.0],
+  ["Cold summer garden soup","1 soup bowl",49,8.6,2.6,14.1],
+  ["Chapati/Roti","1 chapati",202,5.9,35.6,3.6],
+  ["Plain parantha/paratha","1 parantha",298,5.1,30.7,16.9],
+  ["Potato parantha/paratha (Aloo ka parantha/paratha)","1 parantha",205,3.7,23.9,10.2],
+  ["Radish parantha/paratha (Mooli ka parantha/paratha)","1 parantha",184,3.3,20.5,9.5],
+  ["Cauliflower parantha/paratha (Phoolgobhi ka parantha/paratha)","1 parantha",178,3.7,18.8,9.5],
+  ["Dal parantha/paratha","1 parantha",268,6.8,30.0,13.1],
+  ["Sprouted moong parantha/paratha","1 parantha",229,4.3,24.3,12.4],
+  ["Pea parantha/paratha (Matar ka parantha/paratha)","1 parantha",191,5.6,21.5,8.8],
+  ["Keema parantha/paratha","1 parantha",238,9.4,18.4,13.9],
+  ["Paneer parantha/paratha","1 parantha",263,8.0,24.3,14.6],
+  ["Besan and spinach parantha/paratha (Besan aur palak ka parantha/paratha)","1 parantha",216,5.5,21.4,12.1],
+  ["Poori","1 poori",738,1.4,8.2,77.6],
+  ["Spinach poori (Palak poori)","1 poori",684,1.4,7.8,71.9],
+  ["Methi poori","1 poori",710,1.4,8.0,74.6],
+  ["Dal stuffed poori","1 poori",785,2.1,10.1,81.7],
+  ["Potato stuffed poori (Aloo ki poori)","1 poori",777,1.5,9.4,81.3],
+  ["Tandoori parantha/paratha","1 parantha",295,5.1,30.7,16.5],
+  ["Boiled rice (Uble chawal)","1 plate",117,2.6,25.7,0.2],
+  ["Plain pulao","1 plate",140,2.3,21.8,4.6],
+  ["Mixed vegetable pulao","1 plate",113,2.7,17.5,3.3],
+  ["Mushroom pulao","1 plate",124,2.5,19.0,4.0],
+  ["Sprouted moong pulao","1 plate",113,2.2,17.5,3.6],
+  ["Paneer pulao","1 plate",582,2.0,8.8,59.8],
+  ["Peanut pulao","1 plate",193,5.3,21.2,9.5],
+  ["Navratan pulao","1 plate",262,6.2,37.0,9.4],
+  ["Green chickpeas pulao (Choliya pulao/Hare chane ka pulao)","1 plate",173,4.9,27.6,4.8],
+  ["Mutton biryani/biriyani","1 plate",191,7.4,22.5,7.7],
+  ["Vegetable biryani/biriyani","1 plate",175,3.2,18.6,9.5],
+  ["Lemon rice (Pulihora, Elumichai sadam, Chitranna)","1 plate",176,4.3,21.6,7.9],
+  ["Sweet rice (Meethe chawal)","1 plate",215,2.1,42.6,4.6],
+  ["Curd rice (Dahi bhaat/Dahi chawal/ Perugu annam/Daddojanam/Thayir saadam)","1 plate",196,5.8,32.9,4.3],
+  ["Tamarind rice (Chintapandu pulihora/Puliyodharai/Puli sadam/Huli anna)","1 plate",373,7.5,65.1,8.5],
+  ["Spanish rice","1 plate",164,4.2,31.1,2.2],
+  ["Chinese fried rice","1 plate",121,4.0,13.4,5.4],
+  ["Macroni cheese pie","1 casserole dish",171,5.8,21.1,7.5],
+  ["Vegetable chowmein","1 plate",130,3.1,15.4,6.4],
+  ["Chicken chowmein","1 plate",151,6.3,13.3,8.2],
+  ["Cheese noodle ring","1 plate",134,6.2,14.0,6.1],
+  ["Spaghetti and cheese balls in tomato sauce","1 plate",508,2.4,7.8,52.1],
+  ["Penne platter","1 plate",177,5.0,20.9,8.7],
+  ["Pasta hot pot","1 plate",125,5.8,11.6,6.5],
+  ["Chicken lasagne","1 plate",187,10.4,13.9,10.4],
+  ["Fettuccine with spinach sauce","1 plate",129,3.1,12.2,7.8],
+  ["Naan","1 naan",286,8.1,51.8,5.0],
+  ["Bhatura","1 bhatura",793,1.6,10.7,82.6],
+  ["Idli","1 idli",138,4.6,28.2,0.3],
+  ["Masala dosa","1 dosa",165,3.3,19.6,7.8],
+  ["Semolina dosa (Suji/Rava dosa)","1 dosa",227,7.3,32.8,7.1],
+  ["Onion tomato uttapam","1 uttapam",462,1.9,11.3,45.3],
+  ["Paneer kaathi roll","1 kaathi roll",286,6.9,20.1,19.6],
+  ["Makki ki roti","1 roti",264,3.5,24.2,16.9],
+  ["Washed moong dal (Dhuli moong ki dal)","1 bowl",50,2.7,5.9,1.7],
+  ["Washed urad dal (Dhuli urad ki dal)","1 bowl",61,2.5,5.8,3.0],
+  ["Split bengal gram with bottle gourd (Channa dal with ghiya/lauki)","1 bowl",73,2.8,7.1,3.6],
+  ["Dry washed urad","1 bowl",125,6.8,15.7,3.5],
+  ["Mixed dal","1 bowl",62,2.5,5.8,3.1],
+  ["Whole moong (Moong ki dal)","1 bowl",54,2.2,5.2,2.6],
+  ["Whole masoor (Masoor ki dal)","1 bowl",54,2.3,5.4,2.5],
+  ["Whole moth (Moth ki dal)","1 bowl",55,2.0,5.7,2.6],
+  ["Whole urad (Urad ki dal)","1 bowl",54,2.2,5.0,2.6],
+  ["Moti mahal dal (Urad rajmah mix dal)","1 bowl",103,3.9,8.7,5.7],
+  ["Black channa curry/Bengal gram curry (Kale chane ki curry)","1 bowl",141,5.7,14.1,6.6],
+  ["Chickpeas curry (Safed channa curry)","1 bowl",163,6.1,20.0,6.8],
+  ["Lobia curry","1 bowl",149,6.1,17.9,5.6],
+  ["Soyabean curry","1 bowl",163,10.4,6.8,10.2],
+  ["Kidney bean curry (Rajmah curry)","1 bowl",144,6.0,16.4,5.8],
+  ["Sambar","1 bowl",97,3.4,10.6,4.4],
+  ["Besan kadhi with pakodies","1 bowl",403,1.6,3.6,42.6],
+  ["Khatta channa","1 bowl",203,6.3,21.1,10.6],
+  ["Sprouted moong dal chat","1 plate",32,1.4,6.0,0.3],
+  ["Potato cauliflower (Aloo gobhi)","1 bowl",106,1.9,6.0,8.1],
+  ["Potato capsicum (Shimla mirch aloo)","1 bowl",126,1.4,8.7,9.3],
+  ["Cabbage and peas (Pattagobhi aur matar)","1 bowl",64,3.2,6.2,2.6],
+  ["Carrot and fenugreek leaves (Gajar methi)","1 bowl",62,2.1,4.2,3.8],
+  ["Potato fenugreek (Aloo methi)","1 bowl",135,2.2,8.5,10.0],
+  ["Brinjal bhartha (Baingan ka bhartha)","1 bowl",65,1.4,4.4,4.5],
+  ["Dry potato (Sookhe aloo)","1 bowl",103,1.6,14.4,4.2],
+  ["Beans with coconut (Nariyal aur sem/phali; Beans thoran)","1 bowl",132,2.6,4.4,11.4],
+  ["Cauliflower with coconut (Nariyal ke saath phoolgobhi)","1 bowl",132,2.6,4.0,11.6],
+  ["Carrot and cabbage with coconut (Nariyal ke saath pattagobhi aur gajar)","1 bowl",107,1.8,5.0,8.6],
+  ["Raw turnip with coconut","1 bowl",132,1.8,5.8,11.5],
+  ["Raw papaya with coconut (Papaya thoran)","1 bowl",133,1.5,5.6,11.4],
+  ["Stuffed okra (Bharwa bhindi)","1 bowl",94,2.1,3.9,7.7],
+  ["Stuffed round gourd (Bharwa tinde)","1 bowl",73,1.1,4.0,5.8],
+  ["Stuffed capsicum (Bharwa shimla mirch)","1 capsicum",91,1.3,8.3,5.7],
+  ["Stuffed brinjal (Bharwa baingan)","1 brinjal",93,1.5,4.0,7.7],
+  ["Stuffed tomatoes (Bharwa tamatar)","1 tomato",93,3.3,6.2,6.1],
+  ["Pea potato curry (Aloo matar)","1 bowl",101,3.5,9.7,5.1],
+  ["Pea paneer curry (Matar paneer)","1 bowl",135,6.6,9.3,7.8],
+  ["Pea mushroom curry (Matar mushroom)","1 bowl",93,3.9,7.4,5.2],
+  ["Pea curry (Matar ki sabzi)","1 bowl",103,4.5,9.2,5.1],
+  ["Pea vadi curry","1 bowl",102,4.6,8.9,5.1],
+  ["Paneer curry","1 bowl",177,7.8,8.4,12.4],
+  ["Lotus stem curry (Kamal kakdi curry)","1 bowl",110,1.5,9.2,7.2],
+  ["Gravy for kofta","1 bowl",126,1.8,6.3,10.3],
+  ["Pea kofta curry (Matar kofta curry)","1 bowl",596,2.0,4.2,63.4],
+  ["Spinach kofta curry (Palak kofta curry)","1 bowl",572,1.1,3.6,61.5],
+  ["Paneer kofta curry","1 bowl",671,2.4,3.3,72.1],
+  ["Lotus stem kofta curry (Kamal kakdi kofta curry)","1 bowl",634,1.0,5.0,67.8],
+  ["Raw banana kofta curry (Kela kofta curry)","1 bowl",627,0.6,3.4,68.0],
+  ["Cauliflower kofta curry (Phoolgobhi kofta curry)","1 bowl",641,1.0,2.6,69.6],
+  ["Cabbage kofta curry (Pattagobhi kofta curry)","1 bowl",640,1.0,2.9,69.4],
+  ["Ghiya/Lauki Kofta Curry","1 bowl",639,0.9,2.7,69.4],
+  ["Spinach paneer kofta curry (Palak paneer kofta curry)","1 bowl",606,1.4,2.9,65.4],
+  ["Vegetarian egg kofta curry","1 bowl",627,1.3,4.3,67.2],
+  ["Baked vegetables","1 bowl",89,3.7,8.4,4.4],
+  ["Cauliflower musallam (Phoolgobhi musallam)","1 bowl",59,1.9,4.5,3.5],
+  ["Baked vegetables with spinach","1 bowl",78,3.2,6.9,4.0],
+  ["Baked potato with skin","1 bowl",136,3.4,11.1,8.5],
+  ["Shepherd's pie (vegetarian)","1 bowl",136,5.0,12.0,7.3],
+  ["Baked brinjal in tomato sauce","1 bowl",39,1.6,4.1,1.6],
+  ["Dum aloo","1 bowl",682,0.7,3.3,74.0],
+  ["Spinach paneer (Palak paneer)","1 bowl",78,4.0,4.4,4.8],
+  ["Methi chaman","1 bowl",476,1.5,2.8,50.9],
+  ["Sarson ka saag","1 bowl",88,3.0,5.3,5.9],
+  ["Jackfruit sabzi (Kathal ki sabzi)","1 bowl",625,0.7,3.4,67.6],
+  ["Avial","1 bowl",125,2.5,8.5,8.9],
+  ["Al yakhani","1 bowl",148,2.9,4.7,13.1],
+  ["Shahi paneer","1 bowl",156,5.1,6.6,12.3],
+  ["Paneer in butter sauce","1 bowl",146,7.0,9.7,8.8],
+  ["Methi malai paneer","1 bowl",195,7.3,8.2,14.8],
+  ["Chilli paneer","1 bowl",778,2.1,3.3,84.0],
+  ["Paneer makhana korma","1 bowl",776,3.2,4.6,82.8],
+  ["Kadhai Paneer","1 bowl",108,4.3,7.3,6.8],
+  ["Roghan josh","1 bowl",140,9.6,4.9,9.0],
+  ["Spinach mutton (Palak mutton)","1 bowl",80,5.7,3.5,4.7],
+  ["Pea keema curry (Matar keema ki sabzi)","1 bowl",133,8.4,6.2,8.1],
+  ["Keema kofta curry","1 kofta",154,9.8,5.6,10.4],
+  ["Kashmiri mutton koftas (Gushtaba)","1 gushtaba",97,6.3,3.0,6.8],
+  ["Mutton yakhni","1 bowl",104,8.3,0.8,7.7],
+  ["Chicken yakhni","1 bowl",99,10.7,0.8,6.1],
+  ["Mutton do piaza","1 bowl",183,9.4,4.1,14.4],
+  ["Mutton chops","1 chop",664,4.0,1.5,71.3],
+  ["Shammi kebab","1 kabab",686,4.5,3.5,72.6],
+  ["Scotch egg","1 piece",677,4.0,1.9,72.6],
+  ["Shepherd's pie (with minced meat)","1 dish",143,7.5,8.1,8.9],
+  ["Chicken curry","1 bowl",129,11.8,3.4,7.6],
+  ["Tandoori chicken","1 chicken",145,16.3,2.3,7.9],
+  ["Butter chicken","1 large piece",137,10.9,3.7,8.7],
+  ["Chicken kebab","1 kabab",729,3.7,1.1,78.9],
+  ["Chilli chicken","1 bowl",199,9.6,2.9,16.6],
+  ["Fried chicken with tomato sauce (Fried chicken tamatar ki chutney kay saath)","1 piece",125,11.5,2.5,7.6],
+  ["Fish curry (Machli curry)","1 bowl",111,8.8,3.8,6.7],
+  ["Fried fish (Indian style) (Tali hui machli)","1 piece",659,4.3,5.4,68.9],
+  ["Fried fish and Chips (English Style) (Tali hui machli aur chips)","1 fillet",652,3.4,2.8,69.7],
+  ["Tomato fish","1 bowl",490,2.4,3.2,51.9],
+  ["Baked fish with cheese sauce","1 bowl",114,8.6,4.1,7.0],
+  ["Fish tikka","1 piece",117,16.0,3.9,4.2],
+  ["Tandoori fish","1 piece",96,11.2,2.4,4.6],
+  ["Paneer, apple and pineapple salad","1 bowl",95,3.9,8.3,5.1],
+  ["Russian salad","1 bowl",115,4.3,6.5,7.8],
+  ["Pasta salad","1 bowl",190,4.2,12.7,13.9],
+  ["Deviled egg","1 egg",99,5.0,2.2,7.7],
+  ["Hawain salad","1 bowl",175,4.3,14.3,11.4],
+  ["Mixed pulse and vegetable salad","1 bowl",83,4.7,14.0,0.8],
+  ["Sprouted moong salad","1 bowl",38,2.3,5.5,0.7],
+  ["Tossed salad","1 bowl",63,1.0,5.0,4.2],
+  ["Mixed vegetable salad with curd sauce","1 bowl",60,4.2,7.0,1.5],
+  ["Potato salad (Aloo ka salaad)","1 bowl",90,1.4,11.2,4.4],
+  ["Waldroff salad","1 bowl",142,1.5,11.0,10.1],
+  ["Coleslaw","1 bowl",77,1.2,5.6,5.3],
+  ["Fruit salad (Phalon ka salaad)","1 bowl",78,0.9,16.0,1.2],
+  ["Tomato onion raita (Tamatar aur pyaaz ka raita)","1 bowl",59,3.7,7.1,1.8],
+  ["Peanut raita (Mungfali ka raita)","1 bowl",150,8.6,9.3,9.0],
+  ["Sprouted moong raita","1 bowl",61,4.6,6.1,2.2],
+  ["Bottle gourd raita (Ghiya/Lauki ka raita)","1 bowl",56,4.0,5.8,2.1],
+  ["Cucumber raita (Kheere ka raita)","1 bowl",59,4.0,6.3,2.1],
+  ["Carrot and spinach raita (Gajar aur palak ka raita)","1 bowl",57,4.0,5.8,2.0],
+  ["Mint raita (Pudinay ka raita)","1 bowl",78,5.6,7.7,3.0],
+  ["Potato raita (Aloo ka raita)","1 bowl",75,4.2,10.2,2.0],
+  ["Boondi raita","1 bowl",688,2.2,4.0,73.8],
+  ["Sweet raita (Meetha raita)","1 bowl",99,3.2,17.9,1.8],
+  ["Dahi vadas/Dahi bhalla","1 vada",668,3.0,5.5,70.4],
+  ["Gunjia","1 gunjia",667,3.0,5.7,70.3],
+  ["Saunth/Sonth chutney with tamarind/imli","1 teaspoon",142,1.0,33.5,0.1],
+  ["Rice kheer (Chawal ki kheer)","1 bowl",75,2.3,10.1,3.0],
+  ["Makhana kheer","1 bowl",108,3.3,12.9,5.0],
+  ["Vermicelli kheer (Semiya/Seviyan ki kheer)","1 bowl",120,3.4,15.9,5.0],
+  ["Semolina kheer (Suji/Rava kheer)","1 bowl",113,3.4,15.9,4.2],
+  ["Paneer kheer","1 bowl",105,4.5,10.0,5.4],
+  ["Cabbage kheer (Pattagobhi ki kheer)","1 bowl",84,2.9,9.7,3.8],
+  ["Carrot kheer (Gajar ki kheer)","1 bowl",85,2.8,10.1,3.9],
+  ["Cauliflower kheer (Phoolgobhi ki kheer)","1 bowl",82,3.0,8.8,4.0],
+  ["Moong dal kheer","1 bowl",77,3.0,9.9,3.0],
+  ["Phirni","1 bowl",116,3.5,16.1,4.3],
+  ["Semolina halwa (Suji ka halwa)","1 bowl",226,2.2,24.7,13.4],
+  ["Shahi suji halwa","1 bowl",382,3.5,44.4,21.7],
+  ["Carrot halwa (Gajar ka halwa)","1 bowl",173,3.1,18.5,9.7],
+  ["Egg halwa (Ande ka halwa)","1 bowl",300,7.8,39.6,13.4],
+  ["Potato halwa (Aloo ka halwa)","1 bowl",152,1.5,29.2,3.5],
+  ["Pumpkin halwa (Kaddu ka halwa)","1 bowl",190,1.3,27.6,8.8],
+  ["Moong dal halwa","1 bowl",350,8.3,40.2,17.7],
+  ["Caramel custard (steamed)","1 bowl",122,5.0,15.0,4.9],
+  ["Baked custard","1 bowl",107,5.4,9.4,5.3],
+  ["Soft Custard (stirred)","1 bowl",109,5.0,11.2,5.1],
+  ["Chocolate ice cream","1 ice-cream cup",178,4.5,15.4,11.2],
+  ["Mango ice cream","1 ice-cream cup",126,3.4,11.1,7.6],
+  ["Fruit Ice cream (Phalon ka Ice cream)","1 ice-cream cup",171,4.4,16.1,10.4],
+  ["Caramel ice cream","1 ice-cream cup",174,4.3,14.8,11.2],
+  ["Lemon souffle","1 souffle cup",169,7.0,13.4,10.0],
+  ["Orange souffle","1 souffle cup",168,6.8,14.2,9.7],
+  ["Vanilla souffle","1 souffle cup",188,7.7,14.8,11.2],
+  ["Chocolate souffle","1 souffle cup",189,7.9,14.7,11.4],
+  ["Pineapple souffle","1 souffle cup",196,8.1,15.5,11.7],
+  ["Apple mousse","1 bowl",107,4.2,12.8,4.3],
+  ["Rich chocolate mousse","1 cup",188,8.0,10.8,12.2],
+  ["Mango mousse","1 cup",125,3.2,9.1,8.5],
+  ["Orange and pineapple cream","1 bowl",101,1.4,12.0,5.4],
+  ["Charlotte rousse","1 bowl",188,4.0,34.1,4.8],
+  ["Triffle pudding","1 bowl",117,2.9,18.2,3.9],
+  ["Snow flakes pudding","1 bowl",95,4.7,8.1,5.0],
+  ["Kulfi","1 kulfi",98,3.2,11.3,4.7],
+  ["Steamed orange pudding","1 large slice",278,2.3,41.5,12.0],
+  ["Meringue and rice pudding","1 bowl",113,4.8,14.6,4.0],
+  ["Cheese pudding","1 large slice",285,11.3,19.3,18.4],
+  ["Chocolate pudding","1 large slice",212,3.5,29.6,9.5],
+  ["Bread and butter pudding","1 plate",168,5.6,19.6,7.9],
+  ["Queen of pudding","1 large slice",133,5.5,16.4,5.4],
+  ["Pineapple upside down pudding","1 large slice",258,3.1,35.7,11.9],
+  ["Date and nut pie","1 bowl",322,3.9,46.9,13.3],
+  ["Stewed apple with custard","1 piece",93,1.3,18.4,1.8],
+  ["Apple snowballs","1 piece",102,0.9,24.6,0.3],
+  ["Hot orange souffle","1 bowl",180,6.9,18.8,8.9],
+  ["Hot chocolate souffle","1 bowl",226,6.7,26.2,11.1],
+  ["Hot vanilla souffle","1 bowl",193,6.9,21.8,9.1],
+  ["Plain burfi (Burfi)","1 burfi",408,9.8,30.9,28.0],
+  ["Coconut burfi (Nariyal ki burfi)","1 burfi",468,8.8,32.1,34.6],
+  ["Bottle gourd burfi (Ghiya/Lauki burfi)","1 burfi",276,5.9,24.5,17.7],
+  ["Chocolate burfi","1 burfi",339,13.0,33.1,17.9],
+  ["Cashewnut burfi (Kaju burfi/Kaju katli)","1 burfi",422,5.5,37.9,28.5],
+  ["Gram flour burfi (Besan burfi)","1 burfi",422,11.2,46.6,22.4],
+  ["Semolina ladoo with khoya (Suji/Rava aur khoye ke ladoo )","1 ladoo",429,6.7,52.9,21.9],
+  ["Semolina ladoo with coconut (Suji/Rava aur nariyal ke ladoo )","1 ladoo",464,5.7,50.9,27.0],
+  ["Gram flour ladoo (Besan ladoo)","1 ladoo",477,8.9,62.6,22.8],
+  ["Sesame ladoo (Til ke ladoo)","1 ladoo",397,10.7,43.5,19.6],
+  ["Chenna murki","1 bowl",253,10.5,36.0,8.2],
+  ["Milk cake","1 slice",127,3.0,9.1,8.9],
+  ["Ghujia/Lavang latika","1 gunjia",769,1.9,13.0,78.9],
+  ["Gulab Jamun with khoya","1 gulab jamun",586,2.0,26.1,53.2],
+  ["Mal pua","1 malqura",567,1.7,17.6,54.6],
+  ["Shahi tukre","1 tukra",190,2.8,41.5,2.5],
+  ["Potato pakora/pakoda (Aloo pakoda)","1 plate",677,1.9,6.0,71.8],
+  ["Onion pakora/pakoda (Pyaaz ke pakode)","1 plate",675,1.9,5.4,71.8],
+  ["Cauliflower pakora/pakoda (Phoolgobhi ke pakode)","1 plate",672,2.0,4.5,71.9],
+  ["Mixed vegetable pakora/pakoda","1 plate",674,1.9,5.1,71.9],
+  ["Spinach pakora/pakoda (Palak pakoda)","1 plate",713,2.0,4.7,76.4],
+  ["Methi pakora/pakoda (Methi ke pakode)","1 plate",713,2.1,4.7,76.4],
+  ["Egg pakora/pakoda (Ande ke pakode)","1 plate",711,2.8,4.5,75.9],
+  ["Bread pakora/pakoda","1 plate",711,2.6,8.9,74.2],
+  ["Paneer pakora/pakoda","1 plate",718,3.3,5.5,76.0],
+  ["Potato bonda (Aloo bonda)","1 bonda",633,1.1,4.5,67.8],
+  ["Potato samosa (Aloo ka samosa)","1 samosa",577,1.7,9.2,59.2],
+  ["Minced meat samosa (Keema ka samosa)","1 samosa",621,4.4,6.1,64.3],
+  ["Paneer and pea samosa (Paneer matar ka samosa)","1 samosa",624,4.0,8.6,63.6],
+  ["Mathri","1 kachori",805,1.8,12.3,83.1],
+  ["Khasta kachori","1 kachori",713,2.5,12.8,72.3],
+  ["Vegetable cutlet","1 cutlet",665,1.2,4.7,71.3],
+  ["Flattened rice cutlet (Chirwa cutlet/Chivda cutlet/Poha cutlet)","1 cutlet",702,1.8,7.4,73.9],
+  ["Peanut cutlet (Mungfali ke cutlet)","1 cutlet",699,2.6,5.7,74.0],
+  ["Fish cutlet (Machli ka cutlet)","1 cutlet",655,2.8,3.1,70.1],
+  ["Paneer potato cutlet (Paneer aloo cutlet)","1 cutlet",673,2.5,5.2,71.4],
+  ["Spinach chickpeas cutlet (Palak channa dal cutlet)","1 cutlet",688,1.4,4.9,73.6],
+  ["Cheese toast","1 toast",785,2.0,5.5,84.1],
+  ["Vegetable burger","1 burger",520,3.3,13.7,50.6],
+  ["Cheese pizza","1 piece",250,5.8,30.6,12.4],
+  ["Vegetable seekh kebab","1 kabab",691,1.6,5.3,73.7],
+  ["Masala vada","1 vada",826,1.7,4.1,89.2],
+  ["Peanut sago vada (Sabudana mungfali vada)","1 vada",750,1.0,7.1,79.8],
+  ["Vegeterian scotch egg","1 piece",682,2.2,4.6,72.8],
+  ["Paneer shaslik/tikka","1 plate",94,5.1,8.0,4.5],
+  ["Peanut brittle (Moongfali ki chikki)","1 piece",320,6.9,47.5,11.1],
+  ["Spring roll","1 spring roll",624,1.8,8.6,64.6],
+  ["Dry mango chutney (Sookhe aam ki chutney)","1 tablespoon",298,2.4,69.2,0.7],
+  ["Peanut chutney (Mungfali ki chutney)","1 tablespoon",258,11.8,9.9,19.1],
+  ["Coconut chutney (Nariyal ki chutney)","1 tablespoon",266,3.6,8.3,25.0],
+  ["Mint and coriander chutney (Pudinay aur dhaniye ki chutney)","1 tablespoon",103,2.8,21.2,0.5],
+  ["Custard tart","1 tart",226,3.7,28.7,10.7],
+  ["Lemon tart","1 tart",303,6.1,30.7,17.4],
+  ["Jam tart","1 tart",361,4.4,46.2,17.4],
+  ["Orange cream tart","1 tart",197,2.6,27.4,8.7],
+  ["Pineapple tart","1 tart",195,2.3,28.6,8.2],
+  ["Cheese and mushroom tart","1 tart",246,5.5,21.4,15.3],
+  ["Cottage cheese pie","1 pie",239,7.5,20.7,13.8],
+  ["Minced meat pie","1 pie",222,7.4,18.1,13.0],
+  ["Apple cinnamon pie","1 slice",259,3.4,33.7,12.2],
+  ["Lemon meringue pie","1 slice",224,3.9,35.1,8.2],
+  ["Chocolate meringue pie","1 slice",215,5.0,28.8,9.2],
+  ["Cream puffs","1 puff",221,4.7,16.0,15.5],
+  ["Chocolate eclairs","1 clair",239,4.2,26.2,13.5],
+  ["Cheese balls","1 piece",681,2.2,4.8,72.6],
+  ["Minced meat patties","1 patty",266,6.9,15.2,19.6],
+  ["Cheese patties","1 patty",324,7.4,22.2,22.7],
+  ["Hot cheese souffle","1 bowl",177,9.2,5.4,13.2],
+  ["Hot potato souffle","1 bowl",126,5.5,8.6,7.6],
+  ["Hot fish souffle","1 bowl",143,11.2,3.7,9.2],
+  ["Hot spinach souffle","1 bowl",104,5.4,4.2,7.2],
+  ["Plain cream cake","1 piece",354,6.2,47.2,16.2],
+  ["Apple cake (Seb ka cake)","1 piece",290,4.9,39.5,12.9],
+  ["Marble cake","1 piece",354,6.3,46.9,16.3],
+  ["Chocolate cake","1 piece",336,6.0,45.1,15.2],
+  ["Orange cake","1 piece",358,6.1,48.3,16.2],
+  ["Fruit Loaf","1 slice",324,5.4,46.5,13.3],
+  ["Banana cake (Kele ka cake)","1 slice",390,5.8,40.0,23.3],
+  ["Chocolate chiffon cake","1 slice",312,5.8,37.9,15.8],
+  ["Christmas cake","1 slice",373,5.5,48.3,16.9],
+  ["Strawberry and vanilla cake with butter icing","1 slice",371,3.9,44.2,20.4],
+  ["Eggless cake","1 slice",318,8.1,46.1,11.8],
+  ["Swiss roll","1 swiss roll",252,7.3,48.3,3.8],
+  ["Pineapple pastry","1 pastry",208,6.1,29.0,7.9],
+  ["Black forest pastry","1 pastry",234,6.1,34.5,8.5],
+  ["Coconut finger","1 finger",275,7.1,42.6,8.9],
+  ["Pineapple cake","1 slice",196,5.0,23.5,9.3],
+  ["Chocolate walnut cookies (Chocolate aur akhrot ke cookies)","1 cookie",425,6.6,47.1,23.6],
+  ["Chocolate chip cookies","1 cookie",425,5.8,58.0,19.4],
+  ["Sweet plain biscuit","1 biscuit",381,5.9,50.3,17.7],
+  ["Chocolate biscuit","1 biscuit",380,5.9,51.6,17.1],
+  ["Coconut biscuit (Nariyal ke biscuit)","1 biscuit",435,5.8,42.9,27.2],
+  ["Sweet and salty biscuit (Meethay aur namkeen biscuit)","1 biscuit",408,6.2,45.1,22.4],
+  ["Peanut biscuit","1 biscuit",401,8.4,46.7,20.4],
+  ["Pin wheel biscuit","1 biscuit",405,5.4,54.6,18.7],
+  ["Saffron biscuit (Kesar biscuit)","1 biscuit",459,6.0,59.7,22.0],
+  ["Masala biscuit","1 biscuit",394,6.1,45.2,20.8],
+  ["Ice box cookies","1 cookie",374,5.7,56.1,14.4],
+  ["Ginger bread man","1 biscuit",365,6.6,60.3,11.0],
+  ["Danish cookies","1 biscuit",475,5.3,58.0,24.9],
+  ["Short bread cookies","1 biscuit",443,6.0,64.8,18.0],
+  ["Coffee biscuit","1 biscuit",417,6.9,46.5,23.0],
+  ["Melting moments","1 biscuit",438,5.7,55.8,21.8],
+  ["Ginger biscuit (Adarak ke biscuit)","1 biscuit",418,6.0,58.4,18.3],
+  ["Soyabean muthias","1 muthia",839,2.5,3.7,90.5],
+  ["Soyabean tikki","1 tikki",698,3.5,4.4,74.0],
+  ["Soyabean namak paras","1 plate",838,2.6,4.7,89.8],
+  ["Peanut burfi (Moongfali ki burfi)","1 burfi",551,9.3,48.1,36.8],
+  ["Spinach peanut namak paras (Palak moongfali namak paras)","1 plate",740,1.6,6.6,78.5],
+  ["Gram flour and semolina chilla/cheela/savory pancake (Besan suji chilla/cheela)","1 cheela",759,2.1,7.6,80.0],
+  ["Rice moong dal cheela (Chawal aur moong dal ka cheela)","1 cheela",798,2.7,11.1,82.4],
+  ["Split bengal gram sweet rice (Channa dal sweet rice)","1 plate",190,4.2,41.1,0.6],
+  ["Sweet poori (Meethi poori)","1 poori",783,2.1,14.3,79.6],
+  ["Wheat flour and moong dal burfi (Atta aur moong dal ki burfi)","1 piece",441,9.8,60.0,18.4],
+  ["Spinach burfi (Palak burfi)","1 piece",121,2.7,12.8,6.8],
+  ["Sweet split chickpea roti (Sweet channa dal roti/Puranpoli)","1 roti",367,9.5,62.7,7.9],
+  ["Sprouted moong daliya","1 plate",112,2.8,14.8,4.7],
+  ["Sprouted moong poha","1 plate",193,5.6,26.6,6.9],
+  ["Pearl millet ladoo (Bajra ladoo)","1 ladoo",320,9.6,51.0,8.1],
+  ["Paushtik ladoo","1 ladoo",486,7.7,60.3,25.0],
+  ["Paushtik roti","1 roti",149,7.2,26.6,1.5],
+  ["Semolina carrot vada (Suji gajar vada)","1 vada",700,1.6,6.5,74.1],
+  ["Dhokla","1 piece",216,13.4,30.7,5.3],
+  ["Kashmiri tea (Kehwa)","1 tea cup",25,0.2,5.2,0.5],
+  ["Steeped hot coffee","1 tea cup",16,0.4,3.0,0.3],
+  ["Hot chocolate","1 tea cup",90,3.4,9.0,4.6],
+  ["Cold coffee (with cream)","1 tall glass",83,1.9,12.0,3.3],
+  ["Banana milkshake with ice cream (Kele ka milkshake ice cream ke saath)","1 tall glass",76,2.0,11.2,2.8],
+  ["Flavoured milkshake","1 tall glass",67,2.1,8.7,2.8],
+  ["Jal jeera","1 juice glass",30,0.4,6.7,0.3],
+  ["Gingo","1 tall glass",48,0.1,12.4,0.1],
+  ["Mintade","1 glass",40,0.0,10.6,0.0],
+  ["Canjee","1 glass",7,0.2,0.4,0.4],
+  ["Cauliflower canjee (Phoolgobhi ki canjee)","1 glass",7,0.4,0.3,0.4],
+  ["Potato canjee (Aloo canjee)","1 glass",16,0.4,2.7,0.4],
+  ["Vermicelli porridge (Semiya/Seviyan porridge)","1 bowl",78,2.5,10.6,3.0],
+  ["Semolina upma (Suji/Rava upma)","1 bowl",148,3.3,16.3,7.5],
+  ["Vermicelli upma (Semiya/Seviyan upma)","1 bowl",149,3.1,16.9,7.5],
+  ["Rice upma","1 bowl",151,2.6,18.0,7.5],
+  ["Bread upma","1 bowl",130,2.8,12.6,7.8],
+  ["Vegetable upma","1 plate",146,4.7,16.5,6.6],
+  ["Poha","1 bowl",295,6.1,35.0,14.1],
+  ["Vegetable poha","1 bowl",181,4.9,21.5,8.1],
+  ["Moong dal stuffed cheela/chilla (Moong dal ka cheela/chilla)","1 cheela",155,7.0,19.4,5.1],
+  ["Paneer stuffed cheela/chilla","1 cheela",205,11.4,19.2,8.9],
+  ["Indian style egg bhujia (Anda bhujia (Indian style))","1 small bowl",103,6.1,3.8,7.0],
+  ["French omelette/omlet","1 egg",211,10.0,0.4,18.9],
+  ["Puffy omelette/omlet","1 egg",188,8.8,0.1,16.8],
+  ["Orange omelette/omlet","1 egg",195,8.9,1.7,16.8],
+  ["Cheese and mushroom omelette/omlet","1 egg",206,9.7,1.7,17.8],
+  ["Spanish omelette/omlet","1 egg",157,8.2,5.1,11.4],
+  ["Mixed stock","1 cup",25,2.1,0.3,1.7],
+  ["Meat stock","1 cup",24,2.1,0.0,1.8],
+  ["White stock","1 cup",7,0.1,0.4,0.6],
+  ["Meat consomme (with mutton)","1 bowl",30,14.9,0.5,13.7],
+  ["Consomme au julienne","1 bowl",28,12.5,1.5,10.7],
+  ["Consomme au vermicelli","1 bowl",30,15.2,1.3,13.0],
+  ["Green pea soup (Matar ka soup)","1 bowl",40,11.1,3.6,12.9],
+  ["Spinach soup (Palak ka soup)","1 bowl",33,10.5,3.0,14.3],
+  ["Mixed vegetable soup","1 bowl",36,8.2,3.0,11.7],
+  ["Cheese soup","1 bowl",41,12.4,1.9,17.1],
+  ["Mulligatawny soup","1 bowl",54,11.3,8.2,13.3],
+  ["Cream of carrot soup","1 bowl",60,8.3,5.7,12.3],
+  ["Cream of broccoli soup","1 bowl",56,9.0,3.7,12.8],
+  ["Cream of potato soup","1 bowl",60,8.1,6.1,12.1],
+  ["Almond soup (Badam ka soup)","1 bowl",79,10.1,3.7,13.8],
+  ["Cold cucumber cream soup","1 bowl",12,0.3,1.8,0.3],
+  ["Cold tomato soup","1 bowl",17,0.1,0.6,1.6],
+  ["Chicken stew","1 bowl",128,7.2,4.4,8.9],
+  ["Veg paneer stew","1 bowl",146,7.0,10.2,8.4],
+  ["Onion-green chilli parantha/paratha (Pyaaz aur hari mirch ka parantha/paratha)","1 parantha",191,4.4,26.4,7.3],
+  ["Methi parantha/paratha","1 parantha",148,4.3,22.2,4.3],
+  ["Bathua poori","1 poori",599,2.4,13.8,59.1],
+  ["Gram flour poori (Besan poori)","1 poori",698,2.6,10.9,71.5],
+  ["Beetroot poori (Chukandar ki poori)","1 poori",528,1.9,12.3,52.2],
+  ["Peas poori (Matar ki poori)","1 poori",593,3.0,14.9,57.7],
+  ["Peas kachori (Matar kachori)","1 kachori",585,3.2,13.2,57.5],
+  ["Pizza","1 slice",147,6.8,9.9,8.7],
+  ["Bacon and mushroom pancake","1 pancake",158,6.8,8.5,10.6],
+  ["Cheese and tomato pancake","1 pancake",147,5.2,10.7,9.3],
+  ["Minced meat pancake (with chicken)","1 pancake",116,12.0,8.2,10.5],
+  ["Eggplant/Brinjal rice (Vangi bhat)","1 plate",185,5.3,31.7,3.7],
+  ["Kashmiri 'tahar'","1 plate",98,1.9,19.1,1.4],
+  ["Cumin pulao (Jeera/Zeera pulao)","1 plate",135,2.5,23.6,3.2],
+  ["Peas pulao (Matar pulao)","1 plate",109,3.9,18.4,1.9],
+  ["Split bengal gram dal and vegetable pulao (Channa dal and vegetable pulao)","1 plate",117,3.6,19.7,2.3],
+  ["Black channa pulao/ Bengal gram pulao (Kale chane ka pulao)","1 plate",126,3.4,21.6,2.6],
+  ["Mutton pulao","1 plate",131,6.5,11.3,10.8],
+  ["Chicken pulao","1 plate",108,6.1,11.2,8.5],
+  ["Mexican rice","1 plate",121,4.6,14.2,4.9],
+  ["Plain khitchdi (Plain khichri/khichdi)","1 small bowl",57,1.7,10.0,1.0],
+  ["Instant idli (with semolina)","1 idli",247,9.2,43.4,3.6],
+  ["Plain dosa","1 dosa",381,10.3,64.1,8.4],
+  ["Masala dosa mixed vegetable fillings","1 dosa",145,4.8,23.0,3.3],
+  ["Masala dosa paneer fillings","1 dosa",243,10.3,29.8,8.8],
+  ["Uttapam","1 uttapam",256,6.2,36.3,9.0],
+  ["Appam","1 appam",268,3.1,13.3,22.6],
+  ["Beans and macaroni","1 plate",136,4.6,14.2,7.0],
+  ["Spaghetti bolognese","1 shallow dish",97,9.3,10.0,9.5],
+  ["Meat and macaroni casserole","1 small casserole dish",162,9.2,16.1,10.2],
+  ["Spaghetti with meat balls and tomato sauce","1 shallow dish",158,5.6,10.5,10.6],
+  ["Spaghetti with paneer balls and tomato sauce","1 shallow dish",159,4.0,12.7,10.4],
+  ["Lasagne with meat sauce","1 dish",63,2.9,5.4,3.4],
+  ["Lasagne with vegetables","1 dish",49,1.7,5.9,2.2],
+  ["Home made egg noodles","1 curry bowl",241,6.5,42.9,4.4],
+  ["Sour lentils (Khatti dal)","1 curry bowl",35,2.2,6.0,0.1],
+  ["Urad special dehusked","1 curry bowl",69,3.1,8.9,2.2],
+  ["Arhar with spinach (Arhar dal aur palak)","1 curry bowl",53,2.0,4.8,2.8],
+  ["Moong dal with vadi","1 curry bowl",24,0.4,1.0,2.0],
+  ["Rasam with tamarind (Puli rasam/ Chintapandu rasam/ Charu/Saaru)","1 curry bowl",27,1.1,3.4,0.9],
+  ["Rasam with lemon (Nimmakaya rasam/Nimmakaya charu/Elumichai rasam/Nimbe hannina saaru)","1 curry bowl",24,1.1,2.9,0.9],
+  ["Green gram whole with baghar (Sabut moong dal with tadka)","1 bowl",63,3.2,6.8,2.5],
+  ["Urad sabut special","1 bowl",79,2.3,5.0,5.5],
+  ["Kabuli channa curry","1 bowl",69,2.9,7.6,3.1],
+  ["Besan gatte curry","1 bowl",189,7.8,16.3,10.7],
+  ["Dry masala chops","1 chops",135,9.1,3.3,9.5],
+  ["Mutton korma","1 bowl",116,7.1,2.5,8.5],
+  ["Shahi keema kofta curry","1 bowl",418,4.1,1.7,43.8],
+  ["Minced meat ball curry","1 bowl",110,6.8,2.9,7.8],
+  ["Boti kebab","1 kebab",133,9.2,3.1,9.3],
+  ["Mutton seekh kebab","1 kebab",134,11.2,3.1,8.4],
+  ["Indian lamb and egg curry (Nargisi kofta)","1 kofta",336,3.8,2.1,34.7],
+  ["Soya chunks sweet and sour (Nutrinugget sweet and sour)","1 bowl",501,2.9,3.3,56.0],
+  ["Soya chunks korma (Nutrinugget korma)","1 bowl",131,3.9,7.7,9.5],
+  ["Mushroom matar","1 bowl",71,2.8,5.3,4.1],
+  ["Soya chunks and peas (Nutrinugget matar)","1 bowl",83,3.0,5.8,5.1],
+  ["Vegetable yakhni","1 bowl",406,1.2,1.9,43.8],
+  ["Spinach mushroom (Palak mushroom)","1 bowl",48,1.9,3.0,3.0],
+  ["Vegetarian nargisi kofta curry","1 kofta",332,2.3,6.6,32.9],
+  ["Roast chicken","1 joint",200,20.5,0.1,13.1],
+  ["Shahi chicken masala","1 bowl",164,9.8,4.1,12.0],
+  ["Tomato chicken","1 bowl",112,10.6,2.1,6.7],
+  ["Creamy chicken","1 bowl",153,13.5,3.1,9.6],
+  ["Broccoli chicken ala king","1 bowl",120,8.0,5.3,7.6],
+  ["Ginger chicken","1 bowl",129,8.2,5.6,8.2],
+  ["Chicken sweet and sour","1 bowl",445,6.9,2.7,47.6],
+  ["Chicken korma","1 bowl",148,9.8,5.4,9.7],
+  ["Bengal fish curry (Bengali machli curry)","1 bowl",109,7.3,4.4,7.0],
+  ["Fish finger","1 fillet",543,5.7,4.5,55.8],
+  ["Fish in coconut milk (Nariyal ke doodh ke saath machli)","1 dish",86,8.7,2.7,4.4],
+  ["Prawn curry (with coconut) (Jhinga curry)","1 bowl",110,8.5,3.1,6.9],
+  ["Baked stuffed fish","1 fish",122,16.1,2.1,5.4],
+  ["Fish pie","1 pie",121,9.2,7.7,5.8],
+  ["Crispy baked fish","1 casserole dish",138,10.9,9.6,6.4],
+  ["Fish souffle","1 dish",140,10.5,5.1,8.6],
+  ["Potato curry (Aloo ki sabzi)","1 bowl",90,1.5,10.4,4.5],
+  ["Egg curry (Anda curry)","1 bowl",118,5.4,4.0,8.8],
+  ["Vegetable curry with coconut","1 bowl",83,2.8,7.2,4.7],
+  ["Curd with potatoes (Dahi aloo)","1 bowl",60,1.6,7.2,2.7],
+  ["Potato kofta curry (Aloo kofta curry)","1 bowl",455,0.6,2.8,49.1],
+  ["Yam kofta curry (Zimikand/Suran kofta curry)","1 bowl",323,0.7,3.8,33.8],
+  ["Jackfruit kofta curry (Kathal ka kofta curry)","1 bowl",321,0.8,3.2,33.8],
+  ["Spinach and potato (Palak aloo)","1 bowl",57,1.6,5.9,2.8],
+  ["Mooli bhujia","1 bowl",91,1.7,4.7,7.2],
+  ["Bathua bhujia","1 bowl",91,2.3,3.6,7.3],
+  ["Cabbage rolls (dry) ((Pattagobhi rolls) (dry))","1 roll",142,8.2,6.1,9.4],
+  ["Cabbage rolls (curry) ((Pattagobhi rolls)(curry))","1 roll",125,5.8,7.0,8.2],
+  ["Dry arbi (Sookhi arbi)","1 bowl",135,2.1,11.1,9.0],
+  ["Masala arbi","1 bowl",185,3.0,16.2,11.9],
+  ["Peas brinjal bhartha (Matar baingan bhartha)","1 small bowl",85,2.0,5.0,6.0],
+  ["Okra/Lady's fingers fry (Bhindi sabzi/sabji/subji)","1 bowl",111,1.8,4.5,9.3],
+  ["Crispy okra/Crispy lady's fingers (Karare bhindi)","1 small bowl",658,1.9,4.3,70.4],
+  ["Beans foogath","1 small bowl",105,2.0,3.3,9.2],
+  ["Stuffed bittergourd (wet) (Bharwa karele)","1 bowl",162,1.4,4.7,15.2],
+  ["Jackfruit/Kathal (dry)","1 bowl",489,0.9,4.6,51.8],
+  ["Yam fried (Zimikand/Suran fried)","1 bowl",492,0.8,5.5,51.8],
+  ["Cauliflower, pea and potato bhujia (Phoolgobhi, matar aur aloo bhujia)","1 bowl",96,2.8,8.2,5.5],
+  ["Vegetable jalfrezi","1 bowl",68,1.4,5.4,4.4],
+  ["Vegetables stir fry","1 small bowl",31,1.0,3.2,1.5],
+  ["Broccoli delight","1 bowl",41,2.5,2.3,2.5],
+  ["Dhansak (vegetarian)","1 bowl",83,3.3,7.3,4.2],
+  ["Cauliflower basket","1 portion",91,5.2,4.0,5.9],
+  ["Stuffed bottle gourd (Stuffed ghiya/lauki)","1 portion",93,5.8,4.4,5.8],
+  ["Ducheese potato","1 potato",141,3.6,10.9,9.0],
+  ["Roast potatoes","1 potato",87,1.5,14.5,2.4],
+  ["Stuffed baked potatoes","1 potato",100,3.8,11.0,4.4],
+  ["Potato nests","1 nest",112,5.7,11.1,4.8],
+  ["Parsley potato","1 bowl",120,1.5,13.8,6.3],
+  ["Creamed spinach and mushroom","1 bowl",420,2.3,3.2,44.1],
+  ["Fricassee of Mushroom","1 dish",107,3.6,8.1,6.6],
+  ["Cauliflower au gratin","1 bowl",146,4.5,9.1,10.2],
+  ["Vegetable and cheese pie","1 dish",127,4.0,8.8,8.3],
+  ["Spinach souffle","1 small bowl",150,7.4,6.3,10.5],
+  ["Beetroot and egg salad (Chukandar aur ande ka salad)","1 small bowl",85,3.4,3.4,6.5],
+  ["Sour cream potato salad","1 small bowl",122,2.9,9.1,8.1],
+  ["Tossed green salad","1 small bowl",50,1.3,3.8,3.2],
+  ["Spring basket salad","1 basket",160,3.4,11.6,11.3],
+  ["Cucumber and yogurt salad (Kheere aur dahi ka salad)","1 small plate",36,2.1,4.7,0.9],
+  ["Chicken and tomato towers","1 stuffed tomato",101,6.9,2.4,7.0],
+  ["Jellied sunshine fruit salad","1 small mould",49,5.8,4.2,0.8],
+  ["Tomato aspic","1 small mould",50,6.9,5.0,0.3],
+  ["Frozen frosty fruit salad (Phalon ka salaad)","1 slice",104,1.7,15.6,4.2],
+  ["French dressing","1 cup",734,0.3,3.7,79.7],
+  ["Mayonnaise without eggs","1 cup",329,2.1,4.0,33.8],
+  ["Curd dressing","1 cup",79,5.6,8.0,2.9],
+  ["Carrot raita (Gajar ka raita)","1 bowl",65,4.1,7.2,2.2],
+  ["Pumpkin raita (Kaddu ka raita)","1 bowl",56,3.7,6.0,1.9],
+  ["Mint and peanut raita (Pudinay aur moongfali ka raita)","1 bowl",112,7.0,7.3,6.2],
+  ["Spinach raita (Palak ka raita)","1 bowl",53,4.0,5.1,1.9],
+  ["Bathua raita","1 bowl",54,4.1,5.3,1.8],
+  ["Pineapple raita (Ananas ka raita)","1 bowl",68,3.9,8.6,2.0],
+  ["Banana raita (Kele ka raita)","1 bowl",89,4.1,13.5,2.1],
+  ["Mango raita (Aam ka raita)","1 bowl",67,3.9,8.2,2.1],
+  ["Guava raita (Amarood ka raita)","1 bowl",64,4.2,7.3,2.1],
+  ["Grapes raita (Angoor ka raita)","1 bowl",73,4.0,9.7,2.1],
+  ["Bottle gourd kheer (Ghiya/Lauki kheer)","1 bowl",84,2.7,10.0,3.9],
+  ["Pumpkin kheer (Kaddu ki kheer)","1 bowl",86,2.8,10.4,3.9],
+  ["Apple kheer (Seb ki kheer)","1 bowl",81,2.1,11.3,3.2],
+  ["Caramel custard (baked)","1 small bowl",123,5.1,14.9,5.0],
+  ["Vanilla ice cream without egg","1 ice cream cup",229,2.7,14.2,18.1],
+  ["Vanilla ice cream with egg","1 ice cream cup",215,4.2,11.7,17.0],
+  ["Strawberry ice cream","1 ice cream cup",216,4.2,12.3,17.0],
+  ["Chocochip ice cream","1 ice cream cup",241,4.2,16.8,17.9],
+  ["Choconut ice cream","1 sundae glass",274,5.0,23.1,18.5],
+  ["Pear chocholate sunday","1 sundae glass",183,2.1,15.0,13.1],
+  ["Chocolate sauce","1 tablespoon",263,1.9,43.2,10.4],
+  ["Coffee ice cream","1 ice cream cup",151,3.1,14.1,9.4],
+  ["Coffee pear alaska","1 dish",204,2.9,19.4,13.2],
+  ["Crunchy butterscotch","1 cup",277,3.1,19.9,21.0],
+  ["Peach melba ice cream","1 sundae glass",201,2.1,16.3,14.5],
+  ["Vanilla ice cream with apples in hot cherry sauce","1 dish",196,1.7,22.8,11.4],
+  ["Grape and orange whip","1 orange case",57,1.4,6.7,2.6],
+  ["Honey banana cream","1 tall stemmed glass",125,2.8,13.6,6.7],
+  ["Raspberry bavarian cream","1 small mould",150,3.3,17.8,7.9],
+  ["Fruit delight","1 small mould",107,2.1,9.1,7.1],
+  ["Creamy chocolate mousse","1 dish",231,6.8,9.5,18.2],
+  ["Cold lemon souffle","1 souffle dish",170,5.9,15.6,9.8],
+  ["Cold orange souffle","1 souffle dish",173,5.9,16.3,9.8],
+  ["Cold pineapple souffle","1 souffle dish",181,6.2,16.9,10.4],
+  ["Cold vanilla souffle","1 souffle dish",180,6.2,16.3,10.3],
+  ["Cold chocolate souffle","1 souffle dish",188,6.4,17.2,10.9],
+  ["Stewed fruit (with pear)","1 bowl",74,0.2,18.2,0.3],
+  ["Apricot fool","1 tall stemmed glass",241,1.5,33.6,11.3],
+  ["Pavlova","1 meringue",201,1.8,21.8,12.3],
+  ["Apple crumb pudding","1 small plate",221,1.5,35.2,8.9],
+  ["Steamed cake with chocolate sauce","1 small mould",302,4.5,29.1,19.0],
+  ["Hot lemon souffle","1 bowl",155,5.3,16.3,7.9],
+  ["Gulab jamun with milk powder","1 piece",471,0.8,28.2,40.1],
+  ["Chum chum","1 piece",130,1.5,28.3,1.9],
+  ["Dil bahar","1 piece",130,1.5,28.3,1.9],
+  ["Rasbhari","1 piece",130,1.5,28.3,1.9],
+  ["Rajbogh","1 piece",134,1.7,28.2,2.3],
+  ["Rasgulla","1 piece",119,1.4,25.8,1.8],
+  ["Rasmalai","1 piece",136,1.6,29.2,2.1],
+  ["Khoa coconut burfi","1 piece",411,10.0,36.5,26.0],
+  ["Danedar burfi","1 piece",103,3.2,12.3,4.7],
+  ["Semolina burfi (Suji/Rava burfi)","1 piece",349,3.5,47.1,16.9],
+  ["Pumpkin coconut burfi (Kaddu aur nariyal ki burfi)","1 piece",186,1.8,17.0,12.7],
+  ["Khoa ladoo","1 piece",396,12.2,34.4,24.1],
+  ["Wheat and gram flour ladoo (Atta besan ladoo)","1 piece",502,9.4,50.5,29.9],
+  ["Semolina ladoo with nuts (Suji/Rava ladoo with nuts)","1 piece",442,5.4,48.0,25.4],
+  ["Sesame chickpeas brittle (Til aur channe ki chikki)","1 piece",283,8.5,50.5,4.7],
+  ["Murmura chikki","1 piece",254,2.1,59.6,0.3],
+  ["Masala onion pakora/pakoda (Pyaaz ke pakode)","1 pakora",552,2.0,6.5,57.6],
+  ["Masala green chilli pakora/pakoda (Hari mirch kay pakode)","1 pakora",669,2.2,5.5,71.0],
+  ["Chicken pakora/pakoda","1 pakora",590,6.0,4.5,61.0],
+  ["Fish pakora/pakoda","1 pakora",577,6.0,4.5,59.5],
+  ["Paneer cutlet","1 cutlet",672,4.6,7.6,69.4],
+  ["Sago cutlet/vadas (Sabudana cutlet/vadas)","1 cutlet",559,0.6,11.2,57.0],
+  ["Poshtik cutlet","1 cutlet",496,2.0,7.4,50.9],
+  ["Egg cutlet (Anda cutlet)","1 cutlet",575,2.5,5.8,60.2],
+  ["Minced meat cutlet","1 cutlet",532,5.1,5.6,54.5],
+  ["Vegetable samosa","1 samosa",443,2.2,13.2,42.2],
+  ["Plain urad dal vada (Uzunne vada/Minapa garelu/Ulundu vadai/Medu vada)","1 vada",746,4.4,9.7,76.3],
+  ["Masala urad dal vada","1 vada",704,4.3,9.9,71.6],
+  ["Khaman (dhokla)","1 dhokla",55,1.9,5.4,2.8],
+  ["Instant dhokla","1 dhokla",207,7.7,24.1,9.4],
+  ["Tomato ginger chutney (Tamatar adarak ki chutney)","1 tablespoon",45,1.1,9.1,0.3],
+  ["Mint tomato chutney (Pudinay aur tamatar ki chutney)","1 tablespoon",44,1.5,8.2,0.4],
+  ["Coriander chutney (Hare dhaniye ki chutney)","1 tablespoon",43,1.4,8.2,0.4],
+  ["Gooseberry chutney (Amla chutney)","1 tablespoon",43,1.4,8.8,0.6],
+  ["Walnut chutney (Akhrot ki chutney)","1 tablespoon",370,9.4,8.9,33.5],
+  ["Saunth/Sonth chutney with ginger","1 tablespoon",84,0.3,20.6,0.1],
+  ["Gun powder chutney","1 tablespoon",312,21.6,47.6,2.7],
+  ["Dessicated coconut chutney (Sookhe kase nariyal ki chutney)","1 tablespoon",346,12.9,36.7,15.9],
+  ["Curd mint dip","1 tablespoon",76,4.8,9.1,2.4],
+  ["Curd vegetable dip","1 tablespoon",56,3.9,6.0,1.9],
+  ["Mayonnaise vegetable dip","1 tablespoon",241,3.0,4.8,23.4],
+  ["Tomato and cucumber sandwich (Tamatar aur kheere ka sandwich)","1 sandwich",151,4.0,20.5,6.3],
+  ["Tomato sandwich (grilled)","1 sandwich",190,6.3,21.3,9.4],
+  ["French sandwich (toasted)","1 sandwich",187,6.8,14.8,11.5],
+  ["Peanut butter cucumber sandwich","1 sandwich",243,9.0,29.8,10.6],
+  ["Mint and peanut sandwich","1 sandwich",274,7.2,31.8,13.9],
+  ["Spicy chutney sandwich","1 sandwich",250,8.7,34.0,9.6],
+  ["Chicken walnut sandwich (Chicken aur akhrot ke sandwich)","1 sandwich",286,12.6,22.6,16.8],
+  ["Rolled sandwich","1 sandwich",293,6.5,34.7,15.3],
+  ["Ribbon sandwich","1 ribbon",239,6.3,24.8,13.4],
+  ["Checker board sandwich","1 square",348,7.4,25.9,24.6],
+  ["Submarine sandwich","1 hot dog bun",217,6.1,13.6,15.3],
+  ["Cheese open sandwich","1 sandwich",274,9.8,28.4,14.2],
+  ["Sunset and sunrise open sandwich","1 sandwich",241,8.6,18.9,15.1],
+  ["Danish luncheon sandwich","1 sandwich",194,9.0,17.8,10.1],
+  ["Chicken and corn open sandwich","1 sandwich",188,8.6,19.2,8.8],
+  ["Chocolate sponge cake","1 piece",240,9.1,39.5,5.5],
+  ["Chocolate swiss roll","1 swiss roll",306,6.0,27.0,19.8],
+  ["Lemon curd filling","1 tablespoon",226,3.4,26.4,12.6],
+  ["Jam filling","1 tablespoon",185,0.0,46.1,0.0],
+  ["Chocolate pastry","1 pastry",243,7.0,32.2,10.1],
+  ["Assorted pastry","1 pastry",231,6.8,32.0,8.9],
+  ["Orange gateau","1 piece",178,4.8,27.0,6.0],
+  ["Black forest gateau","1 piece",218,5.9,30.6,8.6],
+  ["Lemon cake","1 piece",374,5.3,43.1,20.6],
+  ["Dundee cake","1 piece",397,7.8,41.4,22.7],
+  ["Victorian sandwich cake","1 piece",373,5.2,44.7,19.8],
+  ["Chocolate eggless cake","1 piece",312,6.7,43.5,13.2],
+  ["Orange eggless cake","1 piece",356,7.2,52.6,13.8],
+  ["Chocolate glace icing","1 tablespoon",436,3.2,62.4,20.8],
+  ["Butter icing","1 tablespoon",501,0.2,71.6,25.4],
+  ["Chocolate butter icing","1 tablespoon",470,3.2,61.7,24.8],
+  ["Almond biscuit (Badam ke biscuit)","1 biscuit",408,6.2,52.1,19.7],
+  ["Orange biscuit","1 biscuit",355,3.6,62.1,11.0],
+  ["Gingerman biscuit","1 gingerman",357,6.3,55.2,12.7],
+  ["Coffee drops","1 small",443,7.6,43.1,27.2],
+  ["Christmas biscuit","1 biscuit",406,5.7,61.0,15.9],
+  ["Christmas wreath biscuit","1 biscuit",386,5.4,58.1,15.0],
+  ["Christmas bell biscuit","1 biscuit",405,5.7,60.8,15.8],
+  ["Christmas star biscuit","1 biscuit",392,3.5,74.5,10.0],
+  ["Christmas tree biscuit","1 biscuit",386,5.4,58.4,15.0],
+  ["Chocolate cream shells","1 shell",427,5.1,59.3,19.3],
+  ["Jelly biscuit","1 biscuit",405,4.2,55.2,19.3],
+  ["Cherry and walnut cookies","1 cookies",423,5.6,59.4,18.8],
+  ["Cheese straws","1 straw",382,9.8,30.6,24.3],
+  ["Butterfly biscuit","1 biscuit",341,10.0,25.3,22.1],
+  ["Flan pastry","1 pastry",446,6.7,47.8,25.0],
+  ["Fruit flan","1 flan",261,3.3,34.7,12.5],
+  ["Orange cream flan","1 flan",280,4.7,36.2,13.6],
+  ["Fruit puree tart","1 tart",286,3.4,30.4,16.8],
+  ["Apple banana pie","1 pie",244,3.1,32.1,11.4],
+  ["Lemon chiffon pie","1 pie",259,4.9,27.6,14.5],
+  ["Orange chiffon pie","1 pie",208,3.9,23.1,11.2],
+  ["Cream buns","1 bun",216,4.5,14.2,15.8],
+  ["Savoury puffs","1 puff",191,9.5,10.8,15.2],
+  ["Choux swans","1 swan",216,4.3,14.9,15.6],
+  ["Potato aigrettes","1 aigrette",530,2.4,8.0,54.2],
+  ["Cream horns","1 horn",408,3.4,23.1,33.5],
+  ["Savoury cheese horns","1 horn",295,5.7,21.4,20.7],
+  ["Paneer patties","1 patty",339,7.6,22.8,24.0],
+  ["Vegetable patties","1 patty",262,4.0,21.0,17.7],
+  ["Pearl millet infant food (Bajra shishu aahaar)","1 ",362,12.0,62.1,6.6],
+  ["Sajina","1 ",345,10.8,66.9,3.0],
+  ["Cereal mix","1 ",121,3.3,21.8,2.0],
+  ["Pulse mix","1 ",83,3.2,16.0,0.5],
+  ["Shishu ahar","1 ",93,2.6,17.4,1.4],
+  ["Cereal pulse mix with amylase rice flour","1 ",152,4.3,27.8,2.7],
+  ["Banana groundnut paste/puree","1 ",213,4.3,36.1,5.5],
+  ["Rice dal porridge (Chawal dal ki khichdi/khichri)","1 ",383,10.8,65.0,8.3],
+  ["Lentils and semolina porridge (Dal suji porridge/daliya)","1 ",117,3.3,23.2,1.1],
+  ["Spinach khichri (Palak khichri/khichdi)","1 ",102,3.4,17.4,1.9],
+  ["Vegetable mix","1 ",174,4.7,36.0,0.9],
+  ["Lentils and wheat porridge (Dal wheat porridge/daliya )","1 ",53,2.7,8.4,0.9],
+  ["Maize porridge","1 ",90,2.1,15.6,1.9],
+  ["Spinach peanut burfi (Palak aur mungfali ki burfi)","1 ",105,3.4,13.6,4.4],
+  ["Split bengal gram burfi/fudge (Channa dal burfi)","1 piece",287,4.7,54.6,7.1],
+  ["Chickpea flour cookies (Sweet besan rounds/cookies)","1 piece",207,4.3,39.6,3.4],
+  ["Pearl millet mathri (Bajra mathri)","1 piece",785,1.8,7.4,83.1],
+  ["Sesame biscuit (Til ke biscuit)","1 biscuit",424,8.3,53.6,19.3],
+  ["Fermented bengal gram vada (Khameerikrit/Ufna hua channa dal ka vada)","1 vada",658,4.0,8.7,67.2],
+  ["Poshtik namak paras","1 piece",613,6.5,19.5,56.6],
+  ["Soya chikki","1 piece",424,7.2,62.9,15.5],
+  ["Besan bathua chilla/cheela","1 cheela",374,11.5,40.6,18.6],
+  ["Wheat flour and nuts ladoos (Atta nuts ladoos)","1 ladoo",392,9.5,44.3,19.2],
+  ["Gram flour and semolina dhokla (Besan suji dhokla)","1 piece",199,8.5,25.9,7.1],
+  ["Atta dal burfi","1 piece",299,6.7,40.6,12.5],
+  ["Soya roti","1 roti",284,9.2,40.0,9.2],
+  ["Poshtik khichdi/khichri","1 plate",93,3.0,15.6,1.9],
+  ["Namkeen daliya","1 plate",295,8.3,49.3,8.0],
+  ["Sprouts upma","1 plate",316,9.5,45.0,10.4],
+  ["Semolina idli (Suji/Rava idli)","1 idli",206,9.3,33.7,3.5],
+  ["Poshtik chilla/cheela","1 cheela",160,4.8,27.5,3.0],
+  ["Stuffed bittergourd (dry) (Bharwa karela)","1 bowl",218,1.3,2.5,22.4],
+  ["Cauliflower potato canjee","1 glass",17,0.6,2.6,0.4],
+  ["Creamed spinach","1 small bowl",97,5.2,4.4,6.4],
+  ["Mango milkshake with ice cream (Aam milkshake ice creamÊkeÊsaath)","1 tall glass",68,1.9,9.2,2.8],
+  ["Pineapple milkshake with ice cream (Ananas milkshake ice creamÊkeÊsaath)","1 tall glass",68,1.9,9.3,2.8],
+  ["Orange milkshake with ice cream (Narangi milkshake ice creamÊkeÊsaath)","1 tall glass",68,1.9,9.2,2.8],
+  ["Woodapple juice (Bel ka sharbat)","1 glass",34,0.6,6.5,0.7],
+  ["Sattu drink","1 glass",23,0.6,5.2,0.1],
+  ["Apple and honey sorbet (Seb aur shehad ka sharbat)","1 cup",121,0.1,30.7,0.3],
+  ["Thandai","1 glass",101,3.6,9.1,5.9],
+  ["Cucumber sharbat (Kheere ka sharbat)","1 glass",27,0.3,6.6,0.1],
+  ["Apple oats chia seed smoothie","1 glass",86,3.5,13.1,2.5],
+  ["Nannari sharbat","1 cup",89,0.0,23.6,0.0],
+  ["Semolina milk drink (Thari kanji)","1 cup",44,1.0,6.9,1.4],
+  ["Saffron milk (Kesariya doodh)","1 glass",102,3.2,12.6,4.6],
+  ["Black rice kheer (Chak-hao kheer)","1 bowl",148,4.4,22.9,4.9],
+  ["Coconut kheer (Nariyal ki kheer)","1 bowl",163,3.4,14.4,10.6],
+  ["Apple sago payasam (Seb aur sabudana ki kheer)","1 bowl",136,3.1,14.4,7.7],
+  ["Kesari bath","1 bowl",245,2.4,31.4,12.6],
+  ["Putharekulu","1 roll",318,3.7,59.6,7.5],
+  ["Mango malpua","1 piece",335,1.6,12.8,30.7],
+  ["Mango vanilla custard","1 glass",148,3.4,18.4,7.0],
+  ["Kiwi granola pudding","1 bowl",281,5.6,32.3,15.4],
+  ["Oats burfi","1 piece",425,8.9,62.5,17.3],
+  ["Lotus seed halwa (Kamal gattay ka halwa)","1 piece",371,7.8,39.6,20.7],
+  ["Amaranth ladoo (Rajgira ladoo)","1 ladoo",454,10.1,51.3,22.7],
+  ["Chhena poda","1 slice",345,13.7,33.6,17.9],
+  ["Sweet couscous dessert","1 bowl",196,3.8,29.7,7.7],
+  ["Sweetened yogurt (Shrikhand)","1 bowl",107,5.3,16.0,2.9],
+  ["Thickened sweetened milk (Rabri)","1 bowl",103,3.5,10.6,5.3],
+  ["Gram flour halwa (Besan halwa)","1 piece",277,5.9,25.8,17.3],
+  ["Prawn sandwich","1 sandwich",170,10.4,11.9,9.3],
+  ["Watercress sandwich","1 triangle",229,5.2,28.0,11.5],
+  ["Fish sandwich","1 sandwich",150,4.7,10.1,10.4],
+  ["Kidney bean sandwich with cottage cheese","1 triangle",177,9.8,18.9,6.8],
+  ["Finger millet biscuit (Ragi biscuit)","1 biscuit",459,4.0,52.7,25.8],
+  ["Buttermilk biscuit","1 biscuit",323,5.8,34.9,17.5],
+  ["Lemon cookies","1 cookie",394,5.6,42.2,23.0],
+  ["Sweet potato biscuit (Shakarkand ke biscuit)","1 biscuit",296,5.1,38.1,13.3],
+  ["Raspberry shortbread cookies","1 cookie",441,3.0,61.2,21.2],
+  ["Pumpkin cookies","1 cookie",218,2.5,44.7,3.9],
+  ["Greenpea cookies","1 cookie",159,6.5,23.1,4.2],
+  ["Sunflower cookies","1 cookie",521,9.5,40.1,36.3],
+  ["Cardamom cookies (Elaichi cookies)","1 cookie",400,5.1,54.0,19.1],
+  ["Hazelnut cookies","1 cookie",493,6.2,39.4,35.0],
+  ["Milk cookies","1 cookie",459,10.5,48.4,25.0],
+  ["Cranberry cookies","1 cookie",272,3.9,36.4,12.7],
+  ["Olive biscuit","1 biscuit",438,3.2,55.0,23.8],
+  ["Tutti fruitti biscuit","1 biscuit",421,5.2,53.1,17.9],
+  ["Peach blueberry preserves","1 half-pints",177,0.5,45.8,0.2],
+  ["Pear preserves (Naashpati ka murabba)","1 half-pints",101,0.2,25.7,0.2],
+  ["Starfruit preserves","1 jar",129,0.2,33.6,0.1],
+  ["Gooseberry pickle (Amla ka achaar)","1 jar",279,1.6,7.6,27.6],
+  ["Lotus stem pickle (Kamal kakdi ka achar)","1 jar",103,1.4,20.1,1.6],
+  ["Date pickle (Khajoor ka achaar)","1 small bowl",182,1.7,34.7,4.2],
+  ["Garlic pickle (Lahasun ka achar)","1 jar",414,3.7,9.8,39.9],
+  ["Fermented bamboo shoot pickle (Mesu pickle)","1 jar",60,1.6,1.7,5.6],
+  ["Sweet peach pickle (Aadoo ka achaar)","1 jar",145,0.5,37.0,0.2],
+  ["Pickled mustard greens","1 jar",13,1.5,1.1,0.2],
+  ["Small onion pickle","1 bowl",17,1.6,2.8,0.6],
+  ["Green tomato pickle (Haray tamatar ka achaar)","1 jar",193,1.2,2.9,19.7],
+  ["Pickled cabbage","1 jar",14,0.4,2.6,0.1],
+  ["Coconut pickle (Nariyal ka aachar)","1 jar",517,3.0,11.5,51.7],
+  ["Potato pickle (Aloo ka achaar)","1 bowl",369,2.1,7.9,36.5],
+  ["Mango murabba candy","1 candy",293,0.3,77.3,0.1],
+  ["Afghani chicken","1 plate",152,15.7,1.9,9.1],
+  ["Fish orly","1 fillet",564,5.9,4.3,58.2],
+  ["Hariyali Fish Tikka","1 kebab",150,14.0,2.2,9.4],
+  ["Chicken manchurian","1 plate",142,9.5,6.1,12.0],
+  ["Handi chicken","1 plate",166,12.3,1.5,12.5],
+  ["Lemon chicken","1 plate",170,20.2,0.6,9.7],
+  ["Lemon butter fish","1 piece",160,16.4,0.8,10.3],
+  ["Baked eggs in tomato sauce","1 plate",80,4.9,3.8,5.2],
+  ["Egg in a pepper","1 egg",129,12.6,0.2,8.7],
+  ["Spinach mushroom scrambled egg (Palak mushroom bhurji)","1 plate",159,13.3,0.6,11.5],
+  ["Corn omelette/omlet","1 omelette",167,11.4,1.6,12.9],
+  ["Cajun chicken","1 chicken breast",185,12.7,1.9,14.0],
+  ["Paaner do pyaza","1 bowl",128,4.2,3.4,10.9],
+  ["Cabbage manchurian (Pattagobhi manchurian)","1 bowl",224,0.6,4.8,22.5],
+  ["Gobi 65","1 plate",278,0.6,3.6,29.1],
+  ["Paneer lababdar","1 bowl",105,4.0,3.4,8.5],
+  ["Roasted cauliflower steak","1 cauliflower steak",79,2.0,2.0,6.7],
+  ["Sauteed radishes with green beans","1 plate",94,2.4,6.0,6.6],
+  ["Garlic chutney/Poondu chutney (Lahasun ki chutney)","1 small bowl",256,3.3,20.4,17.6],
+  ["Schezwan chutney","1 box",205,3.3,10.8,17.7],
+  ["Onion chutney (Pyaaz ki chutney/Vengaya chutney)","1 cup",144,3.0,13.5,8.4],
+  ["Dates chutney (Khajoor ki chutney)","1 small bowl",104,1.1,21.7,1.1],
+  ["Chicken salad","1 bowl",338,15.3,1.3,30.3],
+  ["Macaroni salad","1 cup",262,5.0,21.6,17.8],
+  ["Cabbage raita (Pattagobhi raita)","1 bowl",85,3.2,5.2,5.8],
+  ["Pomegranate raita (Anaar ka raita)","1 bowl",73,4.0,7.2,3.2],
+  ["Onion raita (Pyaaz ka raita)","1 bowl",72,4.9,7.9,2.4],
+  ["Green chilli raita (Hari mirch ka raita)","1 bowl",77,5.6,7.7,2.9],
+  ["Kale salad","1 bowl",178,4.9,5.0,15.3],
+  ["Spinach and paneer souffle","1 souffle dish",186,7.6,9.6,13.5],
+  ["Masala souffle","1 souffle dish",124,6.4,8.0,7.4],
+  ["Chicken and cheese souffle","1 souffle dish",182,9.1,3.5,14.7],
+  ["Tamarind chutney (Chintapandu pachadi/Puli chutney)","1 ml",109,0.9,25.1,0.5],
+  ["Pav bhaji masala","1 gm",230,9.1,29.1,11.0],
+  ["Green chutney","1 glass jar",79,5.4,10.0,1.6],
+  ["Sago khitchdi/khichri (Sabudana khitchdi/khichri)","1 bowl",187,2.7,22.4,10.1],
+  ["Gram flour chilla/cheela (Besan chilla/cheela)","1 cheela",136,7.8,21.0,2.9],
+  ["Vegetable namkeen jave","1 plate",112,2.9,19.0,2.5],
+  ["Khakhra","1 khakhra",178,4.8,27.7,5.3],
+  ["Moong bean dosa (Pesarattu)","1 pesarattu",286,12.3,31.9,11.7],
+  ["Methi thepla","1 thepla",346,9.0,41.3,15.9],
+  ["Rice puttu (Ari puttu)","1 puttu",82,1.3,11.8,3.1],
+  ["Buckwheat pancake (Khura)","1 pancake",263,2.9,27.3,16.4],
+  ["Quinoa khichdi/khichri","1 bowl",64,3.2,8.8,1.6],
+  ["Khakhra chaat","1 plate",359,4.5,16.6,30.6],
+  ["Banana appam","1 appam",470,1.2,20.1,42.5],
+  ["Veg manchurian","1 plate",586,0.9,6.8,61.6],
+  ["Pav bhaji","1 ",97,2.7,12.0,4.3],
+  ["Rice murukku","1 piece",594,5.4,33.3,48.2],
+  ["Bhel puri","1 plate",510,3.5,16.5,47.9],
+  ["Semolina dhokla (Suji/Rava dhokla)","1 plate",195,5.4,30.9,5.2],
+  ["Spicy corn chaat","1 plate",480,4.6,11.4,46.5],
+  ["Jackfruit fritters (Ponsa mulik/Kathal ka pakora)","1 mulik/fritter",598,2.3,24.0,54.4],
+  ["Banana chips (Kele ke chips)","1 bowl",666,0.4,7.3,70.5],
+  ["Wheat cake","1 piece",315,4.8,41.1,14.9],
+  ["Mango cheesecake","1 slice",152,2.4,20.1,7.3],
+  ["Carrot cake (Gajar ka cake)","1 slice",256,5.6,36.0,10.3],
+  ["Semolina cake (Suji/Rava cake)","1 square",374,6.6,31.3,25.2],
+  ["Finger millet cake (Ragi cake)","1 slice",279,4.0,38.9,12.3],
+  ["Honey cake","1 slice",334,3.1,49.0,14.7],
+  ["Almond cardamom cake (Badam elaichi cake)","1 slice",356,7.2,34.5,21.4],
+  ["Tutti frutti cake","1 cake",348,4.5,52.9,12.7],
+  ["Ham and Bean soup","1 bowl",96,10.6,4.2,4.2],
+  ["Whey soup","1 bowl",69,3.5,6.3,3.3],
+  ["Bottle gourd soup (Ghiya/Lauki soup)","1 bowl",23,0.5,1.2,1.8],
+  ["Baked potato soup","1 bowl",147,5.7,5.8,11.2],
+  ["Pumpkin soup","1 bowl",40,0.5,2.1,3.2],
+  ["Sweet corn soup","1 bowl",32,1.0,3.6,1.6],
+  ["Paneer soup","1 bowl",48,3.2,2.4,2.8],
+  ["Curried Cauliflower soup","1 cup",37,6.7,3.1,9.8],
+  ["Millet soup","1 bowl",56,11.3,8.2,12.6],
+  ["Lemon coriander soup","1 bowl",108,2.3,10.3,6.3],
+  ["Garlic soup","1 bowl",195,2.4,7.0,17.6],
+  ["Dal makhani","1 bowl",74,3.3,8.0,3.1],
+  ["Dalma","1 bowl",119,4.9,15.0,4.6],
+  ["Split bengal gram dal (Channa dal)","1 bowl",100,4.2,10.0,4.6],
+  ["Horsegram dal (Kulthi dal)","1 bowl",56,2.9,8.2,1.1],
+  ["Panchmel dal","1 bowl",111,4.6,10.7,5.4],
+  ["Dal dhokli","1 bowl",69,3.0,8.6,2.5],
+  ["Gujarati handvo","1 cake",207,8.2,31.9,4.8],
+  ["Sev (Omapodi/Karapusa)","1 plate",609,5.1,12.9,60.1],
+  ["Papdi","1 plate",709,1.8,12.9,72.1],
+  ["Jowar dosa","1 dosa",294,8.5,40.5,10.3],
+  ["Bread roll","1 bread roll",435,2.9,16.1,40.2],
+  ["Soya seekh kebab","1 kabab",115,5.4,10.0,5.9],
+  ["Classic seasoned black beans","1 bowl",29,8.0,7.7,8.3],
+  ["Maa chaane ki dal","1 bowl",345,19.8,43.1,9.5],
+  ["Garlic chickpea soup (Lahasun aur chane ka shoraba)","1 soup bowl",90,4.5,13.9,2.0],
+  ["White sauce (thin)","1 ",115,3.3,6.6,8.4],
+  ["White sauce (medium)","1 ",151,3.4,8.0,11.8],
+  ["White sauce (thick)","1 ",210,3.4,10.2,17.2],
+  ["Cheese sauce","1 ",195,7.7,7.1,15.1],
+  ["Egg sauce","1 ",147,6.0,5.9,11.1],
+  ["Mushroom sauce","1 ",138,3.4,7.3,10.5],
+  ["Mustard sauce","1 ",159,4.0,8.3,12.2],
+  ["Brown sauce","1 ",109,11.9,5.4,23.7],
+  ["Classic italian pasta","1 ",42,0.6,4.4,2.5],
+  ["Pasta spinach sauce","1 ",85,1.8,1.8,7.9],
+  ["Pasta cheese sauce","1 ",149,4.3,9.0,10.8],
+  ["Mayonnaise","1 ",775,1.9,1.6,84.5],
+  ["Low calorie quick mayonnaise","1 ",243,1.4,4.7,24.4],
+  ["Thousand island dressing","1 ",408,1.4,4.5,42.9],
+  ["Curd dip","1 ",80,5.0,8.0,3.4],
+  ["Short crust pastry","1 ",422,6.1,44.7,24.0],
+  ["Choux pastry","1 ",222,5.5,16.2,15.0],
+  ["Flaky pastry","1 ",444,4.7,33.6,32.0],
+  ["Sponge cake","1 ",254,9.2,44.6,4.7],
+  ["Glace icing","1 ",324,0.0,86.3,0.0],
+  ["Royal icing","1 ",333,1.7,86.5,0.0],
+  ["American frosting","1 ",258,1.1,67.5,0.0],
+  ["Gum icing","1 ",223,5.9,53.2,0.0],
+  ["Channa murmura premix","1 ",339,10.6,72.6,3.3],
+  ["Cracked wheat and green gram dal premix (Dalia moong dal premix)","1 ",362,15.9,64.8,5.1],
+  ["Rice flakes and roasted channa","1 ",333,10.6,71.9,2.9],
+  ["Spinach soup in milk","1 ",57,2.9,4.0,3.2],
+  ["Vegetable soup","1 ",55,2.2,7.6,1.6],
+  ["Mashed banana with milk","1 ",95,2.5,14.6,3.0],
+  ["Poha with curd (Poha aur dahi)","1 ",173,6.0,26.7,4.7],
+  ["Potato with curd","1 ",73,3.2,12.0,1.3],
+  ["Sweet wheat porridge (Sweet dalia)","1 ",141,5.1,23.8,2.8],
+  ["Vegetable khichdi/khichri","1 ",143,5.6,19.6,4.5],
+  ["Moong dal mixture","1 ",159,4.6,33.9,1.0],
+  ["Cracked wheat khichri/khichdi (Dalia khichri/khichdi)","1 ",167,7.6,22.4,5.5],
+  ["Stewed apple","1 ",92,0.2,22.5,0.4],
+  ["Lemon squash (Nimbu ka squash)","1 ",185,0.1,48.9,0.1],
+  ["Orange squash (Santre ka squash)","1 ",193,0.2,50.9,0.0],
+  ["Lichi squash","1 ",198,0.3,52.0,0.1],
+  ["Mango squash (Aam ka squash)","1 ",195,0.2,51.0,0.2],
+  ["Pineapple squash (Ananas ka squash)","1 ",195,0.2,51.3,0.1],
+  ["Lemon and ginger squash (Nimbu aur adrak ka squash)","1 ",170,0.5,44.1,0.2],
+  ["Apple jam (Seb ka murabba)","1 ",189,0.1,48.6,0.3],
+  ["Plum jam (Aloo bukhara jam)","1 ",179,0.3,46.2,0.2],
+  ["Pineapple jam","1 ",149,0.3,38.3,0.1],
+  ["Guava jelly (Amrood ki jelly)","1 ",116,1.1,28.2,0.2],
+  ["Orange marmalade (Santray ka murabba)","1 ",104,0.7,25.9,0.1],
+  ["Carrot murabba (Gajar ka murabba)","1 ",175,0.3,45.6,0.2],
+  ["Gooseberry marmalade (Amla murabba)","1 ",123,0.1,32.3,0.0],
+  ["Ginger candy (Adrak ki candy)","1 ",196,0.7,50.4,0.3],
+  ["Mango pickle (Aam ka achaar)","1 ",192,1.6,8.1,17.9],
+  ["Mixed vegetable pickle (Sabziyoon ka achaar)","1 ",211,1.9,7.5,19.7],
+  ["Sweet lemon pickle (Neembu ka meetha achaar)","1 ",70,1.2,16.9,0.2],
+  ["Plum chutney (Aloo bukhara ki chutney)","1 ",177,0.5,45.0,0.3],
+  ["Raw mango chutney (Kachhe aam/Kairi ki chutney)","1 ",193,0.5,49.9,0.2],
+  ["Tomato sauce","1 ",34,0.8,7.2,0.3],
+  ["Tomato puree","1 ",21,0.8,3.7,0.2],
+  ["Garam masala","1 ",254,9.9,26.2,11.0],
+  ["Chat masala","1 ",223,8.2,23.9,9.9],
+  ["Kashmiri masala","1 ",389,8.3,23.2,31.0],
+  ["Rasam powder (Rasam masala)","1 ",268,12.0,25.2,11.8],
+  ["Sambar powder (Sambar masala)","1 ",297,12.5,23.4,15.6],
+  ["Tartare sauce","1 ",611,1.4,3.0,66.1],
+  ["Barbeque sauce","1 ",122,1.0,20.5,4.5],
+  ["Bread sauce","1 ",111,3.5,8.7,7.0],
+  ["Green chilli sauce","1 ",46,1.2,7.4,0.3],
+  ["Home made plain noodles","1 ",239,6.2,44.5,3.6],
+  ["Dal moong","1 ",44,2.2,4.9,1.6],
+  ["Cumin seeds baghar (Jeera baghar/tadka)","1 ",737,3.3,5.2,78.8],
+  ["Onion tomato baghar (Pyaaz tamatar ka tadka)","1 ",138,1.3,6.2,12.0],
+  ["Mustard seeds baghar (Mustard seed tadka)","1 ",553,4.7,10.4,54.3],
+  ["Hot cherry sauce","1 ",253,0.1,68.0,0.1],
+  ["Apple jelly (Seb ki jelly)","1 ",152,0.1,39.4,0.2],
+  ["Marmalade (Murabba)","1 ",144,0.2,37.6,0.0],
+  ["Plum squash (Aloo bukhara squash)","1 ",211,0.2,55.5,0.1],
+  ["Lemon green chilli pickle (Nimboo aur hari mirch ka achaar)","1 ",14,0.8,2.1,0.2],
+  ["Brinjal pickle (Baingan ka achaar)","1 ",139,2.2,4.2,13.0],
+  ["Sweet and sour tomato pickle (Khatta meetha tamatar ka achaar)","1 ",61,1.3,6.5,3.2],
+  ["Jhatpat achar with carrot (Jhatpat achaar gajar ke saath)","1 ",91,2.0,6.3,6.5],
+  ["Tomato chutney (Tamatar ki chutney)","1 ",176,1.0,31.9,6.0],
+  ["Tomato ketchup","1 ",33,0.9,6.5,0.3],
+  ["Bengal 5 Spice Blend (Panch Phoran)","1 ",290,18.3,20.0,22.2]
+];
+
 
     /* ==========================================================================
-       9 DISTINCT REGIONAL & TARGETED INDIAN MEAL PLANS
+       STORAGE KEYS & STATE MANAGEMENT
        ========================================================================== */
-    const ALL_9_MEAL_PLANS = [
-      {
-        id: "bihari",
-        title: "Bihari Paramparik Swad",
-        tag: "Authentic Bihari",
-        badgeClass: "badge-bihari",
-        desc: "Gut-healthy sattu, slow-roasted chana, smoked chokha, and regional Bihar comfort food.",
-        items_preview: "🌅 Breakfast: 2 Sattu Parathas with Baingan-Tamatar Chokha\n🍛 Lunch: 2 Litti Chokha with Desi Ghee + Chana Dal Tadka\n☕️ Snacks: Bihari Jhalmuri (Roasted Chana & Murmura) + Hot Chai\n🍲 Dinner: 2 Phulkas + Lauki Chana Dal + Crispy Bihari Aloo Bhujia\n🌙 Midnight: Warm Haldi Doodh",
-        meals: {
-          breakfast: [{"id":"b1","name":"Bihari Sattu Paratha (with green chilli & dhaniya)","portion":"2 pieces","calories":420,"protein":14,"carbs":58,"fat":12,"qty":1,"origin":"PLAN"}],
-          lunch: [
-            {"id":"b2","name":"Litti Chokha with Desi Ghee","portion":"2 pieces + chokha","calories":440,"protein":12,"carbs":64,"fat":14,"qty":1,"origin":"PLAN"},
-            {"id":"b3","name":"Yellow Dal Tadka (Arhar/Toor)","portion":"1 katori","calories":150,"protein":7.5,"carbs":20,"fat":4.5,"qty":1,"origin":"PLAN"}
-          ],
-          snacks: [
-            {"id":"b4","name":"Bihari Jhalmuri (Roasted chana & murmura)","portion":"1 bowl","calories":140,"protein":5.5,"carbs":25,"fat":2.5,"qty":1,"origin":"PLAN"},
-            {"id":"b5","name":"Hot tea (Garam Chai)","portion":"1 tea cup","calories":34,"protein":0.8,"carbs":5.4,"fat":1.1,"qty":1,"origin":"PLAN"}
-          ],
-          dinner: [
-            {"id":"b6","name":"Roti / Phulka (plain)","portion":"2 pieces","calories":170,"protein":6,"carbs":34,"fat":1,"qty":1,"origin":"PLAN"},
-            {"id":"b7","name":"Bihari Lauki Chana Dal","portion":"1 katori","calories":145,"protein":7,"carbs":21,"fat":3.5,"qty":1,"origin":"PLAN"},
-            {"id":"b8","name":"Bihari Aloo Bhujia (crisp dry sabzi)","portion":"1 katori","calories":180,"protein":2.5,"carbs":24,"fat":8.5,"qty":1,"origin":"PLAN"}
-          ],
-          midnight: [{"id":"b9","name":"Haldi Doodh (Warm)","portion":"1 cup","calories":130,"protein":4,"carbs":12,"fat":4,"qty":1,"origin":"PLAN"}]
-        }
-      },
-      {
-        id: "north",
-        title: "Classic Ghar Ka Khana",
-        tag: "North Indian Balanced",
-        badgeClass: "badge-api",
-        desc: "Timeless home-cooked comfort with balanced macros, whole wheat, and home-style curd.",
-        items_preview: "🌅 Breakfast: 2 Aloo Parathas with curd\n🍛 Lunch: 3 Rotis, Dal Tadka, Jeera Rice, Cucumber salad\n☕️ Snacks: 1 cup Masala Chai + Roasted Makhana\n🍲 Dinner: 2 Rotis + Paneer Butter Masala\n🌙 Midnight: Warm Haldi Doodh",
-        meals: {
-          breakfast: [
-            {"id":"p1","name":"Aloo Paratha with Butter","portion":"2 pieces","calories":580,"protein":11,"carbs":76,"fat":26,"qty":1,"origin":"PLAN"},
-            {"id":"p1b","name":"Curd / Dahi (Whole milk)","portion":"1 katori","calories":100,"protein":4,"carbs":6,"fat":6.5,"qty":1,"origin":"PLAN"}
-          ],
-          lunch: [
-            {"id":"p2","name":"Roti / Phulka (plain)","portion":"3 pieces","calories":255,"protein":9,"carbs":51,"fat":1.5,"qty":1,"origin":"PLAN"},
-            {"id":"p3","name":"Yellow Dal Tadka (Arhar/Toor)","portion":"1 katori","calories":150,"protein":7.5,"carbs":20,"fat":4.5,"qty":1,"origin":"PLAN"},
-            {"id":"p4","name":"Jeera Rice","portion":"1 katori","calories":215,"protein":3.8,"carbs":40,"fat":4.5,"qty":1,"origin":"PLAN"}
-          ],
-          snacks: [
-            {"id":"p5","name":"Masala Chai (with milk & sugar)","portion":"1 cup","calories":115,"protein":3.2,"carbs":16,"fat":4.2,"qty":1,"origin":"PLAN"},
-            {"id":"p6","name":"Roasted Makhana (Foxnuts)","portion":"1 bowl","calories":110,"protein":3,"carbs":20,"fat":2,"qty":1,"origin":"PLAN"}
-          ],
-          dinner: [
-            {"id":"p7","name":"Paneer Butter Masala","portion":"1 katori","calories":340,"protein":11,"carbs":12,"fat":28,"qty":1,"origin":"PLAN"},
-            {"id":"p8","name":"Roti / Phulka (plain)","portion":"2 pieces","calories":170,"protein":6,"carbs":34,"fat":1,"qty":1,"origin":"PLAN"}
-          ],
-          midnight: [{"id":"p9","name":"Haldi Doodh (Warm)","portion":"1 cup","calories":130,"protein":4,"carbs":12,"fat":4,"qty":1,"origin":"PLAN"}]
-        }
-      },
-      {
-        id: "protein_veg",
-        title: "High Protein Desi Vegetarian",
-        tag: "30%+ Protein",
-        badgeClass: "badge-db",
-        desc: "Plant-powered muscle preservation and satiety built on paneer, chana, and besan chillas.",
-        items_preview: "🌅 Breakfast: 2 Besan Chillas + 60g Paneer Bhurji\n🍛 Lunch: 2 Rotis + Chole Masala + Curd\n☕️ Snacks: 1 bowl Sprouted Kala Chana Chaat\n🍲 Dinner: Palak Paneer + 2 Phulkas\n🌙 Midnight: 1 bowl Roasted Makhana",
-        meals: {
-          breakfast: [
-            {"id":"hp1","name":"Besan Chilla","portion":"2 pieces","calories":280,"protein":12.4,"carbs":36,"fat":9,"qty":1,"origin":"PLAN"},
-            {"id":"hp1b","name":"Paneer Bhurji","portion":"1 small bowl (60g)","calories":130,"protein":8,"carbs":3,"fat":10,"qty":1,"origin":"PLAN"}
-          ],
-          lunch: [
-            {"id":"hp2","name":"Roti / Phulka (plain)","portion":"2 pieces","calories":170,"protein":6,"carbs":34,"fat":1,"qty":1,"origin":"PLAN"},
-            {"id":"hp3","name":"Chole Masala (Chickpeas)","portion":"1 katori","calories":240,"protein":9,"carbs":32,"fat":8,"qty":1,"origin":"PLAN"},
-            {"id":"hp4","name":"Curd / Dahi (Whole milk)","portion":"1 katori","calories":100,"protein":4,"carbs":6,"fat":6.5,"qty":1,"origin":"PLAN"}
-          ],
-          snacks: [{"id":"hp5","name":"Kala Chana Chaat","portion":"1 bowl","calories":190,"protein":8.8,"carbs":28,"fat":3.2,"qty":1,"origin":"PLAN"}],
-          dinner: [
-            {"id":"hp6","name":"Palak Paneer","portion":"1 katori","calories":230,"protein":10,"carbs":8,"fat":18,"qty":1,"origin":"PLAN"},
-            {"id":"hp7","name":"Roti / Phulka (plain)","portion":"2 pieces","calories":170,"protein":6,"carbs":34,"fat":1,"qty":1,"origin":"PLAN"}
-          ],
-          midnight: [{"id":"hp8","name":"Roasted Makhana (Foxnuts)","portion":"1 bowl","calories":110,"protein":3,"carbs":20,"fat":2,"qty":1,"origin":"PLAN"}]
-        }
-      },
-      {
-        id: "south",
-        title: "South Indian Fermented & Light",
-        tag: "Gut Microbiome",
-        badgeClass: "badge-db",
-        desc: "Naturally fermented, gut-soothing probiotic nutrition with digestive spices and steamed staples.",
-        items_preview: "🌅 Breakfast: 3 Steamed Idlis + Vegetable Sambar\n🍛 Lunch: Steamed Rice + Tomato Rasam + Curd Rice with tadka\n☕️ Snacks: 1 Glass Spiced Chaas (Neer Mor)\n🍲 Dinner: 1 Masala Dosa + Vegetable Sambar\n🌙 Midnight: 1 cup Warm Haldi Doodh",
-        meals: {
-          breakfast: [
-            {"id":"si1","name":"Steamed Idli","portion":"3 pieces","calories":195,"protein":6,"carbs":42,"fat":0.75,"qty":1,"origin":"PLAN"},
-            {"id":"si2","name":"Sambar (vegetable)","portion":"1 bowl","calories":110,"protein":4.2,"carbs":18,"fat":2.6,"qty":1,"origin":"PLAN"}
-          ],
-          lunch: [
-            {"id":"si3","name":"Steamed Basmati Rice","portion":"1 katori","calories":180,"protein":3.5,"carbs":39,"fat":0.4,"qty":1,"origin":"PLAN"},
-            {"id":"si4","name":"Tomato Rasam","portion":"1 bowl","calories":45,"protein":1.2,"carbs":7.5,"fat":1.1,"qty":1,"origin":"PLAN"},
-            {"id":"si5","name":"Curd rice with tadka","portion":"1 bowl","calories":240,"protein":5.5,"carbs":38,"fat":7.5,"qty":1,"origin":"PLAN"}
-          ],
-          snacks: [{"id":"si6","name":"Spiced Chaas (Buttermilk)","portion":"1 glass","calories":45,"protein":2.2,"carbs":4.8,"fat":1.8,"qty":1,"origin":"PLAN"}],
-          dinner: [
-            {"id":"si7","name":"Masala Dosa","portion":"1 piece","calories":340,"protein":6,"carbs":48,"fat":14,"qty":1,"origin":"PLAN"},
-            {"id":"si8","name":"Sambar (vegetable)","portion":"1 bowl","calories":110,"protein":4.2,"carbs":18,"fat":2.6,"qty":1,"origin":"PLAN"}
-          ],
-          midnight: [{"id":"si9","name":"Haldi Doodh (Warm)","portion":"1 cup","calories":130,"protein":4,"carbs":12,"fat":4,"qty":1,"origin":"PLAN"}]
-        }
-      },
-      {
-        id: "nonveg",
-        title: "Lean Desi Non-Veg Muscle",
-        tag: "High Protein Non-Veg",
-        badgeClass: "badge-api",
-        desc: "Clean animal protein paired with low-GI carbs, fresh salad, and lean chicken/boiled eggs.",
-        items_preview: "🌅 Breakfast: 2 Boiled Eggs + 2 Phulkas\n🍛 Lunch: Chicken Curry (Home-style) + 1 cup Steamed Rice\n☕️ Snacks: 1 bowl Boiled Kala Chana Chaat\n🍲 Dinner: Tandoori Chicken (1.5 leg quarter) + 1 Phulka\n🌙 Midnight: 1 cup Warm Haldi Doodh",
-        meals: {
-          breakfast: [
-            {"id":"nv1","name":"Boiled Eggs (2 pcs)","portion":"2 eggs","calories":155,"protein":13,"carbs":1.1,"fat":10.6,"qty":1,"origin":"PLAN"},
-            {"id":"nv1b","name":"Roti / Phulka (plain)","portion":"2 pieces","calories":170,"protein":6,"carbs":34,"fat":1,"qty":1,"origin":"PLAN"}
-          ],
-          lunch: [
-            {"id":"nv2","name":"Chicken Curry (Home-style)","portion":"1 katori","calories":240,"protein":22,"carbs":5,"fat":14,"qty":1,"origin":"PLAN"},
-            {"id":"nv3","name":"Steamed Basmati Rice","portion":"1 katori","calories":180,"protein":3.5,"carbs":39,"fat":0.4,"qty":1,"origin":"PLAN"}
-          ],
-          snacks: [{"id":"nv4","name":"Kala Chana Chaat","portion":"1 bowl","calories":190,"protein":8.8,"carbs":28,"fat":3.2,"qty":1,"origin":"PLAN"}],
-          dinner: [
-            {"id":"nv5","name":"Tandoori Chicken","portion":"1 piece (150g)","calories":260,"protein":30,"carbs":3,"fat":14,"qty":1.5,"origin":"PLAN"},
-            {"id":"nv6","name":"Roti / Phulka (plain)","portion":"1 piece","calories":85,"protein":3,"carbs":17,"fat":0.5,"qty":1,"origin":"PLAN"}
-          ],
-          midnight: [{"id":"nv7","name":"Haldi Doodh (Warm)","portion":"1 cup","calories":130,"protein":4,"carbs":12,"fat":4,"qty":1,"origin":"PLAN"}]
-        }
-      },
-      {
-        id: "satvik",
-        title: "Satvik Gut Healer & Detox",
-        tag: "Ayurvedic Cleanse",
-        badgeClass: "badge-db",
-        desc: "Tridosha-balancing, light on digestion, rich in cumin, moong lentils, and soothing churnas.",
-        items_preview: "🌅 Breakfast: Kanda Poha with Peanuts & Curry leaves\n🍛 Lunch: Moong Dal Khichdi with Ghee + Fresh Curd\n☕️ Snacks: 1 Glass Spiced Chaas (Buttermilk)\n🍲 Dinner: Light Moong Dal + 2 Phulkas\n🌙 Midnight: Warm Garam Chai / Herbal Infusion",
-        meals: {
-          breakfast: [{"id":"sv1","name":"Kanda Poha with Peanuts","portion":"1 bowl","calories":250,"protein":5,"carbs":42,"fat":7.5,"qty":1,"origin":"PLAN"}],
-          lunch: [
-            {"id":"sv2","name":"Moong Dal Khichdi with Ghee","portion":"1 bowl","calories":260,"protein":8.5,"carbs":42,"fat":6.5,"qty":1,"origin":"PLAN"},
-            {"id":"sv3","name":"Curd / Dahi (Whole milk)","portion":"1 katori","calories":100,"protein":4,"carbs":6,"fat":6.5,"qty":1,"origin":"PLAN"}
-          ],
-          snacks: [{"id":"sv4","name":"Spiced Chaas (Buttermilk)","portion":"1 glass","calories":45,"protein":2.2,"carbs":4.8,"fat":1.8,"qty":1,"origin":"PLAN"}],
-          dinner: [
-            {"id":"sv5","name":"Moong Dal (Home-style)","portion":"1 katori","calories":125,"protein":8,"carbs":18,"fat":2.5,"qty":1,"origin":"PLAN"},
-            {"id":"sv6","name":"Roti / Phulka (plain)","portion":"2 pieces","calories":170,"protein":6,"carbs":34,"fat":1,"qty":1,"origin":"PLAN"}
-          ],
-          midnight: [{"id":"sv7","name":"Hot tea (Garam Chai)","portion":"1 tea cup","calories":34,"protein":0.8,"carbs":5.4,"fat":1.1,"qty":1,"origin":"PLAN"}]
-        }
-      },
-      {
-        id: "student",
-        title: "Quick Working Professional / Student",
-        tag: "15-Min Prep",
-        badgeClass: "badge-custom",
-        desc: "Zero-fuss batch cooking, simple one-pot pulaos, and fast protein wraps for busy workdays.",
-        items_preview: "🌅 Breakfast: Rava Upma with roasted peanuts\n🍛 Lunch: 2 Phulkas + Paneer Bhurji\n☕️ Snacks: Bhel Puri + Masala Chai\n🍲 Dinner: 1-Pot Vegetable Pulao + Fresh Curd\n🌙 Midnight: Warm Haldi Doodh",
-        meals: {
-          breakfast: [{"id":"st1","name":"Rava Upma","portion":"1 bowl","calories":210,"protein":5,"carbs":34,"fat":6,"qty":1,"origin":"PLAN"}],
-          lunch: [
-            {"id":"st2","name":"Roti / Phulka (plain)","portion":"2 pieces","calories":170,"protein":6,"carbs":34,"fat":1,"qty":1,"origin":"PLAN"},
-            {"id":"st3","name":"Paneer Bhurji","portion":"1 katori","calories":220,"protein":12,"carbs":6,"fat":17,"qty":1,"origin":"PLAN"}
-          ],
-          snacks: [
-            {"id":"st4","name":"Bhel puri","portion":"1 plate","calories":210,"protein":4.8,"carbs":38,"fat":4.5,"qty":1,"origin":"PLAN"},
-            {"id":"st5","name":"Masala Chai (with milk & sugar)","portion":"1 cup","calories":115,"protein":3.2,"carbs":16,"fat":4.2,"qty":1,"origin":"PLAN"}
-          ],
-          dinner: [
-            {"id":"st6","name":"Vegetable Pulao","portion":"1 plate","calories":310,"protein":6.2,"carbs":54,"fat":7.8,"qty":1,"origin":"PLAN"},
-            {"id":"st7","name":"Curd / Dahi (Whole milk)","portion":"1 katori","calories":100,"protein":4,"carbs":6,"fat":6.5,"qty":1,"origin":"PLAN"}
-          ],
-          midnight: [{"id":"st8","name":"Haldi Doodh (Warm)","portion":"1 cup","calories":130,"protein":4,"carbs":12,"fat":4,"qty":1,"origin":"PLAN"}]
-        }
-      },
-      {
-        id: "keto",
-        title: "Desi Low-Carb / Keto",
-        tag: "Belly Fat Shred",
-        badgeClass: "badge-custom",
-        desc: "Minimized simple starches to flatten insulin spikes and accelerate visceral lipolysis.",
-        items_preview: "🌅 Breakfast: 1.5 katori Paneer Bhurji\n🍛 Lunch: Paneer Tikka (1 plate) + Fresh Curd\n☕️ Snacks: 1 bowl Roasted Makhana (Foxnuts)\n🍲 Dinner: Palak Paneer (1 katori) + 1 Missi Roti\n🌙 Midnight: Hot Green Tea / Garam Chai (no sugar)",
-        meals: {
-          breakfast: [{"id":"kt1","name":"Paneer Bhurji","portion":"1 katori","calories":220,"protein":12,"carbs":6,"fat":17,"qty":1.5,"origin":"PLAN"}],
-          lunch: [
-            {"id":"kt2","name":"Paneer tikka","portion":"1 plate","calories":220,"protein":14,"carbs":7,"fat":15,"qty":1,"origin":"PLAN"},
-            {"id":"kt3","name":"Curd / Dahi (Whole milk)","portion":"1 katori","calories":100,"protein":4,"carbs":6,"fat":6.5,"qty":1,"origin":"PLAN"}
-          ],
-          snacks: [{"id":"kt4","name":"Roasted Makhana (Foxnuts)","portion":"1 bowl","calories":110,"protein":3,"carbs":20,"fat":2,"qty":1,"origin":"PLAN"}],
-          dinner: [
-            {"id":"kt5","name":"Palak Paneer","portion":"1 katori","calories":230,"protein":10,"carbs":8,"fat":18,"qty":1,"origin":"PLAN"},
-            {"id":"kt6","name":"Missi roti","portion":"1 piece","calories":145,"protein":5.2,"carbs":22,"fat":4.1,"qty":1,"origin":"PLAN"}
-          ],
-          midnight: [{"id":"kt7","name":"Hot tea (Garam Chai)","portion":"1 tea cup","calories":34,"protein":0.8,"carbs":5.4,"fat":1.1,"qty":1,"origin":"PLAN"}]
-        }
-      },
-      {
-        id: "maharashtrian",
-        title: "Maharashtrian & Regional Balanced",
-        tag: "Traditional Millets",
-        badgeClass: "badge-db",
-        desc: "Rich in gluten-free Jowar Bhakri, regional pitla, high-fiber poha, and probiotic dahi.",
-        items_preview: "🌅 Breakfast: Kanda Poha with Peanuts + Curd\n🍛 Lunch: 2 Jowar Bhakris + Yellow Dal Tadka\n☕️ Snacks: 2 pieces Khaman Dhokla + Masala Chai\n🍲 Dinner: Moong Dal Khichdi with Ghee + Curd\n🌙 Midnight: Warm Haldi Doodh",
-        meals: {
-          breakfast: [
-            {"id":"mh1","name":"Kanda Poha with Peanuts","portion":"1 bowl","calories":250,"protein":5,"carbs":42,"fat":7.5,"qty":1,"origin":"PLAN"},
-            {"id":"mh2","name":"Curd / Dahi (Whole milk)","portion":"1 katori","calories":100,"protein":4,"carbs":6,"fat":6.5,"qty":1,"origin":"PLAN"}
-          ],
-          lunch: [
-            {"id":"mh3","name":"Jowar roti / Bhakri","portion":"2 pieces","calories":280,"protein":7.6,"carbs":58,"fat":2.4,"qty":1,"origin":"PLAN"},
-            {"id":"mh4","name":"Yellow Dal Tadka (Arhar/Toor)","portion":"1 katori","calories":150,"protein":7.5,"carbs":20,"fat":4.5,"qty":1,"origin":"PLAN"}
-          ],
-          snacks: [
-            {"id":"mh5","name":"Dhokla (Khaman)","portion":"2 pieces","calories":120,"protein":4.5,"carbs":21,"fat":2,"qty":1,"origin":"PLAN"},
-            {"id":"mh6","name":"Masala Chai (with milk & sugar)","portion":"1 cup","calories":115,"protein":3.2,"carbs":16,"fat":4.2,"qty":1,"origin":"PLAN"}
-          ],
-          dinner: [
-            {"id":"mh7","name":"Moong Dal Khichdi with Ghee","portion":"1 bowl","calories":260,"protein":8.5,"carbs":42,"fat":6.5,"qty":1,"origin":"PLAN"},
-            {"id":"mh8","name":"Curd / Dahi (Whole milk)","portion":"1 katori","calories":100,"protein":4,"carbs":6,"fat":6.5,"qty":1,"origin":"PLAN"}
-          ],
-          midnight: [{"id":"mh9","name":"Haldi Doodh (Warm)","portion":"1 cup","calories":130,"protein":4,"carbs":12,"fat":4,"qty":1,"origin":"PLAN"}]
-        }
-      }
-    ];
-
-    /* ==========================================================================
-       STORAGE KEYS & STATE
-       ========================================================================== */
-    const STORAGE_KEY_LOGS = "desicalorie_5yr_logs_v10";
-    const STORAGE_KEY_GOALS = "desicalorie_goals_v10";
-    const STORAGE_KEY_CUSTOM_FOODS = "desicalorie_custom_foods_v10";
-    const STORAGE_KEY_CACHED_API = "desicalorie_cached_api_foods_v10";
-    const STORAGE_KEY_KEYS = "desicalorie_apikeys_v10";
-    const STORAGE_KEY_PROFILE = "desicalorie_yoddha_v10";
+    const STORAGE_KEY_LOGS = "desicalorie_5yr_logs_v13";
+    const STORAGE_KEY_GOALS = "desicalorie_goals_v13";
+    const STORAGE_KEY_CUSTOM_FOODS = "desicalorie_custom_foods_v13";
+    const STORAGE_KEY_CACHED_API = "desicalorie_cached_api_foods_v13";
+    const STORAGE_KEY_KEYS = "desicalorie_apikeys_v13";
+    const STORAGE_KEY_PROFILE = "desicalorie_yoddha_v13";
 
     let currentDateStr = getTodayDateStr();
     let currentLogs = {};
     let customFoods = [];
-    let userGoals = { calories: 2000, protein: 75, carbs: 220, fat: 65 };
+    let userGoals = { calories: 2000, protein: 75, carbs: 220, fat: 65, sugar: 25, cholesterol: 300 };
     let yoddhaProfile = { xp: 0, claimedQuests: {} };
     let apiKeys = { ninjas: "" };
     let activeSelection = null;
@@ -1502,8 +2329,13 @@
 
         const savedGoals = localStorage.getItem(STORAGE_KEY_GOALS);
         if (savedGoals) {
-          userGoals = JSON.parse(savedGoals);
+          userGoals = { ...userGoals, ...JSON.parse(savedGoals) };
           document.getElementById("setting-goal-cal").value = userGoals.calories;
+          document.getElementById("setting-goal-pro").value = userGoals.protein || 75;
+          document.getElementById("setting-goal-carb").value = userGoals.carbs || 220;
+          document.getElementById("setting-goal-fat").value = userGoals.fat || 65;
+          document.getElementById("setting-goal-sugar").value = userGoals.sugar || 25;
+          document.getElementById("setting-goal-chol").value = userGoals.cholesterol || 300;
           document.getElementById("planner-target-cals").innerText = userGoals.calories;
         }
 
@@ -1516,7 +2348,7 @@
           document.getElementById("key-ninjas").value = apiKeys.ninjas || "";
         }
       } catch (e) {
-        console.error("Storage error:", e);
+        console.error("Storage load error:", e);
       }
     }
 
@@ -1573,31 +2405,47 @@
           }
           return streak;
         } else {
-          return 0; // Missed day -> reset to 0
+          return 0;
         }
       }
     }
 
     /* ==========================================================================
-       RENDER 9 MEAL PLANS
+       RENDER 9 MEAL PLANS WITH COMPLETE PROTEIN & CARBS
        ========================================================================== */
     function renderRecommendedPlans() {
       const container = document.getElementById("recommended-plans-list");
       const target = userGoals.calories;
 
-      container.innerHTML = ALL_9_MEAL_PLANS.map((p, idx) => `
-        <div class="card" style="margin-bottom: 12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <b style="font-size:15px;">${p.title}</b>
-            <span class="badge ${p.badgeClass}">${p.tag}</span>
+      container.innerHTML = ALL_9_MEAL_PLANS.map((p, idx) => {
+        let pTotal = 0, cTotal = 0, calTotal = 0;
+        Object.values(p.meals).forEach(items => {
+          items.forEach(it => {
+            calTotal += Math.round(it.calories * (it.qty || 1));
+            pTotal += Math.round(it.protein * (it.qty || 1));
+            cTotal += Math.round(it.carbs * (it.qty || 1));
+          });
+        });
+
+        return `
+          <div class="card" style="margin-bottom: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <b style="font-size:15px;">${p.title}</b>
+              <span class="badge ${p.badgeClass}">${p.tag}</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-sec); margin-bottom:6px;">${p.desc}</div>
+            <div style="display:flex; gap:8px; margin-bottom:8px; font-size:11px; font-weight:700;">
+              <span class="badge badge-macro">Total: ${calTotal} kcal</span>
+              <span class="badge badge-macro">💪 P: ${pTotal}g</span>
+              <span class="badge badge-macro">🌾 C: ${cTotal}g</span>
+            </div>
+            <div style="font-size:12px; white-space:pre-line; color:#4B5563; margin-bottom:12px; line-height:1.5; background:var(--surface-secondary); padding:8px 10px; border-radius:var(--radius-sm);">${p.items_preview}</div>
+            <button class="btn-submit" style="margin:0; padding:10px; font-size:13px;" onclick="applyQuickPlan(${idx})">
+              Apply Plan (${target} kcal Target)
+            </button>
           </div>
-          <div style="font-size:12px; color:var(--text-sec); margin-bottom:8px;">${p.desc}</div>
-          <div style="font-size:12px; white-space:pre-line; color:#4B5563; margin-bottom:12px; line-height:1.5; background:var(--surface-secondary); padding:8px 10px; border-radius:var(--radius-sm);">${p.items_preview}</div>
-          <button class="btn-submit" style="margin:0; padding:10px; font-size:13px;" onclick="applyQuickPlan(${idx})">
-            Apply Plan (${target} kcal Target)
-          </button>
-        </div>
-      `).join("");
+        `;
+      }).join("");
     }
 
     function applyQuickPlan(planIdx) {
@@ -1605,7 +2453,6 @@
       if (!selectedPlan) return;
 
       const dayData = getDayLog(currentDateStr);
-      // Deep clone items so each log entry is independent
       dayData.meals.breakfast = JSON.parse(JSON.stringify(selectedPlan.meals.breakfast || []));
       dayData.meals.lunch = JSON.parse(JSON.stringify(selectedPlan.meals.lunch || []));
       dayData.meals.snacks = JSON.parse(JSON.stringify(selectedPlan.meals.snacks || []));
@@ -1633,7 +2480,9 @@
         protein: item[3],
         carbs: item[4],
         fat: item[5],
-        origin: item[0].includes("Bihari") || item[0].includes("Litti") ? "BIHARI" : "INDB"
+        sugar: item[6] !== undefined ? item[6] : 0,
+        cholesterol: item[7] !== undefined ? item[7] : 0,
+        origin: (item[0].includes("Bihari") || item[0].includes("Litti")) ? "BIHARI" : "INDB"
       }));
       return [...customFoods, ...defaultList];
     }
@@ -1644,7 +2493,7 @@
       const allList = getAllDatabaseFoods();
 
       document.getElementById("db-total-count-lbl").innerText = 
-        `${allList.length} total dishes stored (${customFoods.length} custom, ${ANUVAAD_INDB_DATABASE.length} preloaded)`;
+        `${allList.length} total dishes stored (${customFoods.length} custom, ${ANUVAAD_INDB_DATABASE.length} embedded)`;
 
       const matches = allList.filter(item => 
         item.name.toLowerCase().includes(query) || item.portion.toLowerCase().includes(query)
@@ -1667,9 +2516,11 @@
               <div class="db-food-stats">
                 ${badge}
                 <span>${item.portion}</span> • 
-                <span>P: <b>${item.protein}g</b></span> • 
-                <span>C: <b>${item.carbs}g</b></span> • 
+                <span class="badge badge-macro">P: <b>${item.protein}g</b></span>
+                <span class="badge badge-macro">C: <b>${item.carbs}g</b></span>
                 <span>F: <b>${item.fat}g</b></span>
+                <span>🍬 <b>${item.sugar || 0}g</b></span>
+                <span>🫀 <b>${item.cholesterol || 0}mg</b></span>
               </div>
             </div>
             <div style="text-align: right;">
@@ -1707,6 +2558,8 @@
       const fat = parseFloat(document.getElementById("cust-food-fat").value) || 0;
       const pro = parseFloat(document.getElementById("cust-food-pro").value) || 0;
       const carb = parseFloat(document.getElementById("cust-food-carb").value) || 0;
+      const sugar = parseFloat(document.getElementById("cust-food-sugar").value) || 0;
+      const chol = parseFloat(document.getElementById("cust-food-chol").value) || 0;
 
       if (!name || isNaN(cals) || cals <= 0) {
         showToast("Please enter a food name and valid calories.");
@@ -1721,6 +2574,8 @@
         protein: Math.round(pro * 10) / 10,
         fat: Math.round(fat * 10) / 10,
         carbs: Math.round(carb * 10) / 10,
+        sugar: Math.round(sugar * 10) / 10,
+        cholesterol: Math.round(chol),
         origin: "CUSTOM"
       };
 
@@ -1730,13 +2585,15 @@
       renderDatabaseView();
       awardXP(20, "Added Food to Database");
       playDesiChime("quest");
-      showToast(`✓ Added "${name}" (${cals} kcal) to Database!`);
+      showToast(`✓ Added "${name}" (${cals} kcal • ${pro}g P • ${carb}g C) to Database!`);
 
       document.getElementById("cust-food-name").value = "";
       document.getElementById("cust-food-cal").value = "";
       document.getElementById("cust-food-fat").value = "";
       document.getElementById("cust-food-pro").value = "";
       document.getElementById("cust-food-carb").value = "0";
+      document.getElementById("cust-food-sugar").value = "0";
+      document.getElementById("cust-food-chol").value = "0";
     }
 
     function promptLogDbFood(food) {
@@ -1744,54 +2601,8 @@
       selectFoodItem(food);
     }
 
-    function handleCsvFileSelected(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const text = e.target.result;
-          const lines = text.split("\n");
-          if (lines.length < 2) return;
-          let count = 0;
-          lines.slice(1).forEach((line, idx) => {
-            const cols = line.split(",");
-            if (cols.length >= 8) {
-              const name = cols[1]?.replace(/['"]/g, "").trim();
-              const cal = parseFloat(cols[4]);
-              const carb = parseFloat(cols[5]) || 0;
-              const pro = parseFloat(cols[6]) || 0;
-              const fat = parseFloat(cols[7]) || 0;
-              if (name && !isNaN(cal) && cal > 0) {
-                if (!customFoods.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-                  customFoods.push({
-                    id: "csv_" + idx,
-                    name: name,
-                    portion: "100g",
-                    calories: Math.round(cal),
-                    protein: pro,
-                    carbs: carb,
-                    fat: fat,
-                    origin: "INDB"
-                  });
-                  count++;
-                }
-              }
-            }
-          });
-          persistCustomFoods();
-          renderDatabaseView();
-          showToast(`✓ Synced ${count} new dishes from Anuvaad CSV!`);
-        } catch (err) {
-          showToast("Error reading CSV file.");
-        }
-      };
-      reader.readAsText(file, "latin1");
-    }
-
     /* ==========================================================================
-       TODAY DASHBOARD RENDERING
+       TODAY DASHBOARD RENDERING: CALORIES, PROTEIN, CARBS, FAT, SUGAR & CHOL
        ========================================================================== */
     function renderTodayDashboard() {
       const isToday = (currentDateStr === getTodayDateStr());
@@ -1804,6 +2615,8 @@
       let grandTotalPro = 0;
       let grandTotalCarbs = 0;
       let grandTotalFat = 0;
+      let grandTotalSugar = 0;
+      let grandTotalChol = 0;
       let totalItemCount = 0;
 
       slots.forEach(slotKey => {
@@ -1811,6 +2624,8 @@
         container.innerHTML = "";
         const items = dayData.meals[slotKey] || [];
         let slotCalSum = 0;
+        let slotProSum = 0;
+        let slotCarbSum = 0;
 
         items.forEach((item, idx) => {
           totalItemCount++;
@@ -1818,30 +2633,40 @@
           const itemPro = Math.round((item.protein || 0) * item.qty);
           const itemCarb = Math.round((item.carbs || 0) * item.qty);
           const itemFat = Math.round((item.fat || 0) * item.qty);
+          const itemSugar = Math.round((item.sugar || 0) * item.qty * 10) / 10;
+          const itemChol = Math.round((item.cholesterol || 0) * item.qty);
 
           slotCalSum += itemCals;
+          slotProSum += itemPro;
+          slotCarbSum += itemCarb;
+
           grandTotalCals += itemCals;
           grandTotalPro += itemPro;
           grandTotalCarbs += itemCarb;
           grandTotalFat += itemFat;
+          grandTotalSugar += itemSugar;
+          grandTotalChol += itemChol;
 
           const row = document.createElement("div");
           row.className = "food-item-row";
           
           let badgeTag = `<span class="badge badge-db">INDB</span>`;
           if (item.origin === "API") badgeTag = `<span class="badge badge-api">⚡ API</span>`;
-          if (item.origin === "MISC") badgeTag = `<span class="badge badge-misc">⚡ Misc Extra</span>`;
+          if (item.origin === "MISC") badgeTag = `<span class="badge badge-misc">⚡ Misc</span>`;
           if (item.origin === "CUSTOM") badgeTag = `<span class="badge badge-custom">⭐️ Custom</span>`;
           if (item.origin === "PLAN") badgeTag = `<span class="badge badge-api">🍱 Plan</span>`;
+          if (item.origin === "BIHARI") badgeTag = `<span class="badge badge-bihari">🌾 Bihari</span>`;
 
           row.innerHTML = `
             <div>
               <div class="food-info-name">${item.name}</div>
               <div class="food-info-sub">
                 ${badgeTag}
-                <span>${item.qty} × ${item.portion || "serving"}</span>
+                <span>${item.qty} × ${item.portion || "srv"}</span>
                 <span>• ${itemCals} kcal</span>
-                <span>(P:${itemPro}g C:${itemCarb}g F:${itemFat}g)</span>
+                <span class="badge badge-macro">P: ${itemPro}g</span>
+                <span class="badge badge-macro">C: ${itemCarb}g</span>
+                <span>(F:${itemFat}g | 🍬${itemSugar}g 🫀${itemChol}mg)</span>
               </div>
             </div>
             <button class="del-btn" onclick="deleteFoodItem('${slotKey}', ${idx})">✕</button>
@@ -1850,8 +2675,10 @@
         });
 
         document.getElementById(`cals-${slotKey}`).innerText = `${slotCalSum} kcal`;
+        document.getElementById(`macros-${slotKey}`).innerText = `P: ${slotProSum}g • C: ${slotCarbSum}g`;
       });
 
+      // Calories & Gauge
       document.getElementById("consumed-cal").innerText = grandTotalCals;
       document.getElementById("items-logged-count").innerText = totalItemCount;
 
@@ -1870,17 +2697,118 @@
         remLbl.innerText = `Over Budget (${userGoals.calories})`;
       }
 
-      document.getElementById("total-protein").innerText = `${grandTotalPro}g / ${userGoals.protein}g`;
-      document.getElementById("total-carbs").innerText = `${grandTotalCarbs}g / ${userGoals.carbs}g`;
-      document.getElementById("total-fat").innerText = `${grandTotalFat}g / ${userGoals.fat}g`;
+      // Protein Progress & Goal Tracking
+      const proGoal = userGoals.protein || 75;
+      document.getElementById("protein-header-val").innerText = `${grandTotalPro}g / ${proGoal}g`;
+      const proPct = Math.min(100, Math.round((grandTotalPro / proGoal) * 100));
+      const proFill = document.getElementById("protein-progress-fill");
+      proFill.style.width = `${proPct}%`;
+      const proStatus = document.getElementById("protein-status-lbl");
+      const proRem = document.getElementById("protein-rem-lbl");
 
+      if (grandTotalPro >= proGoal) {
+        proFill.style.background = "var(--success)";
+        proStatus.style.color = "var(--success)";
+        proStatus.innerText = `✓ Goal Met (${proPct}%)`;
+        proRem.innerText = `+${grandTotalPro - proGoal}g extra`;
+      } else {
+        proFill.style.background = "var(--blue)";
+        proStatus.style.color = "var(--blue)";
+        proStatus.innerText = `${proPct}% Met`;
+        proRem.innerText = `${proGoal - grandTotalPro}g left`;
+      }
+
+      // Carbohydrates Budget / Limit Tracking
+      const carbGoal = userGoals.carbs || 220;
+      document.getElementById("carbs-header-val").innerText = `${grandTotalCarbs}g / ${carbGoal}g`;
+      const carbPct = Math.min(100, Math.round((grandTotalCarbs / carbGoal) * 100));
+      const carbFill = document.getElementById("carbs-progress-fill");
+      carbFill.style.width = `${carbPct}%`;
+      const carbStatus = document.getElementById("carbs-status-lbl");
+      const carbRem = document.getElementById("carbs-rem-lbl");
+
+      if (grandTotalCarbs > carbGoal) {
+        carbFill.style.background = "var(--danger)";
+        carbStatus.style.color = "var(--danger)";
+        carbStatus.innerText = `⚠️ Over Budget`;
+        carbRem.innerText = `+${grandTotalCarbs - carbGoal}g over`;
+      } else if (carbPct >= 85) {
+        carbFill.style.background = "var(--warning)";
+        carbStatus.style.color = "var(--warning)";
+        carbStatus.innerText = `Near Limit`;
+        carbRem.innerText = `${carbGoal - grandTotalCarbs}g left`;
+      } else {
+        carbFill.style.background = "#EAB308";
+        carbStatus.style.color = "var(--success)";
+        carbStatus.innerText = `Within Budget`;
+        carbRem.innerText = `${carbGoal - grandTotalCarbs}g left`;
+      }
+
+      // Free Sugar Limit Monitoring (25g)
+      grandTotalSugar = Math.round(grandTotalSugar * 10) / 10;
+      const sugarGoal = userGoals.sugar || 25;
+      document.getElementById("total-sugar").innerText = `${grandTotalSugar}g / ${sugarGoal}g`;
+      const sugarPct = Math.min(100, Math.round((grandTotalSugar / sugarGoal) * 100));
+      const sugarFill = document.getElementById("sugar-progress-fill");
+      sugarFill.style.width = `${sugarPct}%`;
+      const sugarStatus = document.getElementById("sugar-status-lbl");
+      const sugarRem = document.getElementById("sugar-rem-lbl");
+
+      if (grandTotalSugar > sugarGoal) {
+        sugarFill.style.background = "var(--danger)";
+        sugarStatus.style.color = "var(--danger)";
+        sugarStatus.innerText = `⚠️ Exceeded`;
+        sugarRem.innerText = `+${(grandTotalSugar - sugarGoal).toFixed(1)}g`;
+      } else if (sugarPct >= 80) {
+        sugarFill.style.background = "var(--warning)";
+        sugarStatus.style.color = "var(--warning)";
+        sugarStatus.innerText = `Near Limit`;
+        sugarRem.innerText = `${(sugarGoal - grandTotalSugar).toFixed(1)}g left`;
+      } else {
+        sugarFill.style.background = "var(--success)";
+        sugarStatus.style.color = "var(--success)";
+        sugarStatus.innerText = `Safe (≤25g)`;
+        sugarRem.innerText = `${(sugarGoal - grandTotalSugar).toFixed(1)}g left`;
+      }
+
+      // Cholesterol Limit Monitoring (300mg)
+      const cholGoal = userGoals.cholesterol || 300;
+      document.getElementById("total-chol").innerText = `${grandTotalChol}mg / ${cholGoal}mg`;
+      const cholPct = Math.min(100, Math.round((grandTotalChol / cholGoal) * 100));
+      const cholFill = document.getElementById("chol-progress-fill");
+      cholFill.style.width = `${cholPct}%`;
+      const cholStatus = document.getElementById("chol-status-lbl");
+      const cholRem = document.getElementById("chol-rem-lbl");
+
+      if (grandTotalChol > cholGoal) {
+        cholFill.style.background = "var(--danger)";
+        cholStatus.style.color = "var(--danger)";
+        cholStatus.innerText = `⚠️ Exceeded`;
+        cholRem.innerText = `+${grandTotalChol - cholGoal}mg`;
+      } else if (cholPct >= 80) {
+        cholFill.style.background = "var(--warning)";
+        cholStatus.style.color = "var(--warning)";
+        cholStatus.innerText = `Near Limit`;
+        cholRem.innerText = `${cholGoal - grandTotalChol}mg left`;
+      } else {
+        cholFill.style.background = "var(--success)";
+        cholStatus.style.color = "var(--success)";
+        cholStatus.innerText = `Safe (≤300mg)`;
+        cholRem.innerText = `${cholGoal - grandTotalChol}mg left`;
+      }
+
+      // Total Fat
+      document.getElementById("total-fat").innerText = `${grandTotalFat}g / ${userGoals.fat || 65}g`;
+
+      // Main Circle Gauge
       const circ = 2 * Math.PI * 50;
-      const pct = Math.min(grandTotalCals / userGoals.calories, 1.0);
-      const offset = circ - (pct * circ);
+      const calPct = Math.min(grandTotalCals / userGoals.calories, 1.0);
+      const offset = circ - (calPct * circ);
       const gaugeCircle = document.getElementById("gauge-circle");
       gaugeCircle.style.strokeDashoffset = offset;
       gaugeCircle.style.stroke = remaining < 0 ? "var(--danger)" : "var(--primary)";
 
+      // Streak Counters
       const liveStreak = calculateCurrentStreak();
       document.getElementById("header-streak-count").innerText = liveStreak;
       document.getElementById("yoddha-streak-display").innerText = liveStreak;
@@ -1894,7 +2822,7 @@
       showToast("Item removed.");
     }
 
-    function quickLogStaple(name, cals, pro, carb, fat, portion) {
+    function quickLogStaple(name, cals, pro, carb, fat, sugar, chol, portion) {
       const currentHour = new Date().getHours();
       let slot = "lunch";
       if (currentHour < 11) slot = "breakfast";
@@ -1912,15 +2840,17 @@
         protein: pro,
         carbs: carb,
         fat: fat,
+        sugar: sugar || 0,
+        cholesterol: chol || 0,
         qty: 1.0,
-        origin: "INDB"
+        origin: (name.includes("Bihari") || name.includes("Sattu")) ? "BIHARI" : "INDB"
       });
 
       awardXP(15, `Logged ${name}`);
       playDesiChime("log");
       persistLogs();
       renderTodayDashboard();
-      showToast(`⚡ 1-Tap Logged: ${name} to ${slot.toUpperCase()}`);
+      showToast(`⚡ 1-Tap: ${name} (P:${pro}g C:${carb}g) added to ${slot.toUpperCase()}`);
     }
 
     /* ==========================================================================
@@ -1952,7 +2882,12 @@
         <div class="food-item-row" style="cursor:pointer;" onclick="selectFoodItem(${JSON.stringify(f).replace(/"/g, '&quot;')})">
           <div>
             <div style="font-weight: 600; font-size: 13px;">${f.name}</div>
-            <div style="font-size: 11px; color: var(--text-sec);">${f.portion} • P:${f.protein}g C:${f.carbs}g F:${f.fat}g</div>
+            <div style="font-size: 11px; color: var(--text-sec); display:flex; gap:4px; margin-top:2px;">
+              <span>${f.portion} • </span>
+              <span class="badge badge-macro">P: ${f.protein}g</span>
+              <span class="badge badge-macro">C: ${f.carbs}g</span>
+              <span>• F:${f.fat}g | 🍬${f.sugar || 0}g</span>
+            </div>
           </div>
           <div style="font-weight: 700; color: var(--primary); font-size: 13px;">${f.calories} kcal</div>
         </div>
@@ -1971,7 +2906,17 @@
       if (!activeSelection) return;
       const qty = parseFloat(document.getElementById("serving-qty").value) || 1;
       const total = Math.round(activeSelection.calories * qty);
-      document.getElementById("portion-cals-preview").innerText = `Total: ${total} kcal`;
+      const pro = Math.round(activeSelection.protein * qty);
+      const carb = Math.round(activeSelection.carbs * qty);
+      const sugar = Math.round((activeSelection.sugar || 0) * qty * 10) / 10;
+      const chol = Math.round((activeSelection.cholesterol || 0) * qty);
+      document.getElementById("portion-cals-preview").innerHTML = `
+        Total: <b>${total} kcal</b> | 
+        <span style="color:var(--blue);">Protein: <b>${pro}g</b></span> | 
+        <span style="color:#B45309;">Carbs: <b>${carb}g</b></span> | 
+        <span>Sugar: ${sugar}g</span> | 
+        <span>Chol: ${chol}mg</span>
+      `;
     }
 
     function confirmAddFood() {
@@ -2008,6 +2953,8 @@
       const pro = parseFloat(document.getElementById("misc-protein").value) || 0;
       const carb = parseFloat(document.getElementById("misc-carbs").value) || 0;
       const fat = parseFloat(document.getElementById("misc-fat").value) || 0;
+      const sugar = parseFloat(document.getElementById("misc-sugar").value) || 0;
+      const chol = parseFloat(document.getElementById("misc-chol").value) || 0;
 
       if (isNaN(cals) || cals <= 0) {
         showToast("Please enter valid calories.");
@@ -2023,6 +2970,8 @@
         protein: pro,
         carbs: carb,
         fat: fat,
+        sugar: sugar,
+        cholesterol: chol,
         qty: 1.0,
         origin: "MISC"
       });
@@ -2032,11 +2981,11 @@
       persistLogs();
       closeMiscMealModal();
       renderTodayDashboard();
-      showToast(`⚡ Logged: ${name} (${cals} kcal)`);
+      showToast(`⚡ Logged: ${name} (${cals} kcal • ${pro}g P • ${carb}g C)`);
     }
 
     /* ==========================================================================
-       FAT LOSS CALCULATOR
+       FAT LOSS CALCULATOR & MACRO TARGETS
        ========================================================================== */
     function openCalcModal() {
       document.getElementById("calc-modal").classList.add("active");
@@ -2067,23 +3016,43 @@
       let targetCals = tdee - 550;
       if (targetCals < 1400) targetCals = 1400;
 
+      let targetPro = 0, targetCarb = 0;
+      if (currentCalcMode === "belly") {
+        targetPro = Math.round((targetCals * 0.32) / 4); // 32% Protein for belly fat loss
+        targetCarb = Math.round((targetCals * 0.38) / 4); // 38% Low-GI Carbs
+      } else {
+        targetPro = Math.round((targetCals * 0.28) / 4);
+        targetCarb = Math.round((targetCals * 0.44) / 4);
+      }
+
       document.getElementById("calc-target-cal").innerText = `${targetCals} kcal`;
       document.getElementById("calc-meta-stats").innerText = `BMR: ${Math.round(bmr)} • TDEE: ${tdee} • Deficit: -550 kcal/day`;
-      window.calculatedTargetCal = targetCals;
+      document.getElementById("calc-macros-preview").innerHTML = `
+        <span>Target Protein: <b>${targetPro}g</b> (${currentCalcMode === 'belly' ? '32%' : '28%'})</span>
+        <span>Target Carbs: <b>${targetCarb}g</b> (${currentCalcMode === 'belly' ? '38%' : '44%'})</span>
+      `;
+      window.calculatedTargets = { calories: targetCals, protein: targetPro, carbs: targetCarb };
     }
 
     function applyCalculatedGoals() {
-      if (!window.calculatedTargetCal) return;
-      userGoals.calories = window.calculatedTargetCal;
+      if (!window.calculatedTargets) return;
+      userGoals.calories = window.calculatedTargets.calories;
+      userGoals.protein = window.calculatedTargets.protein;
+      userGoals.carbs = window.calculatedTargets.carbs;
+      
       localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
       document.getElementById("planner-target-cals").innerText = userGoals.calories;
+      document.getElementById("setting-goal-cal").value = userGoals.calories;
+      document.getElementById("setting-goal-pro").value = userGoals.protein;
+      document.getElementById("setting-goal-carb").value = userGoals.carbs;
+
       awardXP(25, "Calibrated Goals");
       triggerConfetti();
       playDesiChime("level");
       closeCalcModal();
       renderTodayDashboard();
       renderRecommendedPlans();
-      showToast(`🎯 Goals updated to ${userGoals.calories} kcal!`);
+      showToast(`🎯 Goals updated to ${userGoals.calories} kcal (P: ${userGoals.protein}g, C: ${userGoals.carbs}g)!`);
     }
 
     /* ==========================================================================
@@ -2111,12 +3080,18 @@
 
     function saveGoalsFromSettings() {
       userGoals.calories = parseInt(document.getElementById("setting-goal-cal").value) || 2000;
+      userGoals.protein = parseInt(document.getElementById("setting-goal-pro").value) || 75;
+      userGoals.carbs = parseInt(document.getElementById("setting-goal-carb").value) || 220;
+      userGoals.fat = parseInt(document.getElementById("setting-goal-fat").value) || 65;
+      userGoals.sugar = parseInt(document.getElementById("setting-goal-sugar").value) || 25;
+      userGoals.cholesterol = parseInt(document.getElementById("setting-goal-chol").value) || 300;
+      
       localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
       document.getElementById("planner-target-cals").innerText = userGoals.calories;
       renderTodayDashboard();
       renderRecommendedPlans();
       closeSettingsModal();
-      showToast("Goals updated.");
+      showToast("Goals & Daily Limits saved.");
     }
 
     function saveApiKeys() {
@@ -2127,7 +3102,7 @@
     }
 
     /* ==========================================================================
-       5-YEAR ARCHIVE LOGS
+       ARCHIVE LOGS (SHOWS CALS, PROTEIN, CARBS, SUGAR & CHOL)
        ========================================================================== */
     function renderArchiveLogs() {
       const container = document.getElementById("archive-days-container");
@@ -2147,10 +3122,19 @@
         const dayEntry = currentLogs[dStr];
         const allItems = [];
         let dayCals = 0;
+        let dayPro = 0;
+        let dayCarbs = 0;
+        let daySugar = 0;
+        let dayChol = 0;
+
         ["breakfast", "lunch", "snacks", "dinner", "midnight"].forEach(s => {
           (dayEntry.meals[s] || []).forEach(it => {
             allItems.push(it);
             dayCals += Math.round(it.calories * it.qty);
+            dayPro += Math.round((it.protein || 0) * it.qty);
+            dayCarbs += Math.round((it.carbs || 0) * it.qty);
+            daySugar += Math.round((it.sugar || 0) * it.qty * 10) / 10;
+            dayChol += Math.round((it.cholesterol || 0) * it.qty);
           });
         });
 
@@ -2166,7 +3150,14 @@
             <span>📅 ${dStr}</span>
             <span style="color:var(--primary); font-weight:800;">${dayCals} kcal</span>
           </div>
-          <div style="font-size:12px; color:var(--text-sec);">${allItems.length} foods logged</div>
+          <div style="display:flex; gap:6px; margin-bottom:6px; font-size:11px; font-weight:700;">
+            <span class="badge badge-macro">💪 P: ${dayPro}g / ${userGoals.protein || 75}g</span>
+            <span class="badge badge-macro">🌾 C: ${dayCarbs}g / ${userGoals.carbs || 220}g</span>
+          </div>
+          <div style="font-size:11px; color:#4B5563;">
+            🍬 Free Sugar: <b>${Math.round(daySugar*10)/10}g</b> / ${userGoals.sugar||25}g • 
+            🫀 Cholesterol: <b>${dayChol}mg</b> / ${userGoals.cholesterol||300}mg
+          </div>
         `;
         container.appendChild(card);
       });
@@ -2175,7 +3166,7 @@
     }
 
     /* ==========================================================================
-       YODDHA GAMIFICATION & AUDIO EFFECTS
+       YODDHA GAMIFICATION
        ========================================================================== */
     function awardXP(amt, reason) {
       yoddhaProfile.xp += amt;
