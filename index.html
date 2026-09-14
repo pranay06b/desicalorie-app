@@ -953,7 +953,6 @@
     </div>
   </main>
 
-  <!-- MODAL: ADD CUSTOM FOOD -->
 <!-- MODAL: ADD CUSTOM FOOD -->
   <div class="modal-overlay" id="add-custom-food-modal">
     <div class="modal-content">
@@ -1001,6 +1000,58 @@
       </div>
 
       <button class="btn-submit" onclick="saveNewCustomFood()">Save Food to Database</button>
+    </div>
+  </div>
+  <!-- MODAL: EDIT FOOD ITEM IN DATABASE -->
+  <div class="modal-overlay" id="edit-food-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">✏️ Edit Food Item</div>
+        <button class="close-modal" onclick="closeEditFoodModal()">✕</button>
+      </div>
+
+      <input type="hidden" id="edit-food-id">
+      <input type="hidden" id="edit-food-origin">
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Food Name *Required</label>
+          <input type="text" id="edit-food-name" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Brand</label>
+          <input type="text" id="edit-food-brand" class="form-input" value="Generic">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Serving / Portion Size</label>
+        <input type="text" id="edit-food-portion" class="form-input" value="1 serving">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Calories (kcal) *Required</label>
+          <input type="number" id="edit-food-cal" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fat (g)</label>
+          <input type="number" step="0.1" id="edit-food-fat" class="form-input">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Protein (g)</label>
+          <input type="number" step="0.1" id="edit-food-pro" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Carbohydrates (g)</label>
+          <input type="number" step="0.1" id="edit-food-carb" class="form-input">
+        </div>
+      </div>
+
+      <button class="btn-submit" onclick="saveEditedFood()">Save Changes</button>
     </div>
   </div>
 <!-- MODAL: SEARCH & IMPORT FOOD VIA FATSECRET API -->
@@ -3370,7 +3421,8 @@ const anuvaadFoods = ANUVAAD_INDB_DATABASE;
     const STORAGE_KEY_CUSTOM_FOODS = "desicalorie_custom_foods_v13";
     const STORAGE_KEY_KEYS = "desicalorie_apikeys_v13";
     const STORAGE_KEY_PROFILE = "desicalorie_yoddha_v13";
-
+const STORAGE_KEY_DELETED_FOODS = "desicalorie_deleted_foods_v14";
+    let deletedFoodIds = [];
     let currentDateStr = getTodayDateStr();
     let currentLogs = {};
     let customFoods = [];
@@ -3457,6 +3509,15 @@ function loadAllSavedData() {
   } catch (e) {
     console.error("Storage load error:", e);
   }
+  const savedDeleted = localStorage.getItem(STORAGE_KEY_DELETED_FOODS);
+    if (savedDeleted) {
+      try { deletedFoodIds = JSON.parse(savedDeleted); } catch (e) {}
+    }
+
+    // Ensure all custom foods have a unique identifier
+    customFoods.forEach((f, idx) => {
+      if (!f.id) f.id = "cust_" + idx + "_" + encodeURIComponent(f.name);
+    });
 }
 function saveApiKeys() {
   const keyInput = document.getElementById("key-spoonacular-key");
@@ -3966,57 +4027,254 @@ function saveApiKeys() {
       showToast(`⚡ 1-Tap: ${name} added to ${slot.toUpperCase()}`);
     }
 
+  
+
     function getAllDatabaseFoods() {
-      const defaultList = ANUVAAD_INDB_DATABASE.map(item => ({
-        id: "indb_" + item[0].replace(/\s+/g, "_"),
-        name: item[0],
-        portion: item[1],
-        calories: item[2],
-        protein: item[3],
-        carbs: item[4],
-        fat: item[5],
-        sugar: 0,
-        cholesterol: 0,
-        origin: (item[0].includes("Bihari") || item[0].includes("Sattu") || item[0].includes("Litti")) ? "BIHARI" : "INDB"
-      }));
-      return [...customFoods, ...defaultList];
-    }
+  const defaultList = ANUVAAD_INDB_DATABASE
+    .map(item => ({
+      id: "indb_" + encodeURIComponent(item[0]),
+      name: item[0],
+      brand: "Generic",
+      portion: item[1],
+      calories: item[2],
+      protein: item[3],
+      carbs: item[4],
+      fat: item[5],
+      sugar: 0,
+      cholesterol: 0,
+      origin: (item[0].includes("Bihari") || item[0].includes("Sattu") || item[0].includes("Litti")) ? "BIHARI" : "INDB"
+    }))
+    .filter(item => !deletedFoodIds.includes(item.id));
 
-    function renderDatabaseView() {
-      const container = document.getElementById("db-items-container");
-      const query = (document.getElementById("db-search-input").value || "").trim().toLowerCase();
-      const allList = getAllDatabaseFoods();
+  const filteredCustom = customFoods.filter(item => !deletedFoodIds.includes(item.id));
+  return [...filteredCustom, ...defaultList];
+}
 
-      document.getElementById("db-total-count-lbl").innerText = 
-        `${allList.length} items available (${customFoods.length} custom, ${ANUVAAD_INDB_DATABASE.length} embedded)`;
+function renderDatabaseView() {
+  const container = document.getElementById("db-items-container");
+  const query = (document.getElementById("db-search-input").value || "").trim().toLowerCase();
+  const allList = getAllDatabaseFoods();
 
-      const matches = allList.filter(item => 
-        item.name.toLowerCase().includes(query) || item.portion.toLowerCase().includes(query)
-      );
+  document.getElementById("db-total-count-lbl").innerText = 
+    `${allList.length} items available (${customFoods.length} custom/Spoonacular, ${allList.length - customFoods.length} embedded)`;
 
-      if (matches.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec);">No food items found matching "${query}".</div>`;
-        return;
-      }
+  const matches = allList.filter(item => 
+    item.name.toLowerCase().includes(query) || 
+    (item.brand && item.brand.toLowerCase().includes(query)) ||
+    item.portion.toLowerCase().includes(query)
+  );
 
-      container.innerHTML = matches.map(item => `
-        <div class="db-food-card">
-          <div style="flex: 1; padding-right: 10px;">
-            <div class="db-food-name">${item.name}</div>
-            <div class="db-food-stats">
-              <span>${item.portion}</span> • 
-              <span class="badge badge-macro">P: <b>${item.protein}g</b></span>
-              <span class="badge badge-macro">C: <b>${item.carbs}g</b></span>
-              <span>F: <b>${item.fat}g</b></span>
-            </div>
+  if (matches.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec);">No food items found matching "${query}".</div>`;
+    return;
+  }
+
+  container.innerHTML = matches.map(item => {
+    const brandName = item.brand || "Generic";
+
+    return `
+      <div class="db-food-card">
+        <div style="flex: 1; padding-right: 10px;">
+          <div class="db-food-name">
+            ${item.name}
+            <span class="badge" style="background: #F1F5F9; color: #475569; border: 0.5px solid #CBD5E1; margin-left: 4px;">
+              🏷️ ${brandName}
+            </span>
           </div>
-          <div style="text-align: right;">
-            <div class="db-food-cal">${item.calories} <span style="font-size: 10px; font-weight: 600; color: var(--text-sec);">kcal</span></div>
-            <button class="btn-db-log" onclick="promptLogDbFood(${JSON.stringify(item).replace(/"/g, '&quot;')})">+ Log</button>
+          <div class="db-food-stats">
+            <span>${item.portion}</span> • 
+            <span class="badge badge-macro">P: <b>${item.protein}g</b></span>
+            <span class="badge badge-macro">C: <b>${item.carbs}g</b></span>
+            <span>F: <b>${item.fat}g</b></span>
           </div>
         </div>
-      `).join("");
+        <div style="text-align: right;">
+          <div class="db-food-cal">${item.calories} <span style="font-size: 10px; font-weight: 600; color: var(--text-sec);">kcal</span></div>
+          <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center; margin-top: 4px;">
+            <button class="icon-btn" style="width: 28px; height: 28px; font-size: 12px;" onclick="openEditFoodById('${encodeURIComponent(item.id)}')" title="Edit food">✏️</button>
+            <button class="icon-btn" style="width: 28px; height: 28px; font-size: 12px; color: var(--danger);" onclick="deleteFoodById('${encodeURIComponent(item.id)}')" title="Delete food">🗑️</button>
+            <button class="btn-db-log" style="margin: 0; padding: 4px 8px;" onclick="logDbFoodById('${encodeURIComponent(item.id)}')">+ Log</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+
+function closeEditFoodModal() {
+  document.getElementById("edit-food-modal").classList.remove("active");
+}
+
+function saveEditedFood() {
+  const id = document.getElementById("edit-food-id").value;
+  const name = document.getElementById("edit-food-name").value.trim();
+  const brand = document.getElementById("edit-food-brand").value.trim() || "Generic";
+  const portion = document.getElementById("edit-food-portion").value.trim() || "1 serving";
+  const calories = parseFloat(document.getElementById("edit-food-cal").value);
+  const fat = parseFloat(document.getElementById("edit-food-fat").value) || 0;
+  const protein = parseFloat(document.getElementById("edit-food-pro").value) || 0;
+  const carbs = parseFloat(document.getElementById("edit-food-carb").value) || 0;
+
+  if (!name || isNaN(calories)) {
+    showToast("Please enter a valid food name and calories.");
+    return;
+  }
+
+  // 1. If it's an existing custom food, update it in customFoods
+  const customIdx = customFoods.findIndex(f => f.id === id);
+  if (customIdx >= 0) {
+    customFoods[customIdx] = {
+      ...customFoods[customIdx],
+      name,
+      brand,
+      portion,
+      calories: Math.round(calories),
+      fat,
+      protein,
+      carbs
+    };
+  } else {
+    // 2. If it was an embedded INDB food, hide original and save edited copy to customFoods
+    if (id.startsWith("indb_") && !deletedFoodIds.includes(id)) {
+      deletedFoodIds.push(id);
+      localStorage.setItem(STORAGE_KEY_DELETED_FOODS, JSON.stringify(deletedFoodIds));
     }
+    customFoods.unshift({
+      id: "cust_" + Date.now(),
+      name,
+      brand,
+      portion,
+      calories: Math.round(calories),
+      fat,
+      protein,
+      carbs,
+      sugar: 0,
+      cholesterol: 0,
+      origin: "CUSTOM"
+    });
+  }
+
+  persistCustomFoods();
+  closeEditFoodModal();
+  renderDatabaseView();
+  showToast(`✓ Updated "${name}" in database!`);
+}
+
+function openEditFoodById(encodedId) {
+  const foodId = decodeURIComponent(encodedId);
+  const allFoods = getAllDatabaseFoods();
+  const food = allFoods.find(f => f.id === foodId);
+
+  if (!food) {
+    showToast("Food item not found.");
+    return;
+  }
+
+  document.getElementById("edit-food-id").value = food.id;
+  document.getElementById("edit-food-origin").value = food.origin || "CUSTOM";
+  document.getElementById("edit-food-name").value = food.name || "";
+  document.getElementById("edit-food-brand").value = food.brand || "Generic";
+  document.getElementById("edit-food-portion").value = food.portion || "1 serving";
+  document.getElementById("edit-food-cal").value = food.calories || 0;
+  document.getElementById("edit-food-fat").value = food.fat || 0;
+  document.getElementById("edit-food-pro").value = food.protein || 0;
+  document.getElementById("edit-food-carb").value = food.carbs || 0;
+
+  document.getElementById("edit-food-modal").classList.add("active");
+}
+
+function closeEditFoodModal() {
+  document.getElementById("edit-food-modal").classList.remove("active");
+}
+
+function saveEditedFood() {
+  const id = document.getElementById("edit-food-id").value;
+  const name = document.getElementById("edit-food-name").value.trim();
+  const brand = document.getElementById("edit-food-brand").value.trim() || "Generic";
+  const portion = document.getElementById("edit-food-portion").value.trim() || "1 serving";
+  const calories = parseFloat(document.getElementById("edit-food-cal").value);
+  const fat = parseFloat(document.getElementById("edit-food-fat").value) || 0;
+  const protein = parseFloat(document.getElementById("edit-food-pro").value) || 0;
+  const carbs = parseFloat(document.getElementById("edit-food-carb").value) || 0;
+
+  if (!name || isNaN(calories)) {
+    showToast("Please enter a valid food name and calories.");
+    return;
+  }
+
+  const customIdx = customFoods.findIndex(f => f.id === id);
+  if (customIdx >= 0) {
+    customFoods[customIdx] = {
+      ...customFoods[customIdx],
+      name,
+      brand,
+      portion,
+      calories: Math.round(calories),
+      fat,
+      protein,
+      carbs
+    };
+  } else {
+    // If it was an embedded INDB food, hide the default and insert modified copy into customFoods
+    if (id.startsWith("indb_") && !deletedFoodIds.includes(id)) {
+      deletedFoodIds.push(id);
+      localStorage.setItem(STORAGE_KEY_DELETED_FOODS, JSON.stringify(deletedFoodIds));
+    }
+    customFoods.unshift({
+      id: "cust_" + Date.now(),
+      name,
+      brand,
+      portion,
+      calories: Math.round(calories),
+      fat,
+      protein,
+      carbs,
+      sugar: 0,
+      cholesterol: 0,
+      origin: "CUSTOM"
+    });
+  }
+
+  persistCustomFoods();
+  closeEditFoodModal();
+  renderDatabaseView();
+  showToast(`✓ Updated "${name}"!`);
+}
+
+function deleteFoodById(encodedId) {
+  const foodId = decodeURIComponent(encodedId);
+  const allFoods = getAllDatabaseFoods();
+  const food = allFoods.find(f => f.id === foodId);
+  const displayName = food ? food.name : "this item";
+
+  if (!confirm(`Are you sure you want to delete "${displayName}" from the database?`)) {
+    return;
+  }
+
+  const customIdx = customFoods.findIndex(f => f.id === foodId);
+  if (customIdx >= 0) {
+    customFoods.splice(customIdx, 1);
+    persistCustomFoods();
+  } else {
+    if (!deletedFoodIds.includes(foodId)) {
+      deletedFoodIds.push(foodId);
+      localStorage.setItem(STORAGE_KEY_DELETED_FOODS, JSON.stringify(deletedFoodIds));
+    }
+  }
+
+  renderDatabaseView();
+  showToast(`🗑️ Removed "${displayName}" from database.`);
+}
+
+function logDbFoodById(encodedId) {
+  const foodId = decodeURIComponent(encodedId);
+  const food = getAllDatabaseFoods().find(f => f.id === foodId);
+  if (food) {
+    openFoodSearchModal("lunch");
+    selectFoodItem(food);
+  }
+}
 
     function openFoodSearchModal(preferredSlot = "lunch") {
       document.getElementById("food-search-modal").classList.add("active");
@@ -4288,23 +4546,30 @@ function openApiModal() {
     function closeAddCustomFoodModal() { document.getElementById("add-custom-food-modal").classList.remove("active"); }
     function autoComputeCarbs() {}
     function saveNewCustomFood() {
-      const name = document.getElementById("cust-food-name").value.trim();
-      const cals = parseFloat(document.getElementById("cust-food-cal").value);
-      if (!name || isNaN(cals)) return;
-      customFoods.push({
-        name,
-        calories: cals,
-        protein: parseFloat(document.getElementById("cust-food-pro").value) || 0,
-        carbs: parseFloat(document.getElementById("cust-food-carb").value) || 0,
-        fat: parseFloat(document.getElementById("cust-food-fat").value) || 0,
-        portion: document.getElementById("cust-food-portion").value || "1 serving",
-        origin: "CUSTOM"
-      });
-      persistCustomFoods();
-      closeAddCustomFoodModal();
-      renderDatabaseView();
-      showToast("Custom food added.");
-    }
+  const name = document.getElementById("cust-food-name").value.trim();
+  const brand = document.getElementById("cust-food-brand").value.trim() || "Generic";
+  const cals = parseFloat(document.getElementById("cust-food-cal").value);
+  if (!name || isNaN(cals)) return;
+
+  customFoods.unshift({
+    id: "cust_" + Date.now(), // <-- Assigns unique ID for editing and deleting
+    name,
+    brand,
+    calories: cals,
+    protein: parseFloat(document.getElementById("cust-food-pro").value) || 0,
+    carbs: parseFloat(document.getElementById("cust-food-carb").value) || 0,
+    fat: parseFloat(document.getElementById("cust-food-fat").value) || 0,
+    portion: document.getElementById("cust-food-portion").value.trim() || "1 serving",
+    sugar: 0,
+    cholesterol: 0,
+    origin: "CUSTOM"
+  });
+
+  persistCustomFoods();
+  closeAddCustomFoodModal();
+  renderDatabaseView();
+  showToast(`Custom food "${name} (${brand})" saved.`);
+}
     function promptLogDbFood(food) {
       openFoodSearchModal("lunch");
       selectFoodItem(food);
@@ -5274,91 +5539,11 @@ function importSpoonacularFood(encodedJsonStr) {
 
 // Import item from FatSecret directly into local custom food database
 
-function getAllDatabaseFoods() {
-  const defaultList = anuvaadFoods.map(item => ({
-    id: "indb_" + item[0].replace(/\s+/g, "_"),
-    name: item[0],
-    brand: "Generic", // Default brand for all embedded INDB items
-    portion: item[1],
-    calories: item[2],
-    protein: item[3],
-    carbs: item[4],
-    fat: item[5],
-    sugar: 0,
-    cholesterol: 0,
-    origin: (item[0].includes("Bihari") || item[0].includes("Sattu") || item[0].includes("Litti")) ? "BIHARI" : "INDB"
-  }));
-  return [...customFoods, ...defaultList];
-}
 
-function renderDatabaseView() {
-  const container = document.getElementById("db-items-container");
-  const query = (document.getElementById("db-search-input").value || "").trim().toLowerCase();
-  const allList = getAllDatabaseFoods();
 
-  document.getElementById("db-total-count-lbl").innerText = 
-    `${allList.length} items available (${customFoods.length} custom/API, ${anuvaadFoods.length} embedded)`;
 
-  const matches = allList.filter(item => 
-    item.name.toLowerCase().includes(query) || 
-    (item.brand && item.brand.toLowerCase().includes(query)) ||
-    item.portion.toLowerCase().includes(query)
-  );
 
-  if (matches.length === 0) {
-    container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec);">No food items found matching "${query}".</div>`;
-    return;
-  }
 
-  container.innerHTML = matches.map(item => {
-    const brandName = item.brand || "Generic";
-    return `
-      <div class="db-food-card">
-        <div style="flex: 1; padding-right: 10px;">
-          <div class="db-food-name">
-            ${item.name}
-            <span class="badge" style="background: #F1F5F9; color: #475569; border: 0.5px solid #CBD5E1; margin-left: 4px;">
-              🏷️ ${brandName}
-            </span>
-          </div>
-          <div class="db-food-stats">
-            <span>${item.portion}</span> • 
-            <span class="badge badge-macro">P: <b>${item.protein}g</b></span>
-            <span class="badge badge-macro">C: <b>${item.carbs}g</b></span>
-            <span>F: <b>${item.fat}g</b></span>
-          </div>
-        </div>
-        <div style="text-align: right;">
-          <div class="db-food-cal">${item.calories} <span style="font-size: 10px; font-weight: 600; color: var(--text-sec);">kcal</span></div>
-          <button class="btn-db-log" onclick="promptLogDbFood(${JSON.stringify(item).replace(/"/g, '&quot;')})">+ Log</button>
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
-function saveNewCustomFood() {
-  const name = document.getElementById("cust-food-name").value.trim();
-  const brand = document.getElementById("cust-food-brand").value.trim() || "Generic";
-  const cals = parseFloat(document.getElementById("cust-food-cal").value);
-  if (!name || isNaN(cals)) return;
-
-  customFoods.unshift({
-    name,
-    brand,
-    calories: cals,
-    protein: parseFloat(document.getElementById("cust-food-pro").value) || 0,
-    carbs: parseFloat(document.getElementById("cust-food-carb").value) || 0,
-    fat: parseFloat(document.getElementById("cust-food-fat").value) || 0,
-    portion: document.getElementById("cust-food-portion").value || "1 serving",
-    origin: "CUSTOM"
-  });
-
-  persistCustomFoods();
-  closeAddCustomFoodModal();
-  renderDatabaseView();
-  showToast(`Custom food "${name} (${brand})" saved.`);
-}
 // Open and close Open Food Facts modal
 function openOffApiModal() {
   document.getElementById("off-search-modal").classList.add("active");
