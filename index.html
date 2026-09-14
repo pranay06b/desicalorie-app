@@ -1263,8 +1263,9 @@
         <button class="close-modal" onclick="closeSettingsModal()">✕</button>
       </div>
 
+      <!-- Daily Budgets & Macronutrient Limits -->
       <div class="card">
-        <h4>🎯 Daily Budgets & Limits</h4>
+        <h4 style="margin-top: 0; margin-bottom: 12px;">🎯 Daily Budgets & Limits</h4>
         <div class="form-group">
           <label class="form-label">Calorie Budget (kcal)</label>
           <input type="number" id="setting-goal-cal" class="form-input" value="2000">
@@ -1296,17 +1297,29 @@
         <button class="btn-submit" onclick="saveGoalsFromSettings()">Save Goals & Limits</button>
       </div>
 
-      <div class="card">
-        <h4>💾 Sharing & Backup</h4>
+      <!-- Sharing, Export & Import Backup -->
+      <div class="card" style="margin-bottom: 0;">
+        <h4 style="margin-top: 0; margin-bottom: 12px;">💾 Sharing & Backup</h4>
+        
+        <!-- WhatsApp / Telegram Share -->
         <button class="btn-submit" style="background: #25D366; margin-bottom: 8px;" onclick="shareOrExportLogs('sheet')">
           📤 Send via WhatsApp / Telegram
         </button>
-        <button class="btn-submit" style="background: var(--indigo);" onclick="shareOrExportLogs('download')">
+        
+        <!-- Save JSON File -->
+        <button class="btn-submit" style="background: var(--indigo); margin-bottom: 8px;" onclick="shareOrExportLogs('download')">
           ⬇️ Save .json File
+        </button>
+
+        <!-- Restore / Import JSON File -->
+        <input type="file" id="import-json-file" accept=".json,application/json" style="display: none;" onchange="importJsonFile(event)">
+        <button class="btn-submit" style="background: var(--surface-secondary); color: var(--text); border: 1px solid var(--border); margin-top: 0;" onclick="document.getElementById('import-json-file').click()">
+          📂 Restore / Import .json File
         </button>
       </div>
     </div>
   </div>
+```[cite: 2]
 
   <!-- MODAL: API KEYS -->
   <div class="modal-overlay" id="api-modal">
@@ -4951,6 +4964,90 @@ function applyCalculatedGoals() {
   renderRecommendedPlans();
   renderYoddhaDashboard();
   showToast(`🎯 Goals updated: ${userGoals.calories} kcal (Protein: ${userGoals.protein}g, Carbs: ${userGoals.carbs}g)`);
+}
+function importJsonFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // Validate that this is a valid Desi Calorie backup file
+      if (!data || (!data.logs && !data.userGoals && !data.customFoods)) {
+        showToast("⚠️ Invalid backup file format.");
+        return;
+      }
+
+      const confirmRestore = confirm(
+        "Restoring this backup will replace your current logs, custom foods, meal plans, and targets with the backup file data. Do you want to proceed?"
+      );
+      if (!confirmRestore) {
+        event.target.value = ""; // Reset file input
+        return;
+      }
+
+      // 1. Restore Logs
+      if (data.logs && typeof data.logs === "object") {
+        currentLogs = data.logs;
+        persistLogs();
+      }
+
+      // 2. Restore User Goals
+      if (data.userGoals && typeof data.userGoals === "object") {
+        userGoals = { ...userGoals, ...data.userGoals };
+        localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
+        
+        // Update settings modal inputs
+        document.getElementById("setting-goal-cal").value = userGoals.calories || 2000;
+        document.getElementById("setting-goal-pro").value = userGoals.protein || 75;
+        document.getElementById("setting-goal-carb").value = userGoals.carbs || 220;
+        document.getElementById("setting-goal-fat").value = userGoals.fat || 65;
+        document.getElementById("setting-goal-sugar").value = userGoals.sugar || 25;
+        document.getElementById("setting-goal-chol").value = userGoals.cholesterol || 300;
+        document.getElementById("planner-target-cals").innerText = userGoals.calories || 2000;
+      }
+
+      // 3. Restore Custom Foods
+      if (Array.isArray(data.customFoods)) {
+        customFoods = data.customFoods;
+        persistCustomFoods();
+      }
+
+      // 4. Restore Custom Meal Plans
+      if (Array.isArray(data.customPlans)) {
+        customPlans = data.customPlans;
+        localStorage.setItem(STORAGE_KEY_CUSTOM_PLANS, JSON.stringify(customPlans));
+      }
+
+      // 5. Restore Yoddha Gamification Profile & XP
+      if (data.yoddhaProfile && typeof data.yoddhaProfile === "object") {
+        yoddhaProfile = data.yoddhaProfile;
+        persistYoddha();
+      }
+
+      // Re-render all views to reflect restored data
+      renderTodayDashboard();
+      renderDatabaseView();
+      renderRecommendedPlans();
+      renderArchiveLogs();
+      renderYoddhaDashboard();
+
+      closeSettingsModal();
+      triggerConfetti();
+      playDesiChime("level");
+      showToast("✓ Backup restored successfully!");
+    } catch (err) {
+      console.error("Import error:", err);
+      showToast("❌ Failed to parse JSON file.");
+    } finally {
+      event.target.value = ""; // Clear file input so the same file can be re-selected if needed
+    }
+  };
+
+  reader.readAsText(file);
 }
   </script>
   <!-- Google tag (gtag.js) -->
