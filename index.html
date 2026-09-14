@@ -1096,33 +1096,38 @@
   </div>
 
   <!-- MODAL: FAT & BELLY FAT CALCULATOR -->
+  <!-- MODAL: ADVANCED FAT & VISCERAL BELLY FAT CALCULATOR -->
+<!-- MODAL: ADVANCED FAT & VISCERAL BELLY FAT CALCULATOR -->
   <div class="modal-overlay" id="calc-modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-height: 94vh;">
       <div class="modal-header">
-        <div class="modal-title">🧮 Fat & Belly Fat Calculator</div>
+        <div class="modal-title">🧮 Comprehensive Body & Visceral Fat Lab</div>
         <button class="close-modal" onclick="closeCalcModal()">✕</button>
       </div>
 
+      <!-- Mode Selector -->
       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
         <button id="mode-btn-general" class="btn-submit" style="flex: 1; padding: 8px; margin: 0; background: var(--primary);" onclick="setCalcMode('general')">
-          🏃 Overall Fat Loss
+          🏃 Standard Fat Loss
         </button>
         <button id="mode-btn-belly" class="btn-submit" style="flex: 1; padding: 8px; margin: 0; background: var(--surface-secondary); color: var(--text); border: 1px solid var(--border);" onclick="setCalcMode('belly')">
-          🔥 Belly & Visceral Fat
+          🔥 Belly & Visceral Focus
         </button>
       </div>
 
+      <!-- Core Metrics: Weight -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div class="form-group">
           <label class="form-label">Current Weight (kg)</label>
-          <input type="number" id="calc-current-wt" class="form-input" value="78" oninput="runFatLossCalculation()">
+          <input type="number" id="calc-current-wt" class="form-input" value="78" step="0.5" oninput="runFatLossCalculation()">
         </div>
         <div class="form-group">
           <label class="form-label">Goal Weight (kg)</label>
-          <input type="number" id="calc-goal-wt" class="form-input" value="68" oninput="runFatLossCalculation()">
+          <input type="number" id="calc-goal-wt" class="form-input" value="68" step="0.5" oninput="runFatLossCalculation()">
         </div>
       </div>
 
+      <!-- Biometrics: Height, Age, Gender -->
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
         <div class="form-group">
           <label class="form-label">Height (cm)</label>
@@ -1134,43 +1139,119 @@
         </div>
         <div class="form-group">
           <label class="form-label">Gender</label>
-          <select id="calc-gender" class="form-input" onchange="runFatLossCalculation()">
+          <select id="calc-gender" class="form-input" onchange="toggleGenderFields(); runFatLossCalculation();">
             <option value="male">Male</option>
             <option value="female">Female</option>
           </select>
         </div>
       </div>
+
+      <!-- Activity Level & Weekly Pace -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div class="form-group">
-        <label class="form-label">Target Fat Loss Pace (Per Week)</label>
-        <select id="calc-weekly-rate" class="form-input" onchange="runFatLossCalculation()">
-          <option value="0.25">🐢 0.25 kg / week (Gentle: -275 kcal/day)</option>
-          <option value="0.50" selected>⚡ 0.50 kg / week (Recommended: -550 kcal/day)</option>
-          <option value="0.75">🔥 0.75 kg / week (Aggressive: -825 kcal/day)</option>
-          <option value="1.00">⚡ 1.00 kg / week (Max Safe Pace: -1,100 kcal/day)</option>
-        </select>
-      </div>
-      <div class="form-group" id="waist-input-group" style="display: none;">
-        <label class="form-label">Waist Circumference at Navel (cm)</label>
-        <input type="number" id="calc-waist" class="form-input" value="94" oninput="runFatLossCalculation()">
-        <div id="whtr-risk-card" style="margin-top: 6px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
-          <span id="whtr-value-lbl">WHtR: 0.55</span>
-          <span id="whtr-status-badge" style="padding: 2px 6px; border-radius: 4px;">Elevated Risk</span>
+          <label class="form-label">Physical Activity Level</label>
+          <select id="calc-activity" class="form-input" onchange="runFatLossCalculation()">
+            <option value="1.2">🛋️ Sedentary (Desk Job)</option>
+            <option value="1.375" selected>🚶 Light Active (1-3 d/wk)</option>
+            <option value="1.55">🏃 Moderate (Gym 3-5 d/wk)</option>
+            <option value="1.725">🏋️ High (Intense 6-7 d/wk)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Fat Loss Pace</label>
+          <select id="calc-weekly-rate" class="form-input" onchange="runFatLossCalculation()">
+            <option value="0.25">🐢 0.25 kg/wk (Gentle: -275 kcal/d)</option>
+            <option value="0.50" selected>⚡ 0.50 kg/wk (Optimal: -550 kcal/d)</option>
+            <option value="0.75">🔥 0.75 kg/wk (Aggressive: -825 kcal/d)</option>
+            <option value="1.00">⚡ 1.00 kg/wk (Max Deficit: -1,100 kcal/d)</option>
+          </select>
         </div>
       </div>
 
-      <div class="card" style="background: var(--surface-secondary); padding: 12px; margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; align-items: baseline;">
-          <span style="font-size: 13px; font-weight: 700;">Recommended Calories:</span>
-          <span style="font-size: 20px; font-weight: 800; color: var(--primary);" id="calc-target-cal">1,650 kcal</span>
+      <!-- Circumference Measurements -->
+      <div style="background: var(--surface-secondary); padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 12px; border: 0.5px solid var(--border);">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-sec); text-transform: uppercase; margin-bottom: 6px;">
+          📏 Circumferences (Navel & Narrowest Levels)
         </div>
-        <div style="font-size: 11px; color: var(--text-sec); margin-top: 4px;" id="calc-meta-stats">BMR: 1,680 • TDEE: 2,310 • Deficit: -550 kcal</div>
-        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; font-weight: 700; color: var(--indigo);" id="calc-macros-preview">
-          <span>Target Protein: ~124g</span>
-          <span>Target Carbs: ~157g</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Waist (Navel cm)</label>
+            <input type="number" id="calc-waist" class="form-input" value="92" oninput="runFatLossCalculation()">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Neck (Narrow cm)</label>
+            <input type="number" id="calc-neck" class="form-input" value="38" oninput="runFatLossCalculation()">
+          </div>
+          <div class="form-group" id="hip-input-wrap" style="margin-bottom: 0; display: none;">
+            <label class="form-label">Hips (Widest cm)</label>
+            <input type="number" id="calc-hip" class="form-input" value="98" oninput="runFatLossCalculation()">
+          </div>
         </div>
       </div>
 
-      <button class="btn-submit" onclick="applyCalculatedGoals()">Apply to My Daily Goals & Macros</button>
+      <!-- DETAILED OUTPUT DASHBOARD -->
+      <div class="card" style="background: var(--surface-secondary); padding: 12px; margin-bottom: 12px; border: 1px solid var(--border);">
+        <!-- Target Intake & Timeline Row -->
+        <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 0.5px solid var(--border); padding-bottom: 8px; margin-bottom: 8px;">
+          <div>
+            <div style="font-size: 11px; color: var(--text-sec); font-weight: 700;">DAILY CALORIC BUDGET</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--primary);" id="calc-target-cal">1,650 kcal</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: var(--text-sec); font-weight: 700;">PROJECTED COMPLETION</div>
+            <div style="font-size: 13px; font-weight: 800; color: var(--indigo);" id="calc-timeline">~16 wks</div>
+          </div>
+        </div>
+
+        <!-- Body Composition Estimates (US Navy Formula) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; text-align: center;">
+          <div style="background: var(--surface); padding: 6px; border-radius: 6px; border: 0.5px solid var(--border);">
+            <div style="font-size: 10px; color: var(--text-sec);">Body Fat %</div>
+            <div style="font-size: 13px; font-weight: 800;" id="calc-bf-pct">~24.5%</div>
+          </div>
+          <div style="background: var(--surface); padding: 6px; border-radius: 6px; border: 0.5px solid var(--border);">
+            <div style="font-size: 10px; color: var(--text-sec);">Fat Mass</div>
+            <div style="font-size: 13px; font-weight: 800; color: #EA580C;" id="calc-fat-mass">19.1 kg</div>
+          </div>
+          <div style="background: var(--surface); padding: 6px; border-radius: 6px; border: 0.5px solid var(--border);">
+            <div style="font-size: 10px; color: var(--text-sec);">Lean Mass (LBM)</div>
+            <div style="font-size: 13px; font-weight: 800; color: var(--blue);" id="calc-lean-mass">58.9 kg</div>
+          </div>
+        </div>
+
+        <!-- Visceral Risk Card (Asian Phenotype WHtR / WHR) -->
+        <div id="whtr-risk-card" style="padding: 8px 10px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #FFEDD5;">
+          <span id="whtr-value-lbl">WHtR: 0.53 • Waist: 92cm</span>
+          <span id="whtr-status-badge" style="padding: 2px 6px; border-radius: 4px; background: #FED7AA; color: #9A3412;">
+            ⚠️ Elevated Visceral Fat
+          </span>
+        </div>
+
+        <!-- Metabolic Engine Breakdown -->
+        <div style="font-size: 11px; color: var(--text-sec); line-height: 1.5; margin-bottom: 8px;" id="calc-meta-stats">
+          BMR: 1,680 • Maintenance (TDEE): 2,310 • Deficit: -660 kcal/day
+        </div>
+
+        <!-- Detailed Macro & Health Prescriptions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; font-weight: 700; border-top: 0.5px solid var(--border); padding-top: 8px;">
+          <div style="color: var(--blue);" id="calc-pro-stat">💪 Protein: 125g (2.1g/kg LBM)</div>
+          <div style="color: #CA8A04;" id="calc-carb-stat">🌾 Complex Carbs: 155g</div>
+          <div style="color: var(--text);" id="calc-fat-stat">🥑 Healthy Fat: 50g</div>
+          <div style="color: var(--success);" id="calc-micro-stat">🥗 Fiber: ≥35g • 💧 Water: 3.0L</div>
+        </div>
+      </div>
+
+      <!-- Actionable Insights & Behavioral Recommendations -->
+      <div style="background: #F0F9FF; border-left: 4px solid #0284C7; padding: 12px; border-radius: var(--radius-sm); margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size: 11px; font-weight: 800; color: #0369A1; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+          💡 Personalized Desi Protocol & Guidance
+        </div>
+        <ul id="calc-insights-list" style="margin: 0; padding-left: 18px; font-size: 12px; color: #0C4A6E; line-height: 1.55;">
+          <!-- Dynamically populated via runFatLossCalculation() -->
+        </ul>
+      </div>
+
+      <button class="btn-submit" onclick="applyCalculatedGoals()">Apply All Calibrated Targets to App</button>
     </div>
   </div>
 
@@ -1241,50 +1322,120 @@
       <button class="btn-submit" onclick="saveApiKeys()">Save Key</button>
     </div>
   </div>
-  <!-- MODAL: ADD CUSTOM MEAL PLAN -->
+  <!-- MODAL: ADD CUSTOM MEAL PLAN (ALGORITHMIC) -->
+  <!-- MODAL: CREATE CUSTOM MEAL PLAN WITH ANUVAAD DB SELECTION -->
   <div class="modal-overlay" id="add-custom-plan-modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-height: 92vh;">
       <div class="modal-header">
-        <div class="modal-title">🍱 Create Custom Meal Plan</div>
+        <div class="modal-title">🍱 Custom Indian Meal Planner</div>
         <button class="close-modal" onclick="closeCustomPlanModal()">✕</button>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Plan Title *Required</label>
-        <input type="text" id="cust-plan-title" class="form-input" placeholder="e.g. My High-Protein Bulk Plan" required>
-      </div>
-
+      <!-- Plan Title & Target Calories -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div class="form-group">
-          <label class="form-label">Category Tag</label>
-          <input type="text" id="cust-plan-tag" class="form-input" placeholder="e.g. High Protein" value="Custom Plan">
+          <label class="form-label">Plan Title *Required</label>
+          <input type="text" id="cust-plan-title" class="form-input" placeholder="e.g. My High Protein Cut" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Badge Style</label>
-          <select id="cust-plan-badge" class="form-input">
-            <option value="badge-macro">Blue Macro Badge</option>
-            <option value="badge-bihari">Bihari Orange Badge</option>
-            <option value="badge-success">Green Success Badge</option>
-            <option value="badge-warning">Warning Badge</option>
-          </select>
+          <label class="form-label">Daily Calorie Target (kcal)</label>
+          <input type="number" id="cust-plan-cals" class="form-input" value="2000" oninput="scaleCustomPlanAlgorithm()">
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Short Description</label>
-        <input type="text" id="cust-plan-desc" class="form-input" placeholder="e.g. Customized calories and protein split for muscle building">
+      <!-- Quick Template / Category -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+        <div class="form-group">
+          <label class="form-label">Pre-load Template (Optional)</label>
+          <select id="cust-plan-archetype-select" class="form-input" onchange="applyArchetypeToBuilder(this.value)">
+            <option value="blank">-- Start Blank (Pick Own Foods) --</option>
+            <option value="vegetarian">🌱 Vegetarian High Protein</option>
+            <option value="bihari">🌾 Bihari Sattu & Desi Power</option>
+            <option value="nonveg">🍗 High Protein Non-Veg</option>
+            <option value="lean_balance">⚖️ Balanced Desi Thali</option>
+            <option value="lowcarb">🥑 Low Carb High Fiber</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category Tag</label>
+          <input type="text" id="cust-plan-tag" class="form-input" value="Custom Plan">
+        </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Plan Items Preview (Text Summary)</label>
-        <textarea id="cust-plan-preview" class="form-input" rows="3" placeholder="🌅 Breakfast: Oats & Eggs&#10;🍛 Lunch: 2 Rotis & Dal..."></textarea>
+      <!-- Calorie & Macro Target Progress Card -->
+      <div class="card" style="background: var(--surface-secondary); padding: 10px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span style="font-size: 12px; font-weight: 700;">Scaled Plan Total:</span>
+          <span style="font-size: 16px; font-weight: 800; color: var(--primary);" id="builder-total-cals">0 kcal</span>
+        </div>
+        <div style="display: flex; gap: 8px; font-size: 11px; font-weight: 700; margin-top: 4px;">
+          <span class="badge badge-macro" id="builder-total-pro">💪 P: 0g</span>
+          <span class="badge badge-macro" id="builder-total-carbs">🌾 C: 0g</span>
+          <span class="badge badge-macro" id="builder-total-fat">🥑 F: 0g</span>
+        </div>
       </div>
 
-      <div style="background: var(--surface-secondary); padding: 10px; border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 11px; color: var(--text-sec);">
-        💡 Tip: When you apply this custom plan, it will auto-populate default healthy staples scaled to your target calories, which you can then customize.
+      <!-- 5 Meal Slots Builder -->
+      <div style="margin-bottom: 14px;">
+        <!-- Breakfast Slot -->
+        <div class="slot-card" style="margin-bottom: 8px;">
+          <div class="slot-header" style="padding: 8px 10px;">
+            <span class="slot-title" style="font-size: 12px;">🌅 Breakfast (Target: 25%)</span>
+            <button class="btn-slot-add" onclick="openPlanFoodPicker('breakfast')">+ Pick Food</button>
+          </div>
+          <div id="builder-slot-breakfast" style="padding: 4px 10px;"></div>
+        </div>
+
+        <!-- Lunch Slot -->
+        <div class="slot-card" style="margin-bottom: 8px;">
+          <div class="slot-header" style="padding: 8px 10px;">
+            <span class="slot-title" style="font-size: 12px;">🍛 Lunch (Target: 35%)</span>
+            <button class="btn-slot-add" onclick="openPlanFoodPicker('lunch')">+ Pick Food</button>
+          </div>
+          <div id="builder-slot-lunch" style="padding: 4px 10px;"></div>
+        </div>
+
+        <!-- Evening Snacks Slot -->
+        <div class="slot-card" style="margin-bottom: 8px;">
+          <div class="slot-header" style="padding: 8px 10px;">
+            <span class="slot-title" style="font-size: 12px;">☕️ Evening Snacks (Target: 10%)</span>
+            <button class="btn-slot-add" onclick="openPlanFoodPicker('snacks')">+ Pick Food</button>
+          </div>
+          <div id="builder-slot-snacks" style="padding: 4px 10px;"></div>
+        </div>
+
+        <!-- Dinner Slot -->
+        <div class="slot-card" style="margin-bottom: 8px;">
+          <div class="slot-header" style="padding: 8px 10px;">
+            <span class="slot-title" style="font-size: 12px;">🍲 Dinner (Target: 25%)</span>
+            <button class="btn-slot-add" onclick="openPlanFoodPicker('dinner')">+ Pick Food</button>
+          </div>
+          <div id="builder-slot-dinner" style="padding: 4px 10px;"></div>
+        </div>
+
+        <!-- Midnight Slot -->
+        <div class="slot-card" style="margin-bottom: 8px;">
+          <div class="slot-header" style="padding: 8px 10px;">
+            <span class="slot-title" style="font-size: 12px;">🌙 Midnight Cravings (Target: 5%)</span>
+            <button class="btn-slot-add" onclick="openPlanFoodPicker('midnight')">+ Pick Food</button>
+          </div>
+          <div id="builder-slot-midnight" style="padding: 4px 10px;"></div>
+        </div>
       </div>
 
-      <button class="btn-submit" onclick="saveCustomPlan()">Save Custom Plan</button>
+      <button class="btn-submit" onclick="saveCustomPlan()">Save Plan to My Library</button>
+    </div>
+  </div>
+
+  <!-- SUB-MODAL: ANUVAAD DATABASE FOOD SELECTOR FOR PLANNER -->
+  <div class="modal-overlay" id="plan-food-picker-modal" style="z-index: 110;">
+    <div class="modal-content" style="max-height: 80vh;">
+      <div class="modal-header">
+        <div class="modal-title" id="picker-modal-title">🍲 Select Food from Anuvaad Database</div>
+        <button class="close-modal" onclick="closePlanFoodPicker()">✕</button>
+      </div>
+      <input type="text" id="picker-search-input" class="form-input" placeholder="🔍 Search rotis, dals, paneer, eggs, sattu..." oninput="handlePickerSearch(this.value)">
+      <div id="picker-results-list" style="max-height: 360px; overflow-y: auto; margin-top: 10px;"></div>
     </div>
   </div>
 
@@ -4091,147 +4242,10 @@ const ANUVAAD_INDB_DATABASE = [
       openFoodSearchModal("lunch");
       selectFoodItem(food);
     }
-    function setCalcMode(mode) {
-  currentCalcMode = mode;
-  document.getElementById("mode-btn-general").style.background = mode === "general" ? "var(--primary)" : "var(--surface-secondary)";
-  document.getElementById("mode-btn-general").style.color = mode === "general" ? "white" : "var(--text)";
-  document.getElementById("mode-btn-belly").style.background = mode === "belly" ? "var(--primary)" : "var(--surface-secondary)";
-  document.getElementById("mode-btn-belly").style.color = mode === "belly" ? "white" : "var(--text)";
-  document.getElementById("waist-input-group").style.display = mode === "belly" ? "block" : "none";
-  runFatLossCalculation();
-}
-
-function runFatLossCalculation() {
-  const currWt = parseFloat(document.getElementById("calc-current-wt").value) || 75;
-  const goalWt = parseFloat(document.getElementById("calc-goal-wt").value) || 68;
-  const ht = parseFloat(document.getElementById("calc-height").value) || 170;
-  const age = parseFloat(document.getElementById("calc-age").value) || 28;
-  const gender = document.getElementById("calc-gender").value;
   
-  // Weekly rate selection (0.25kg to 1.00kg per week)
-  const rateInput = document.getElementById("calc-weekly-rate");
-  const weeklyRate = rateInput ? parseFloat(rateInput.value) : 0.50;
 
-  // Waist input for belly fat WHtR calculation
-  const waistInput = document.getElementById("calc-waist");
-  const waist = waistInput ? (parseFloat(waistInput.value) || 85) : 85;
 
-  // Mifflin-St Jeor BMR calculation
-  let bmr = (10 * currWt) + (6.25 * ht) - (5 * age) + (gender === "male" ? 5 : -161);
-  const tdee = Math.round(bmr * 1.375); // Light activity standard multiplier
 
-  // 1 kg body fat = 7,700 kcal -> daily deficit = weeklyRate * 1100 kcal
-  let baseDeficit = Math.round(weeklyRate * 1100);
-
-  // Estimated duration to reach goal weight
-  const totalDeltaKg = Math.max(0, currWt - goalWt);
-  const weeksToGoal = totalDeltaKg > 0 ? Math.ceil(totalDeltaKg / weeklyRate) : 0;
-
-  let targetCals = 0, targetPro = 0, targetCarb = 0, targetFat = 0;
-
-  if (currentCalcMode === "belly") {
-    const whtr = Math.round((waist / ht) * 100) / 100;
-    const riskCard = document.getElementById("whtr-risk-card");
-    const riskLbl = document.getElementById("whtr-value-lbl");
-    const riskBadge = document.getElementById("whtr-status-badge");
-
-    if (riskLbl && riskBadge && riskCard) {
-      riskLbl.innerText = `WHtR: ${whtr.toFixed(2)} (Waist ${waist}cm / Ht ${ht}cm)`;
-
-      if (whtr < 0.40) {
-        riskCard.style.background = "#FEF3C7";
-        riskBadge.style.background = "#FDE68A";
-        riskBadge.style.color = "#92400E";
-        riskBadge.innerText = "Underweight Boundary";
-      } else if (whtr <= 0.49) {
-        riskCard.style.background = "#DCFCE7";
-        riskBadge.style.background = "#BBF7D0";
-        riskBadge.style.color = "#166534";
-        riskBadge.innerText = "✓ Healthy Visceral Range";
-      } else if (whtr <= 0.57) {
-        riskCard.style.background = "#FFEDD5";
-        riskBadge.style.background = "#FED7AA";
-        riskBadge.style.color = "#9A3412";
-        riskBadge.innerText = "⚠️ Increased Visceral Risk";
-        baseDeficit += 75; // Adjusted deficit for elevated visceral adiposity
-      } else {
-        riskCard.style.background = "#FEE2E2";
-        riskBadge.style.background = "#FECACA";
-        riskBadge.style.color = "#991B1B";
-        riskBadge.innerText = "🚨 High Visceral Risk";
-        baseDeficit += 125;
-      }
-    }
-
-    targetCals = tdee - baseDeficit;
-
-    // Safety floor (preventing metabolic crash)
-    const minSafeCals = gender === "male" ? 1500 : 1200;
-    if (targetCals < minSafeCals) targetCals = minSafeCals;
-
-    // Belly fat macro split: Higher protein, moderate complex carb
-    targetPro = Math.round((targetCals * 0.32) / 4);
-    targetCarb = Math.round((targetCals * 0.38) / 4);
-    targetFat = Math.round((targetCals * 0.30) / 9);
-  } else {
-    targetCals = tdee - baseDeficit;
-
-    const minSafeCals = gender === "male" ? 1500 : 1200;
-    if (targetCals < minSafeCals) targetCals = minSafeCals;
-
-    // General macro split
-    targetPro = Math.round((targetCals * 0.28) / 4);
-    targetCarb = Math.round((targetCals * 0.44) / 4);
-    targetFat = Math.round((targetCals * 0.28) / 9);
-  }
-
-  // Render metrics to modal preview
-  document.getElementById("calc-target-cal").innerText = `${targetCals.toLocaleString()} kcal`;
-  
-  const etaText = weeksToGoal > 0 ? ` • Est. Time: ~${weeksToGoal} wks` : "";
-  document.getElementById("calc-meta-stats").innerText = 
-    `TDEE: ${tdee} • Pace: -${weeklyRate}kg/wk (Deficit: -${baseDeficit} kcal/d)${etaText}`;
-  
-  document.getElementById("calc-macros-preview").innerHTML = `
-    <span>Target Protein: <b>${targetPro}g</b> (${currentCalcMode === 'belly' ? '32%' : '28%'})</span>
-    <span>Target Carbs: <b>${targetCarb}g</b> (${currentCalcMode === 'belly' ? '38%' : '44%'})</span>
-  `;
-
-  window.calculatedTargets = { 
-    calories: targetCals, 
-    protein: targetPro, 
-    carbs: targetCarb, 
-    fat: targetFat 
-  };
-}
-
-function applyCalculatedGoals() {
-  if (!window.calculatedTargets) {
-    runFatLossCalculation();
-  }
-
-  userGoals.calories = window.calculatedTargets.calories;
-  userGoals.protein = window.calculatedTargets.protein;
-  userGoals.carbs = window.calculatedTargets.carbs;
-  if (window.calculatedTargets.fat) userGoals.fat = window.calculatedTargets.fat;
-
-  localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
-
-  document.getElementById("planner-target-cals").innerText = userGoals.calories;
-  document.getElementById("setting-goal-cal").value = userGoals.calories;
-  document.getElementById("setting-goal-pro").value = userGoals.protein;
-  document.getElementById("setting-goal-carb").value = userGoals.carbs;
-  document.getElementById("setting-goal-fat").value = userGoals.fat;
-
-  awardXP(25, "Calibrated Goals");
-  triggerConfetti();
-  playDesiChime("level");
-  closeCalcModal();
-  renderTodayDashboard();
-  renderRecommendedPlans();
-  renderYoddhaDashboard();
-  showToast(`🎯 Goals updated to ${userGoals.calories} kcal (P: ${userGoals.protein}g, C: ${userGoals.carbs}g, F: ${userGoals.fat}g)!`);
-}
 const STORAGE_KEY_CUSTOM_PLANS = "desicalorie_custom_plans_v13";
     let customPlans = [];
 
@@ -4369,7 +4383,575 @@ const STORAGE_KEY_CUSTOM_PLANS = "desicalorie_custom_plans_v13";
       renderYoddhaDashboard();
       showToast(`⚡ Applied "${selectedPlan.title}" to ${currentDateStr}!`);
     }
+function shareOrExportLogs(mode) {
+  if (mode === 'sheet') {
+    const totals = getDayNutrientTotals(currentDateStr);
+    const dayEntry = getDayLog(currentDateStr);
+    const slots = ["breakfast", "lunch", "snacks", "dinner", "midnight"];
+    const slotLabels = {
+      breakfast: "🌅 Breakfast",
+      lunch: "🍛 Lunch",
+      snacks: "☕️ Evening Snacks",
+      dinner: "🍲 Dinner",
+      midnight: "🌙 Midnight Cravings"
+    };
 
+    let summary = `🍛 *Desi Calorie Daily Report (${currentDateStr})*\n\n`;
+    summary += `🔥 *Calories:* ${totals.cals} / ${userGoals.calories} kcal\n`;
+    summary += `💪 *Protein:* ${totals.pro}g / ${userGoals.protein || 75}g\n`;
+    summary += `🌾 *Carbs:* ${totals.carbs}g / ${userGoals.carbs || 220}g\n`;
+    summary += `🥑 *Fat:* ${totals.fat}g / ${userGoals.fat || 65}g\n`;
+    summary += `🍬 *Sugar:* ${totals.sugar}g • 🫀 *Chol:* ${totals.chol}mg\n\n`;
+    summary += `📋 *Items Logged:*\n`;
+
+    let hasItems = false;
+    slots.forEach(slot => {
+      const items = dayEntry.meals[slot] || [];
+      if (items.length > 0) {
+        hasItems = true;
+        summary += `\n*${slotLabels[slot]}*\n`;
+        items.forEach(it => {
+          const qty = it.qty || 1;
+          const cal = Math.round(it.calories * qty);
+          const p = Math.round((it.protein || 0) * qty);
+          summary += ` • ${it.name} (${qty}x) — ${cal} kcal | P: ${p}g\n`;
+        });
+      }
+    });
+
+    if (!hasItems) summary += `_(No meals recorded for this date)_\n`;
+
+    if (navigator.share) {
+      navigator.share({ title: `Desi Calorie - ${currentDateStr}`, text: summary })
+        .catch(err => {
+          if (err.name !== 'AbortError') {
+            window.open(`https://wa.me/?text=${encodeURIComponent(summary)}`, '_blank');
+          }
+        });
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(summary)}`, '_blank');
+    }
+  } else if (mode === 'download') {
+    const exportPayload = {
+      exportedAt: new Date().toISOString(),
+      currentDate: currentDateStr,
+      userGoals: userGoals,
+      yoddhaProfile: yoddhaProfile,
+      customFoods: customFoods,
+      customPlans: customPlans,
+      logs: currentLogs
+    };
+
+    const jsonBlob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
+    const downloadUrl = URL.createObjectURL(jsonBlob);
+    const dlAnchor = document.createElement("a");
+    dlAnchor.href = downloadUrl;
+    dlAnchor.download = `desi_calorie_backup_${currentDateStr}.json`;
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    document.body.removeChild(dlAnchor);
+    URL.revokeObjectURL(downloadUrl);
+
+    showToast("⬇️ Backup downloaded as .json file.");
+  }
+}
+// State for the interactive custom plan builder
+let activePickerSlot = 'lunch';
+let builderPlan = {
+  breakfast: [],
+  lunch: [],
+  snacks: [],
+  dinner: [],
+  midnight: []
+};
+
+// Dietary templates available to quick-fill the slots
+const BUILDER_TEMPLATES = {
+  vegetarian: {
+    breakfast: [{ name: "Moong dal stuffed cheela/chilla", portion: "cheela (50g)", calories: 155, protein: 7, carbs: 19.4, fat: 5.1 }],
+    lunch: [
+      { name: "Chapati/Roti", portion: "chapati (40g)", calories: 154, protein: 4.8, carbs: 29.2, fat: 2 },
+      { name: "Paneer Bhurji", portion: "bowl (150g)", calories: 230, protein: 13.5, carbs: 6.5, fat: 16.5 },
+      { name: "Dal Tadka", portion: "bowl (150g)", calories: 130, protein: 6.5, carbs: 16, fat: 4.5 }
+    ],
+    snacks: [{ name: "Hot tea (Garam Chai)", portion: "tea cup (100ml)", calories: 65, protein: 2, carbs: 9.5, fat: 2.2 }],
+    dinner: [
+      { name: "Chapati/Roti", portion: "chapati (40g)", calories: 154, protein: 4.8, carbs: 29.2, fat: 2 },
+      { name: "Kidney bean curry (Rajmah curry)", portion: "bowl (150g)", calories: 144, protein: 6, carbs: 16.4, fat: 5.8 }
+    ],
+    midnight: [{ name: "Saffron milk (Kesariya doodh)", portion: "glass (250ml)", calories: 102, protein: 3.2, carbs: 12.6, fat: 4.6 }]
+  },
+  bihari: {
+    breakfast: [{ name: "Bihari Sattu Sharbat (Namkeen)", portion: "tall glass (300ml)", calories: 140, protein: 7.5, carbs: 22, fat: 2.5 }],
+    lunch: [
+      { name: "Chapati/Roti", portion: "chapati (40g)", calories: 154, protein: 4.8, carbs: 29.2, fat: 2 },
+      { name: "Yellow Dal Tadka", portion: "bowl (150g)", calories: 150, protein: 7.5, carbs: 20, fat: 4.5 }
+    ],
+    snacks: [{ name: "Peanut brittle (Moongfali ki chikki)", portion: "piece (30g)", calories: 116, protein: 3.2, carbs: 22.3, fat: 1.5 }],
+    dinner: [{ name: "Litti Chokha", portion: "plate (200g)", calories: 380, protein: 10.5, carbs: 52, fat: 14.5 }],
+    midnight: [{ name: "Lassi (salted)", portion: "tall glass (300ml)", calories: 19, protein: 1.4, carbs: 1.9, fat: 0.7 }]
+  },
+  nonveg: {
+    breakfast: [{ name: "Boiled egg (Ubla anda)", portion: "egg (50g)", calories: 45, protein: 4.4, carbs: 0.1, fat: 3 }],
+    lunch: [
+      { name: "Boiled rice (Uble chawal)", portion: "plate (250g)", calories: 117, protein: 2.6, carbs: 25.7, fat: 0.2 },
+      { name: "Chicken curry", portion: "bowl (150g)", calories: 129, protein: 11.8, carbs: 3.4, fat: 7.6 }
+    ],
+    snacks: [{ name: "Sprouted moong salad", portion: "bowl (150g)", calories: 38, protein: 2.3, carbs: 5.5, fat: 0.7 }],
+    dinner: [{ name: "Tandoori chicken", portion: "chicken (100g)", calories: 145, protein: 16.3, carbs: 2.3, fat: 7.9 }],
+    midnight: [{ name: "Cumin infused water (Jeere/Zeere ka pani)", portion: "glass (250ml)", calories: 9, protein: 0.2, carbs: 1.9, fat: 0.1 }]
+  },
+  lean_balance: {
+    breakfast: [{ name: "Poha", portion: "bowl (150g)", calories: 295, protein: 6.1, carbs: 35, fat: 14.1 }],
+    lunch: [
+      { name: "Chapati/Roti", portion: "chapati (40g)", calories: 154, protein: 4.8, carbs: 29.2, fat: 2 },
+      { name: "Dal Fry", portion: "bowl (150g)", calories: 140, protein: 6.8, carbs: 15.5, fat: 5.8 }
+    ],
+    snacks: [{ name: "Murmura (Puffed rice)", portion: "bowl (150g)", calories: 113, protein: 3.6, carbs: 15.7, fat: 4 }],
+    dinner: [{ name: "Paneer curry", portion: "bowl (150g)", calories: 177, protein: 7.8, carbs: 8.4, fat: 12.4 }],
+    midnight: [{ name: "Hot cocoa", portion: "cup (200ml)", calories: 90, protein: 3.4, carbs: 9.2, fat: 4.6 }]
+  },
+  lowcarb: {
+    breakfast: [{ name: "Paneer Bhurji", portion: "bowl (150g)", calories: 230, protein: 13.5, carbs: 6.5, fat: 16.5 }],
+    lunch: [{ name: "Soyabean curry", portion: "bowl (150g)", calories: 163, protein: 10.4, carbs: 6.8, fat: 10.2 }],
+    snacks: [{ name: "Sprouted moong salad", portion: "bowl (150g)", calories: 38, protein: 2.3, carbs: 5.5, fat: 0.7 }],
+    dinner: [{ name: "Spinach paneer (Palak paneer)", portion: "bowl (150g)", calories: 78, protein: 4, carbs: 4.4, fat: 4.8 }],
+    midnight: [{ name: "Cumin infused water (Jeere/Zeere ka pani)", portion: "glass (250ml)", calories: 9, protein: 0.2, carbs: 1.9, fat: 0.1 }]
+  }
+};
+
+function openCustomPlanModal() {
+  document.getElementById("add-custom-plan-modal").classList.add("active");
+  document.getElementById("cust-plan-cals").value = userGoals.calories || 2000;
+  if (!builderPlan.lunch.length && !builderPlan.breakfast.length) {
+    applyArchetypeToBuilder("vegetarian");
+  } else {
+    scaleCustomPlanAlgorithm();
+  }
+}
+
+function closeCustomPlanModal() {
+  document.getElementById("add-custom-plan-modal").classList.remove("active");
+}
+
+function applyArchetypeToBuilder(type) {
+  if (type === "blank") {
+    builderPlan = { breakfast: [], lunch: [], snacks: [], dinner: [], midnight: [] };
+  } else if (BUILDER_TEMPLATES[type]) {
+    builderPlan = JSON.parse(JSON.stringify(BUILDER_TEMPLATES[type]));
+  }
+  scaleCustomPlanAlgorithm();
+}
+
+function openPlanFoodPicker(slot) {
+  activePickerSlot = slot;
+  const slotLabels = {
+    breakfast: "🌅 Breakfast",
+    lunch: "🍛 Lunch",
+    snacks: "☕️ Evening Snacks",
+    dinner: "🍲 Dinner",
+    midnight: "🌙 Midnight"
+  };
+  document.getElementById("picker-modal-title").innerText = `Add to ${slotLabels[slot]}`;
+  document.getElementById("picker-search-input").value = "";
+  document.getElementById("plan-food-picker-modal").classList.add("active");
+  handlePickerSearch("");
+  document.getElementById("picker-search-input").focus();
+}
+
+function closePlanFoodPicker() {
+  document.getElementById("plan-food-picker-modal").classList.remove("active");
+}
+
+function handlePickerSearch(query) {
+  const container = document.getElementById("picker-results-list");
+  query = query.trim().toLowerCase();
+  const allList = getAllDatabaseFoods();
+
+  const matches = query ? allList.filter(f => f.name.toLowerCase().includes(query)) : allList.slice(0, 35);
+
+  if (matches.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-sec); font-size:12px;">No items found matching "${query}".</div>`;
+    return;
+  }
+
+  container.innerHTML = matches.map(item => `
+    <div class="food-item-row" style="cursor: pointer; padding: 8px 10px;" onclick="selectFoodForPlan(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+      <div>
+        <div style="font-weight: 700; font-size: 13px;">${item.name}</div>
+        <div style="font-size: 11px; color: var(--text-sec); display:flex; gap:4px; margin-top:2px;">
+          <span>${item.portion} • </span>
+          <span class="badge badge-macro">P: ${item.protein}g</span>
+          <span class="badge badge-macro">C: ${item.carbs}g</span>
+        </div>
+      </div>
+      <button class="btn-db-log" style="margin:0;">+ Add</button>
+    </div>
+  `).join("");
+}
+
+function selectFoodForPlan(food) {
+  builderPlan[activePickerSlot].push({
+    name: food.name,
+    portion: food.portion,
+    calories: food.calories,
+    protein: food.protein,
+    carbs: food.carbs,
+    fat: food.fat,
+    qty: 1
+  });
+  closePlanFoodPicker();
+  scaleCustomPlanAlgorithm();
+  showToast(`Added ${food.name} to ${activePickerSlot.toUpperCase()}`);
+}
+
+function removeBuilderItem(slot, index) {
+  builderPlan[slot].splice(index, 1);
+  scaleCustomPlanAlgorithm();
+}
+
+/**
+ * Deterministic Calorie & Macro Scaling Algorithm
+ * Divides calories across active slots based on weight distribution:
+ * Breakfast: 25%, Lunch: 35%, Snacks: 10%, Dinner: 25%, Midnight: 5%
+ */
+function scaleCustomPlanAlgorithm() {
+  const targetCalories = parseFloat(document.getElementById("cust-plan-cals").value) || userGoals.calories || 2000;
+  const standardWeights = { breakfast: 0.25, lunch: 0.35, snacks: 0.10, dinner: 0.25, midnight: 0.05 };
+
+  // Determine active slots and normalize weights
+  let activeWeightSum = 0;
+  Object.keys(standardWeights).forEach(slot => {
+    if (builderPlan[slot] && builderPlan[slot].length > 0) {
+      activeWeightSum += standardWeights[slot];
+    }
+  });
+
+  let grandCals = 0, grandPro = 0, grandCarbs = 0, grandFat = 0;
+
+  Object.keys(standardWeights).forEach(slot => {
+    const slotItems = builderPlan[slot] || [];
+    const container = document.getElementById(`builder-slot-${slot}`);
+    container.innerHTML = "";
+
+    if (slotItems.length === 0) {
+      container.innerHTML = `<div style="font-size: 11px; color: var(--text-sec); padding: 4px 0;">No foods selected. Tap "+ Pick Food" to add.</div>`;
+      return;
+    }
+
+    // Normalized slot budget
+    const normalizedWeight = activeWeightSum > 0 ? (standardWeights[slot] / activeWeightSum) : 0.2;
+    const slotTargetCalories = targetCalories * normalizedWeight;
+    const baseSlotCalories = slotItems.reduce((sum, it) => sum + (it.calories || 0), 0);
+
+    // Scaling factor k_s rounded to nearest 0.25 fraction
+    const slotScale = baseSlotCalories > 0 ? (slotTargetCalories / baseSlotCalories) : 1;
+    const roundedScale = Math.max(0.25, Math.round(slotScale * 4) / 4);
+
+    slotItems.forEach((it, idx) => {
+      it.qty = roundedScale;
+      const scaledCals = Math.round(it.calories * roundedScale);
+      const scaledPro = Math.round(it.protein * roundedScale * 10) / 10;
+      const scaledCarbs = Math.round(it.carbs * roundedScale * 10) / 10;
+      const scaledFat = Math.round(it.fat * roundedScale * 10) / 10;
+
+      grandCals += scaledCals;
+      grandPro += scaledPro;
+      grandCarbs += scaledCarbs;
+      grandFat += scaledFat;
+
+      const row = document.createElement("div");
+      row.className = "food-item-row";
+      row.style.padding = "6px 0";
+      row.innerHTML = `
+        <div style="font-size: 12px;">
+          <b>${it.qty}×</b> ${it.name} 
+          <span style="font-size: 10px; color: var(--text-sec);">(${scaledCals} kcal • P: ${scaledPro}g)</span>
+        </div>
+        <button class="del-btn" style="font-size: 13px;" onclick="removeBuilderItem('${slot}', ${idx})">✕</button>
+      `;
+      container.appendChild(row);
+    });
+  });
+
+  document.getElementById("builder-total-cals").innerText = `${grandCals} / ${targetCalories} kcal`;
+  document.getElementById("builder-total-pro").innerText = `💪 P: ${Math.round(grandPro)}g`;
+  document.getElementById("builder-total-carbs").innerText = `🌾 C: ${Math.round(grandCarbs)}g`;
+  document.getElementById("builder-total-fat").innerText = `🥑 F: ${Math.round(grandFat)}g`;
+}
+
+function saveCustomPlan() {
+  const title = document.getElementById("cust-plan-title").value.trim();
+  const tag = document.getElementById("cust-plan-tag").value.trim() || "Custom Plan";
+  const targetCalories = parseFloat(document.getElementById("cust-plan-cals").value) || 2000;
+
+  if (!title) {
+    showToast("Please enter a title for your plan.");
+    return;
+  }
+
+  const totalCount = Object.values(builderPlan).reduce((acc, arr) => acc + arr.length, 0);
+  if (totalCount === 0) {
+    showToast("Please pick at least one food item from the database.");
+    return;
+  }
+
+  // Generate clean preview summary text
+  const slotHeaders = {
+    breakfast: "🌅 Breakfast",
+    lunch: "🍛 Lunch",
+    snacks: "☕️ Evening Snacks",
+    dinner: "🍲 Dinner",
+    midnight: "🌙 Midnight"
+  };
+
+  let previewText = "";
+  const finalMeals = { breakfast: [], lunch: [], snacks: [], dinner: [], midnight: [] };
+
+  Object.keys(builderPlan).forEach(slot => {
+    if (builderPlan[slot].length > 0) {
+      previewText += `${slotHeaders[slot]}:\n`;
+      builderPlan[slot].forEach(it => {
+        const scaled = {
+          name: it.name,
+          portion: it.portion,
+          calories: Math.round(it.calories * it.qty),
+          protein: Math.round(it.protein * it.qty * 10) / 10,
+          carbs: Math.round(it.carbs * it.qty * 10) / 10,
+          fat: Math.round(it.fat * it.qty * 10) / 10,
+          qty: it.qty,
+          origin: "CUSTOM"
+        };
+        finalMeals[slot].push(scaled);
+        previewText += ` • ${scaled.qty}× ${scaled.name} (${scaled.calories} kcal)\n`;
+      });
+      previewText += "\n";
+    }
+  });
+
+  const newPlan = {
+    id: "plan_" + Date.now(),
+    title: title,
+    tag: tag,
+    badgeClass: "badge-macro",
+    desc: `Scales to ${document.getElementById("builder-total-cals").innerText.split(" /")[0]} kcal budget`,
+    items_preview: previewText.trim(),
+    meals: finalMeals
+  };
+
+  customPlans.unshift(newPlan);
+  localStorage.setItem(STORAGE_KEY_CUSTOM_PLANS, JSON.stringify(customPlans));
+
+  closeCustomPlanModal();
+  renderRecommendedPlans();
+  awardXP(35, "Created Custom Meal Plan");
+  triggerConfetti();
+  playDesiChime("level");
+  showToast(`✓ Custom Plan "${title}" saved!`);
+
+  document.getElementById("cust-plan-title").value = "";
+}
+function toggleGenderFields() {
+  const gender = document.getElementById("calc-gender").value;
+  const hipWrap = document.getElementById("hip-input-wrap");
+  if (hipWrap) {
+    hipWrap.style.display = (gender === "female") ? "block" : "none";
+  }
+}
+
+function setCalcMode(mode) {
+  currentCalcMode = mode;
+  document.getElementById("mode-btn-general").style.background = mode === "general" ? "var(--primary)" : "var(--surface-secondary)";
+  document.getElementById("mode-btn-general").style.color = mode === "general" ? "white" : "var(--text)";
+  document.getElementById("mode-btn-belly").style.background = mode === "belly" ? "var(--primary)" : "var(--surface-secondary)";
+  document.getElementById("mode-btn-belly").style.color = mode === "belly" ? "white" : "var(--text)";
+  runFatLossCalculation();
+}
+
+function runFatLossCalculation() {
+  const currWt = parseFloat(document.getElementById("calc-current-wt").value) || 75;
+  const goalWt = parseFloat(document.getElementById("calc-goal-wt").value) || 68;
+  const ht = parseFloat(document.getElementById("calc-height").value) || 170;
+  const age = parseFloat(document.getElementById("calc-age").value) || 28;
+  const gender = document.getElementById("calc-gender").value;
+  const activityMult = parseFloat(document.getElementById("calc-activity").value) || 1.375;
+  const weeklyRate = parseFloat(document.getElementById("calc-weekly-rate").value) || 0.50;
+
+  const waist = parseFloat(document.getElementById("calc-waist").value) || 85;
+  const neck = parseFloat(document.getElementById("calc-neck").value) || 38;
+  const hip = parseFloat(document.getElementById("calc-hip") ? document.getElementById("calc-hip").value : 95) || 95;
+
+  // 1. Basal Metabolic Rate (Mifflin-St Jeor) & Maintenance TDEE
+  const bmr = (10 * currWt) + (6.25 * ht) - (5 * age) + (gender === "male" ? 5 : -161);
+  const tdee = Math.round(bmr * activityMult);
+
+  // 2. US Navy Body Fat % Formula
+  let bodyFatPct = 0;
+  try {
+    if (gender === "male") {
+      const diff = waist - neck;
+      if (diff > 0) {
+        bodyFatPct = 495 / (1.0324 - (0.19077 * Math.log10(diff)) + (0.15456 * Math.log10(ht))) - 450;
+      }
+    } else {
+      const sum = waist + hip - neck;
+      if (sum > 0) {
+        bodyFatPct = 495 / (1.29579 - (0.35004 * Math.log10(sum)) + (0.22100 * Math.log10(ht))) - 450;
+      }
+    }
+  } catch (e) {}
+
+  bodyFatPct = Math.max(5, Math.min(55, Math.round(bodyFatPct * 10) / 10));
+  const fatMass = Math.round((currWt * (bodyFatPct / 100)) * 10) / 10;
+  const leanMass = Math.max(25, Math.round((currWt - fatMass) * 10) / 10);
+
+  // 3. Waist-to-Height Ratio (WHtR) & Asian Phenotype Visceral Risk
+  const whtr = Math.round((waist / ht) * 100) / 100;
+  let visceralPenalty = 0;
+  const riskCard = document.getElementById("whtr-risk-card");
+  const riskLbl = document.getElementById("whtr-value-lbl");
+  const riskBadge = document.getElementById("whtr-status-badge");
+
+  if (riskCard && riskLbl && riskBadge) {
+    riskLbl.innerText = `WHtR: ${whtr.toFixed(2)} • Waist: ${waist}cm`;
+
+    if (whtr < 0.40) {
+      riskCard.style.background = "#FEF3C7";
+      riskBadge.style.background = "#FDE68A";
+      riskBadge.style.color = "#92400E";
+      riskBadge.innerText = "Underweight Range";
+    } else if (whtr <= 0.49) {
+      riskCard.style.background = "#DCFCE7";
+      riskBadge.style.background = "#BBF7D0";
+      riskBadge.style.color = "#166534";
+      riskBadge.innerText = "✓ Low Visceral Risk";
+    } else if (whtr <= 0.57) {
+      riskCard.style.background = "#FFEDD5";
+      riskBadge.style.background = "#FED7AA";
+      riskBadge.style.color = "#9A3412";
+      riskBadge.innerText = "⚠️ Elevated Visceral Risk";
+      visceralPenalty = (currentCalcMode === "belly") ? 80 : 0;
+    } else {
+      riskCard.style.background = "#FEE2E2";
+      riskBadge.style.background = "#FECACA";
+      riskBadge.style.color = "#991B1B";
+      riskBadge.innerText = "🚨 High Visceral / Android Fat";
+      visceralPenalty = (currentCalcMode === "belly") ? 140 : 50;
+    }
+  }
+
+  // 4. Daily Deficit Calculation (1 kg body fat ≈ 7,700 kcal)
+  let dailyDeficit = Math.round(weeklyRate * 1100) + visceralPenalty;
+  let targetCals = tdee - dailyDeficit;
+
+  // Metabolic Safety Floor
+  const safetyFloor = (gender === "male") ? 1500 : 1200;
+  if (targetCals < safetyFloor) {
+    targetCals = safetyFloor;
+    dailyDeficit = tdee - targetCals;
+  }
+
+  // 5. Macro Distribution
+  let targetPro = 0, targetCarb = 0, targetFat = 0;
+  if (currentCalcMode === "belly") {
+    // Muscle-sparing high protein: 2.1g per kg Lean Mass
+    targetPro = Math.round(leanMass * 2.1);
+    targetFat = Math.round((targetCals * 0.28) / 9);
+    targetCarb = Math.max(80, Math.round((targetCals - (targetPro * 4) - (targetFat * 9)) / 4));
+  } else {
+    // Balanced fat loss: 1.75g per kg Lean Mass
+    targetPro = Math.round(leanMass * 1.75);
+    targetFat = Math.round((targetCals * 0.28) / 9);
+    targetCarb = Math.max(90, Math.round((targetCals - (targetPro * 4) - (targetFat * 9)) / 4));
+  }
+
+  // Functional Micro Goals
+  const fiberTarget = (currentCalcMode === "belly") ? 38 : 32;
+  const waterTarget = (currWt * 0.035).toFixed(1);
+
+  // 6. Projected Timeline & Milestone Target Date
+  const kgToLose = Math.max(0, currWt - goalWt);
+  const weeksNeeded = (kgToLose > 0 && weeklyRate > 0) ? Math.ceil(kgToLose / weeklyRate) : 0;
+
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + (weeksNeeded * 7));
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const dateString = `${monthNames[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
+
+  // 7. Update Dashboard Visuals
+  document.getElementById("calc-target-cal").innerText = `${targetCals.toLocaleString()} kcal`;
+  document.getElementById("calc-timeline").innerText = weeksNeeded > 0 ? `~${weeksNeeded} wks (${dateString})` : "Goal Achieved!";
+  document.getElementById("calc-bf-pct").innerText = `~${bodyFatPct}%`;
+  document.getElementById("calc-fat-mass").innerText = `${fatMass} kg`;
+  document.getElementById("calc-lean-mass").innerText = `${leanMass} kg`;
+
+  document.getElementById("calc-meta-stats").innerText = 
+    `BMR: ${Math.round(bmr)} • Maintenance (TDEE): ${tdee} • Deficit: -${dailyDeficit} kcal/day`;
+
+  const proPerLbm = (targetPro / leanMass).toFixed(1);
+  document.getElementById("calc-pro-stat").innerText = `💪 Protein: ${targetPro}g (${proPerLbm}g/kg LBM)`;
+  document.getElementById("calc-carb-stat").innerText = `🌾 Complex Carbs: ${targetCarb}g`;
+  document.getElementById("calc-fat-stat").innerText = `🥑 Healthy Fat: ${targetFat}g`;
+  document.getElementById("calc-micro-stat").innerText = `🥗 Fiber: ≥${fiberTarget}g • 💧 Water: ${waterTarget}L`;
+
+  // 8. Dynamic Contextual Guidance & Recommendations
+  let insightsHTML = "";
+
+  if (currentCalcMode === "belly") {
+    insightsHTML += `<li><b>Food Sequencing (Insulin Defense):</b> Consume fiber (salad/cucumbers/sprouts) and protein (dal/paneer/egg/chicken) <i>before</i> touching roti or rice to blunt the post-meal glucose and insulin spike.</li>`;
+    insightsHTML += `<li><b>Carb Quality Swap:</b> Shift away from maida and white sugar. Prioritize slow-digesting grains like Jowar, Bajra, Sattu, or controlled portions of brown/parboiled basmati.</li>`;
+    if (whtr > 0.50) {
+      insightsHTML += `<li><b>Cortisol & Visceral Drainage:</b> Central belly adiposity is directly aggravated by chronic stress and poor sleep. Aim for 7–8 hours of uninterrupted rest and take a 10–15 minute brisk stroll after your largest meal.</li>`;
+    }
+  } else {
+    insightsHTML += `<li><b>Volume Eating on a Deficit:</b> To stay full on a -${dailyDeficit} kcal deficit, pack half your plate with high-water Indian vegetables (Ghiya/Lauki, Tinda, Turai, Palak, Bhindi).</li>`;
+    insightsHTML += `<li><b>Protein Pacing:</b> Distribute your ${targetPro}g protein target across 3–4 meals (e.g., 25–35g per sitting) to minimize muscle catabolism while burning fat.</li>`;
+  }
+
+  insightsHTML += `<li><b>Fiber & Hydration Protocol:</b> Reach your daily ${fiberTarget}g fiber target via Sabja (sweet basil) seeds, whole lentils (chana/rajma), and raw greens. Drink ${waterTarget}L of water daily to support digestive transit and prevent water retention.</li>`;
+
+  const insightsList = document.getElementById("calc-insights-list");
+  if (insightsList) {
+    insightsList.innerHTML = insightsHTML;
+  }
+
+  // Buffer targets for saving
+  window.calculatedTargets = {
+    calories: targetCals,
+    protein: targetPro,
+    carbs: targetCarb,
+    fat: targetFat,
+    fiber: fiberTarget
+  };
+}
+
+function applyCalculatedGoals() {
+  if (!window.calculatedTargets) {
+    runFatLossCalculation();
+  }
+
+  userGoals.calories = window.calculatedTargets.calories;
+  userGoals.protein = window.calculatedTargets.protein;
+  userGoals.carbs = window.calculatedTargets.carbs;
+  userGoals.fat = window.calculatedTargets.fat;
+
+  localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
+
+  document.getElementById("planner-target-cals").innerText = userGoals.calories;
+  document.getElementById("setting-goal-cal").value = userGoals.calories;
+  document.getElementById("setting-goal-pro").value = userGoals.protein;
+  document.getElementById("setting-goal-carb").value = userGoals.carbs;
+  document.getElementById("setting-goal-fat").value = userGoals.fat;
+
+  awardXP(30, "Calibrated Advanced Biometrics");
+  triggerConfetti();
+  playDesiChime("level");
+  closeCalcModal();
+  renderTodayDashboard();
+  renderRecommendedPlans();
+  renderYoddhaDashboard();
+  showToast(`🎯 Goals updated: ${userGoals.calories} kcal (Protein: ${userGoals.protein}g, Carbs: ${userGoals.carbs}g)`);
+}
   </script>
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5S9QHP9BX"></script>
