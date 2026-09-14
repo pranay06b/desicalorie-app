@@ -842,24 +842,30 @@
     </div>
 
     <!-- TAB 2: FOOD DATABASE (PRE-EMBEDDED ANUVAAD INDB 2024.11 & CUSTOM) -->
+    <!-- TAB 2: FOOD DATABASE (PRE-EMBEDDED ANUVAAD INDB 2024.11 & CUSTOM) -->
     <div id="tab-database" class="tab-view">
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
           <div>
             <h3 style="margin: 0;">🍲 Food & Calorie Database</h3>
             <div style="font-size: 12px; color: var(--text-sec); margin-top: 2px;" id="db-total-count-lbl">
               Loading embedded database...
             </div>
           </div>
-          <button class="btn-submit" style="margin: 0; padding: 7px 12px; font-size: 12px; width: auto;" onclick="openAddCustomFoodModal()">
-            + Add Custom Food
-          </button>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn-submit" style="margin: 0; padding: 7px 12px; font-size: 11px; width: auto; background: #0284C7;" onclick="openSpoonacularSearchModal()">
+  🥄 Add via Web
+</button>
+            <button class="btn-submit" style="margin: 0; padding: 7px 12px; font-size: 11px; width: auto;" onclick="openAddCustomFoodModal()">
+              + Custom Food
+            </button>
+          </div>
         </div>
 
         <input type="text" class="form-input" id="db-search-input" placeholder="🔍 Search foods, rotis, dals, litti, sattu..." oninput="renderDatabaseView()" style="margin-bottom: 10px;">
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <span style="font-size: 11px; color: var(--text-sec); font-weight: 600;">CALORIES • PROTEIN • CARBS • FAT • SUGAR • CHOL</span>
+          <span style="font-size: 11px; color: var(--text-sec); font-weight: 600;">CALORIES • PROTEIN • CARBS • FAT</span>
           <span style="font-size: 11px; color: var(--success); font-weight: 700; background: #DCFCE7; padding: 2px 6px; border-radius: 4px;">
             ✓ Pre-Embedded Offline
           </span>
@@ -868,7 +874,6 @@
         <div id="db-items-container" style="max-height: 550px; overflow-y: auto;"></div>
       </div>
     </div>
-
     <!-- TAB 3: MEAL PLANNER (REGIONAL & TARGETED OPTIONS) -->
     <div id="tab-planner" class="tab-view">
       <div class="card">
@@ -949,6 +954,7 @@
   </main>
 
   <!-- MODAL: ADD CUSTOM FOOD -->
+<!-- MODAL: ADD CUSTOM FOOD -->
   <div class="modal-overlay" id="add-custom-food-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -956,9 +962,15 @@
         <button class="close-modal" onclick="closeAddCustomFoodModal()">✕</button>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Food Name *Required</label>
-        <input type="text" id="cust-food-name" class="form-input" placeholder="e.g. Soya Chaap, Besan Halwa" required>
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Food Name *Required</label>
+          <input type="text" id="cust-food-name" class="form-input" placeholder="e.g. Paneer Bhurji, Sattu Ladoo" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Brand</label>
+          <input type="text" id="cust-food-brand" class="form-input" placeholder="e.g. Amul, Haldiram's" value="Generic">
+        </div>
       </div>
 
       <div class="form-group">
@@ -969,40 +981,53 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div class="form-group">
           <label class="form-label">Calories (kcal) *Required</label>
-          <input type="number" id="cust-food-cal" class="form-input" placeholder="e.g. 210" oninput="autoComputeCarbs()" required>
+          <input type="number" id="cust-food-cal" class="form-input" placeholder="e.g. 210" required>
         </div>
         <div class="form-group">
           <label class="form-label">Fat (g) *Required</label>
-          <input type="number" step="0.1" id="cust-food-fat" class="form-input" placeholder="e.g. 6.5" oninput="autoComputeCarbs()" required>
+          <input type="number" step="0.1" id="cust-food-fat" class="form-input" placeholder="e.g. 6.5" required>
         </div>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div class="form-group">
           <label class="form-label">Protein (g) *Required</label>
-          <input type="number" step="0.1" id="cust-food-pro" class="form-input" placeholder="e.g. 12" oninput="autoComputeCarbs()" required>
+          <input type="number" step="0.1" id="cust-food-pro" class="form-input" placeholder="e.g. 12" required>
         </div>
         <div class="form-group">
           <label class="form-label">Carbohydrates (g) *Required</label>
-          <input type="number" step="0.1" id="cust-food-carb" class="form-input" placeholder="Auto or enter" value="0" required>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        <div class="form-group">
-          <label class="form-label">Free Sugar (g)</label>
-          <input type="number" step="0.1" id="cust-food-sugar" class="form-input" placeholder="e.g. 2.0" value="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Cholesterol (mg)</label>
-          <input type="number" step="1" id="cust-food-chol" class="form-input" placeholder="e.g. 0 or 60" value="0">
+          <input type="number" step="0.1" id="cust-food-carb" class="form-input" placeholder="e.g. 20" value="0" required>
         </div>
       </div>
 
       <button class="btn-submit" onclick="saveNewCustomFood()">Save Food to Database</button>
     </div>
   </div>
+<!-- MODAL: SEARCH & IMPORT FOOD VIA FATSECRET API -->
+<!-- MODAL: SEARCH & IMPORT FOOD VIA OPEN FOOD FACTS -->
+<!-- MODAL: SPOONACULAR SEARCH & IMPORT -->
+  <div class="modal-overlay" id="spoonacular-search-modal">
+    <div class="modal-content" style="max-height: 88vh;">
+      <div class="modal-header">
+        <div class="modal-title">🥄 Import Food via Spoonacular</div>
+        <button class="close-modal" onclick="closeSpoonacularSearchModal()">✕</button>
+      </div>
 
+      <p style="font-size: 12px; color: var(--text-sec); margin: 0 0 10px 0;">
+        Enter natural ingredient portions (e.g., <em>"1 medium apple"</em>, <em>"100g paneer"</em>, <em>"2 boiled eggs"</em>).
+      </p>
+
+      <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+        <input type="text" id="spoonacular-search-query" class="form-input" placeholder="e.g. 1 medium apple, 100g chicken breast..." onkeydown="if(event.key==='Enter') searchSpoonacularFood()">
+        <button class="btn-submit" style="width: auto; padding: 0 16px; margin: 0; white-space: nowrap; background: #0284C7;" onclick="searchSpoonacularFood()">
+          Analyze
+        </button>
+      </div>
+
+      <div id="spoonacular-search-status" style="font-size: 12px; margin-bottom: 8px; font-weight: 600; display: none;"></div>
+      <div id="spoonacular-results-container" style="max-height: 420px; overflow-y: auto;"></div>
+    </div>
+  </div>
   <!-- MODAL: SEARCH FOOD FOR MEAL -->
   <div class="modal-overlay" id="food-search-modal">
     <div class="modal-content">
@@ -1320,18 +1345,23 @@
     </div>
   </div>
 
-  <!-- MODAL: API KEYS -->
+
+  <!-- MODAL: FATSECRET API KEYS -->
+  <!-- MODAL: SPOONACULAR API SETTINGS -->
   <div class="modal-overlay" id="api-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">🔑 Live API Integration</div>
+        <div class="modal-title">🔑 Spoonacular API Integration</div>
         <button class="close-modal" onclick="closeApiModal()">✕</button>
       </div>
+      <p style="font-size: 12px; color: var(--text-sec); margin: 0 0 12px 0;">
+        Enter your Spoonacular API key to search and analyze foods with natural language portions.
+      </p>
       <div class="form-group">
-        <label class="form-label">API-Ninjas Key</label>
-        <input type="password" id="key-ninjas" class="form-input" placeholder="Paste API-Ninjas key...">
+        <label class="form-label">Spoonacular API Key *Required</label>
+        <input type="password" id="key-spoonacular-key" class="form-input" placeholder="Paste Spoonacular API Key...">
       </div>
-      <button class="btn-submit" onclick="saveApiKeys()">Save Key</button>
+      <button class="btn-submit" onclick="saveApiKeys()">Save Credentials</button>
     </div>
   </div>
   <!-- MODAL: ADD CUSTOM MEAL PLAN (ALGORITHMIC) -->
@@ -1482,6 +1512,7 @@
        Extended: original 1087 items + 550 additional unique, non-repetitive
        popular Indian/regional food items (1637 total entries)
        ========================================================================== */
+
 const ANUVAAD_INDB_DATABASE = [
   ["Hot tea (Garam Chai)","1 tea cup (100ml)",16,0.4,2.6,0.5],
   ["Instant coffee","1 tea cup (100ml)",23,0.6,3.6,0.8],
@@ -3312,7 +3343,7 @@ const ANUVAAD_INDB_DATABASE = [
       { level: 7, minXp: 8001, maxXp: 12000, title: "Mahabali Param Yoddha", badge: "🔱 Level 7: Mahabali Param Yoddha", desc: "Supreme master of desi caloric discipline, macronutrient limits, and endurance." },
       { level: 8, minXp: 12001, maxXp: Infinity, title: "Brahmand Nayak Yoddha", badge: "🌟 Level 8: Brahmand Nayak Yoddha", desc: "Legendary pinnacle of holistic fitness, metabolic vitality, and unwavering tapasya." }
     ];
-
+const anuvaadFoods = ANUVAAD_INDB_DATABASE;
     /* ==========================================================================
        STREAK ACHIEVEMENTS CONFIGURATION
        ========================================================================== */
@@ -3333,6 +3364,7 @@ const ANUVAAD_INDB_DATABASE = [
     /* ==========================================================================
        STORAGE KEYS & STATE
        ========================================================================== */
+
     const STORAGE_KEY_LOGS = "desicalorie_5yr_logs_v13";
     const STORAGE_KEY_GOALS = "desicalorie_goals_v13";
     const STORAGE_KEY_CUSTOM_FOODS = "desicalorie_custom_foods_v13";
@@ -3344,7 +3376,7 @@ const ANUVAAD_INDB_DATABASE = [
     let customFoods = [];
     let userGoals = { calories: 2000, protein: 75, carbs: 220, fat: 65, sugar: 25, cholesterol: 300 };
     let yoddhaProfile = { xp: 0, claimedQuests: {} };
-    let apiKeys = { ninjas: "" };
+    let apiKeys = { spoonacularKey: "" };
     let activeSelection = null;
     let currentCalcMode = "general";
 
@@ -3385,41 +3417,55 @@ const ANUVAAD_INDB_DATABASE = [
       renderYoddhaDashboard();
     });
 
-    function loadAllSavedData() {
-      try {
-        const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
-        if (savedLogs) currentLogs = JSON.parse(savedLogs);
+function loadAllSavedData() {
+  try {
+    const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
+    if (savedLogs) currentLogs = JSON.parse(savedLogs);
 
-        const savedCustom = localStorage.getItem(STORAGE_KEY_CUSTOM_FOODS);
-        if (savedCustom) customFoods = JSON.parse(savedCustom);
+    const savedCustom = localStorage.getItem(STORAGE_KEY_CUSTOM_FOODS);
+    if (savedCustom) customFoods = JSON.parse(savedCustom);
 
-        const savedGoals = localStorage.getItem(STORAGE_KEY_GOALS);
-        if (savedGoals) {
-          userGoals = { ...userGoals, ...JSON.parse(savedGoals) };
-          document.getElementById("setting-goal-cal").value = userGoals.calories;
-          document.getElementById("setting-goal-pro").value = userGoals.protein || 75;
-          document.getElementById("setting-goal-carb").value = userGoals.carbs || 220;
-          document.getElementById("setting-goal-fat").value = userGoals.fat || 65;
-          document.getElementById("setting-goal-sugar").value = userGoals.sugar || 25;
-          document.getElementById("setting-goal-chol").value = userGoals.cholesterol || 300;
-          document.getElementById("planner-target-cals").innerText = userGoals.calories;
-        }
-
-        const savedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
-        if (savedProfile) {
-          yoddhaProfile = JSON.parse(savedProfile);
-          if (!yoddhaProfile.claimedQuests) yoddhaProfile.claimedQuests = {};
-        }
-
-        const savedKeys = localStorage.getItem(STORAGE_KEY_KEYS);
-        if (savedKeys) {
-          apiKeys = JSON.parse(savedKeys);
-          document.getElementById("key-ninjas").value = apiKeys.ninjas || "";
-        }
-      } catch (e) {
-        console.error("Storage load error:", e);
-      }
+    const savedGoals = localStorage.getItem(STORAGE_KEY_GOALS);
+    if (savedGoals) {
+      userGoals = { ...userGoals, ...JSON.parse(savedGoals) };
+      document.getElementById("setting-goal-cal").value = userGoals.calories;
+      document.getElementById("setting-goal-pro").value = userGoals.protein || 75;
+      document.getElementById("setting-goal-carb").value = userGoals.carbs || 220;
+      document.getElementById("setting-goal-fat").value = userGoals.fat || 65;
+      document.getElementById("setting-goal-sugar").value = userGoals.sugar || 25;
+      document.getElementById("setting-goal-chol").value = userGoals.cholesterol || 300;
+      document.getElementById("planner-target-cals").innerText = userGoals.calories;
     }
+
+    const savedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
+    if (savedProfile) {
+      yoddhaProfile = JSON.parse(savedProfile);
+      if (!yoddhaProfile.claimedQuests) yoddhaProfile.claimedQuests = {};
+    }
+
+    const savedPlans = localStorage.getItem(STORAGE_KEY_CUSTOM_PLANS);
+    if (savedPlans) {
+      try { customPlans = JSON.parse(savedPlans); } catch (e) {}
+    }
+
+    const savedKeys = localStorage.getItem(STORAGE_KEY_KEYS);
+    if (savedKeys) {
+      apiKeys = JSON.parse(savedKeys);
+      const spoonInput = document.getElementById("key-spoonacular-key");
+      if (spoonInput) spoonInput.value = apiKeys.spoonacularKey || "";
+    }
+  } catch (e) {
+    console.error("Storage load error:", e);
+  }
+}
+function saveApiKeys() {
+  const keyInput = document.getElementById("key-spoonacular-key");
+  apiKeys.spoonacularKey = keyInput ? keyInput.value.trim() : "";
+
+  localStorage.setItem(STORAGE_KEY_KEYS, JSON.stringify(apiKeys));
+  closeApiModal();
+  showToast("Spoonacular API key saved.");
+}
 
     function persistLogs() {
       try { localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(currentLogs)); } catch (e) {}
@@ -3726,150 +3772,158 @@ const ANUVAAD_INDB_DATABASE = [
     /* ==========================================================================
        CORE TRACKING & LOGGING LOGIC
        ========================================================================== */
-    function renderTodayDashboard() {
-      const isToday = (currentDateStr === getTodayDateStr());
-      document.getElementById("display-date-label").innerText = isToday ? "Today" : currentDateStr;
+   function renderTodayDashboard() {
+  const isToday = (currentDateStr === getTodayDateStr());
+  document.getElementById("display-date-label").innerText = isToday ? "Today" : currentDateStr;
 
-      const dayData = getDayLog(currentDateStr);
-      const slots = ["breakfast", "lunch", "snacks", "dinner", "midnight"];
+  const dayData = getDayLog(currentDateStr);
+  const slots = ["breakfast", "lunch", "snacks", "dinner", "midnight"];
 
-      let grandTotalCals = 0, grandTotalPro = 0, grandTotalCarbs = 0, grandTotalFat = 0, grandTotalSugar = 0, grandTotalChol = 0, totalItemCount = 0;
+  let grandTotalCals = 0, grandTotalPro = 0, grandTotalCarbs = 0, grandTotalFat = 0, grandTotalSugar = 0, grandTotalChol = 0, totalItemCount = 0;
 
-      slots.forEach(slotKey => {
-        const container = document.getElementById(`items-${slotKey}`);
-        container.innerHTML = "";
-        const items = dayData.meals[slotKey] || [];
-        let slotCalSum = 0, slotProSum = 0, slotCarbSum = 0;
+  slots.forEach(slotKey => {
+    const container = document.getElementById(`items-${slotKey}`);
+    container.innerHTML = "";
+    const items = dayData.meals[slotKey] || [];
+    let slotCalSum = 0, slotProSum = 0, slotCarbSum = 0;
 
-        items.forEach((item, idx) => {
-          totalItemCount++;
-          const itemCals = Math.round(item.calories * item.qty);
-          const itemPro = Math.round((item.protein || 0) * item.qty);
-          const itemCarb = Math.round((item.carbs || 0) * item.qty);
-          const itemFat = Math.round((item.fat || 0) * item.qty);
-          const itemSugar = Math.round((item.sugar || 0) * item.qty * 10) / 10;
-          const itemChol = Math.round((item.cholesterol || 0) * item.qty);
+    items.forEach((item, idx) => {
+      totalItemCount++;
+      const itemCals = Math.round(item.calories * item.qty);
+      const itemPro = Math.round((item.protein || 0) * item.qty);
+      const itemCarb = Math.round((item.carbs || 0) * item.qty);
+      const itemFat = Math.round((item.fat || 0) * item.qty);
+      const itemSugar = Math.round((item.sugar || 0) * item.qty * 10) / 10;
+      const itemChol = Math.round((item.cholesterol || 0) * item.qty);
 
-          slotCalSum += itemCals;
-          slotProSum += itemPro;
-          slotCarbSum += itemCarb;
+      slotCalSum += itemCals;
+      slotProSum += itemPro;
+      slotCarbSum += itemCarb;
 
-          grandTotalCals += itemCals;
-          grandTotalPro += itemPro;
-          grandTotalCarbs += itemCarb;
-          grandTotalFat += itemFat;
-          grandTotalSugar += itemSugar;
-          grandTotalChol += itemChol;
+      grandTotalCals += itemCals;
+      grandTotalPro += itemPro;
+      grandTotalCarbs += itemCarb;
+      grandTotalFat += itemFat;
+      grandTotalSugar += itemSugar;
+      grandTotalChol += itemChol;
 
-          const row = document.createElement("div");
-          row.className = "food-item-row";
-          
-          let badgeTag = `<span class="badge badge-db">INDB</span>`;
-          if (item.origin === "MISC") badgeTag = `<span class="badge badge-misc">⚡ Misc</span>`;
-          if (item.origin === "CUSTOM") badgeTag = `<span class="badge badge-custom">⭐️ Custom</span>`;
-          if (item.origin === "BIHARI") badgeTag = `<span class="badge badge-bihari">🌾 Bihari</span>`;
+      const row = document.createElement("div");
+      row.className = "food-item-row";
+      
+      // Source / Origin Badge
+      let badgeTag = `<span class="badge badge-db">INDB</span>`;
+      if (item.origin === "MISC") badgeTag = `<span class="badge badge-misc">⚡ Misc</span>`;
+      if (item.origin === "CUSTOM") badgeTag = `<span class="badge badge-custom">⭐️ Custom</span>`;
+      if (item.origin === "FATSECRET") badgeTag = `<span class="badge badge-api">🌐 API</span>`;
+      if (item.origin === "BIHARI") badgeTag = `<span class="badge badge-bihari">🌾 Bihari</span>`;
 
-          row.innerHTML = `
-            <div>
-              <div class="food-info-name">${item.name}</div>
-              <div class="food-info-sub">
-                ${badgeTag}
-                <span>${item.qty} × ${item.portion || "srv"}</span>
-                <span>• ${itemCals} kcal</span>
-                <span class="badge badge-macro">P: ${itemPro}g</span>
-                <span class="badge badge-macro">C: ${itemCarb}g</span>
-              </div>
-            </div>
-            <button class="del-btn" onclick="deleteFoodItem('${slotKey}', ${idx})">✕</button>
-          `;
-          container.appendChild(row);
-        });
+      // Brand Parameter Badge
+      const brandBadge = `<span class="badge" style="background:#F1F5F9; color:#475569; border:0.5px solid #CBD5E1;">🏷️ ${item.brand || 'Generic'}</span>`;
 
-        document.getElementById(`cals-${slotKey}`).innerText = `${slotCalSum} kcal`;
-        document.getElementById(`macros-${slotKey}`).innerText = `P: ${slotProSum}g • C: ${slotCarbSum}g`;
-      });
+      row.innerHTML = `
+        <div>
+          <div class="food-info-name">${item.name}</div>
+          <div class="food-info-sub">
+            ${badgeTag}
+            ${brandBadge}
+            <span>${item.qty} × ${item.portion || "srv"}</span>
+            <span>• ${itemCals} kcal</span>
+            <span class="badge badge-macro">P: ${itemPro}g</span>
+            <span class="badge badge-macro">C: ${itemCarb}g</span>
+          </div>
+        </div>
+        <button class="del-btn" onclick="deleteFoodItem('${slotKey}', ${idx})">✕</button>
+      `;
+      container.appendChild(row);
+    });
 
-      document.getElementById("consumed-cal").innerText = grandTotalCals;
-      document.getElementById("items-logged-count").innerText = totalItemCount;
+    document.getElementById(`cals-${slotKey}`).innerText = `${slotCalSum} kcal`;
+    document.getElementById(`macros-${slotKey}`).innerText = `P: ${slotProSum}g • C: ${slotCarbSum}g`;
+  });
 
-      const remaining = userGoals.calories - grandTotalCals;
-      const remPill = document.getElementById("remaining-pill");
-      const remLbl = document.getElementById("remaining-lbl");
-      const remNum = document.getElementById("remaining-cal");
+  document.getElementById("consumed-cal").innerText = grandTotalCals;
+  document.getElementById("items-logged-count").innerText = totalItemCount;
 
-      if (remaining >= 0) {
-        remPill.className = "stat-pill deficit";
-        remNum.innerText = `${remaining} kcal`;
-        remLbl.innerText = `Remaining (Budget: ${userGoals.calories})`;
-      } else {
-        remPill.className = "stat-pill over";
-        remNum.innerText = `+${Math.abs(remaining)} kcal`;
-        remLbl.innerText = `Over Budget (${userGoals.calories})`;
-      }
+  const remaining = userGoals.calories - grandTotalCals;
+  const remPill = document.getElementById("remaining-pill");
+  const remLbl = document.getElementById("remaining-lbl");
+  const remNum = document.getElementById("remaining-cal");
 
-      // Protein Goal
-      const proGoal = userGoals.protein || 75;
-      document.getElementById("protein-header-val").innerText = `${grandTotalPro}g / ${proGoal}g`;
-      const proPct = Math.min(100, Math.round((grandTotalPro / proGoal) * 100));
-      const proFill = document.getElementById("protein-progress-fill");
-      proFill.style.width = `${proPct}%`;
-      const proStatus = document.getElementById("protein-status-lbl");
-      const proRem = document.getElementById("protein-rem-lbl");
+  if (remaining >= 0) {
+    remPill.className = "stat-pill deficit";
+    remNum.innerText = `${remaining} kcal`;
+    remLbl.innerText = `Remaining (Budget: ${userGoals.calories})`;
+  } else {
+    remPill.className = "stat-pill over";
+    remNum.innerText = `+${Math.abs(remaining)} kcal`;
+    remLbl.innerText = `Over Budget (${userGoals.calories})`;
+  }
 
-      if (grandTotalPro >= proGoal) {
-        proFill.style.background = "var(--success)";
-        proStatus.style.color = "var(--success)";
-        proStatus.innerText = `✓ Goal Met (${proPct}%)`;
-        proRem.innerText = `+${grandTotalPro - proGoal}g extra`;
-      } else {
-        proFill.style.background = "var(--blue)";
-        proStatus.style.color = "var(--blue)";
-        proStatus.innerText = `${proPct}% Met`;
-        proRem.innerText = `${proGoal - grandTotalPro}g left`;
-      }
+  // Protein Goal Progress
+  const proGoal = userGoals.protein || 75;
+  document.getElementById("protein-header-val").innerText = `${grandTotalPro}g / ${proGoal}g`;
+  const proPct = Math.min(100, Math.round((grandTotalPro / proGoal) * 100));
+  const proFill = document.getElementById("protein-progress-fill");
+  proFill.style.width = `${proPct}%`;
+  const proStatus = document.getElementById("protein-status-lbl");
+  const proRem = document.getElementById("protein-rem-lbl");
 
-      // Carbs Limit
-      const carbGoal = userGoals.carbs || 220;
-      document.getElementById("carbs-header-val").innerText = `${grandTotalCarbs}g / ${carbGoal}g`;
-      const carbPct = Math.min(100, Math.round((grandTotalCarbs / carbGoal) * 100));
-      const carbFill = document.getElementById("carbs-progress-fill");
-      carbFill.style.width = `${carbPct}%`;
-      const carbStatus = document.getElementById("carbs-status-lbl");
-      const carbRem = document.getElementById("carbs-rem-lbl");
+  if (grandTotalPro >= proGoal) {
+    proFill.style.background = "var(--success)";
+    proStatus.style.color = "var(--success)";
+    proStatus.innerText = `✓ Goal Met (${proPct}%)`;
+    proRem.innerText = `+${grandTotalPro - proGoal}g extra`;
+  } else {
+    proFill.style.background = "var(--blue)";
+    proStatus.style.color = "var(--blue)";
+    proStatus.innerText = `${proPct}% Met`;
+    proRem.innerText = `${proGoal - grandTotalPro}g left`;
+  }
 
-      if (grandTotalCarbs > carbGoal) {
-        carbFill.style.background = "var(--danger)";
-        carbStatus.style.color = "var(--danger)";
-        carbStatus.innerText = `⚠️ Over Budget`;
-        carbRem.innerText = `+${grandTotalCarbs - carbGoal}g over`;
-      } else {
-        carbFill.style.background = "#EAB308";
-        carbStatus.style.color = "var(--success)";
-        carbStatus.innerText = `Within Budget`;
-        carbRem.innerText = `${carbGoal - grandTotalCarbs}g left`;
-      }
+  // Carbs Limit / Budget Progress
+  const carbGoal = userGoals.carbs || 220;
+  document.getElementById("carbs-header-val").innerText = `${grandTotalCarbs}g / ${carbGoal}g`;
+  const carbPct = Math.min(100, Math.round((grandTotalCarbs / carbGoal) * 100));
+  const carbFill = document.getElementById("carbs-progress-fill");
+  carbFill.style.width = `${carbPct}%`;
+  const carbStatus = document.getElementById("carbs-status-lbl");
+  const carbRem = document.getElementById("carbs-rem-lbl");
 
-      // Sugar & Cholesterol
-      grandTotalSugar = Math.round(grandTotalSugar * 10) / 10;
-      const sugarGoal = userGoals.sugar || 25;
-      document.getElementById("total-sugar").innerText = `${grandTotalSugar}g / ${sugarGoal}g`;
-      document.getElementById("sugar-progress-fill").style.width = `${Math.min(100, (grandTotalSugar / sugarGoal) * 100)}%`;
+  if (grandTotalCarbs > carbGoal) {
+    carbFill.style.background = "var(--danger)";
+    carbStatus.style.color = "var(--danger)";
+    carbStatus.innerText = `⚠️ Over Budget`;
+    carbRem.innerText = `+${grandTotalCarbs - carbGoal}g over`;
+  } else {
+    carbFill.style.background = "#EAB308";
+    carbStatus.style.color = "var(--success)";
+    carbStatus.innerText = `Within Budget`;
+    carbRem.innerText = `${carbGoal - grandTotalCarbs}g left`;
+  }
 
-      const cholGoal = userGoals.cholesterol || 300;
-      document.getElementById("total-chol").innerText = `${grandTotalChol}mg / ${cholGoal}mg`;
-      document.getElementById("chol-progress-fill").style.width = `${Math.min(100, (grandTotalChol / cholGoal) * 100)}%`;
-      document.getElementById("total-fat").innerText = `${grandTotalFat}g / ${userGoals.fat || 65}g`;
+  // Sugar & Cholesterol Progress
+  grandTotalSugar = Math.round(grandTotalSugar * 10) / 10;
+  const sugarGoal = userGoals.sugar || 25;
+  document.getElementById("total-sugar").innerText = `${grandTotalSugar}g / ${sugarGoal}g`;
+  document.getElementById("sugar-progress-fill").style.width = `${Math.min(100, (grandTotalSugar / sugarGoal) * 100)}%`;
 
-      const circ = 2 * Math.PI * 50;
-      const calPct = Math.min(grandTotalCals / userGoals.calories, 1.0);
-      const gaugeCircle = document.getElementById("gauge-circle");
-      gaugeCircle.style.strokeDashoffset = circ - (calPct * circ);
-      gaugeCircle.style.stroke = remaining < 0 ? "var(--danger)" : "var(--primary)";
+  const cholGoal = userGoals.cholesterol || 300;
+  document.getElementById("total-chol").innerText = `${grandTotalChol}mg / ${cholGoal}mg`;
+  document.getElementById("chol-progress-fill").style.width = `${Math.min(100, (grandTotalChol / cholGoal) * 100)}%`;
+  document.getElementById("total-fat").innerText = `${grandTotalFat}g / ${userGoals.fat || 65}g`;
 
-      const liveStreak = calculateCurrentStreak();
-      document.getElementById("header-streak-count").innerText = liveStreak;
-      document.getElementById("yoddha-streak-display").innerText = liveStreak;
-    }
+  // SVG Gauge Animation
+  const circ = 2 * Math.PI * 50;
+  const calPct = Math.min(grandTotalCals / userGoals.calories, 1.0);
+  const gaugeCircle = document.getElementById("gauge-circle");
+  gaugeCircle.style.strokeDashoffset = circ - (calPct * circ);
+  gaugeCircle.style.stroke = remaining < 0 ? "var(--danger)" : "var(--primary)";
+
+  // Synchronize Live Streaks
+  const liveStreak = calculateCurrentStreak();
+  document.getElementById("header-streak-count").innerText = liveStreak;
+  document.getElementById("yoddha-streak-display").innerText = liveStreak;
+}
 
     function deleteFoodItem(slotKey, idx) {
       const dayData = getDayLog(currentDateStr);
@@ -4193,8 +4247,14 @@ const ANUVAAD_INDB_DATABASE = [
 
     function openSettingsModal() { document.getElementById("settings-modal").classList.add("active"); }
     function closeSettingsModal() { document.getElementById("settings-modal").classList.remove("active"); }
-    function openApiModal() { document.getElementById("api-modal").classList.add("active"); }
-    function closeApiModal() { document.getElementById("api-modal").classList.remove("active"); }
+function openApiModal() {
+  const spoonInput = document.getElementById("key-spoonacular-key");
+  if (spoonInput) spoonInput.value = apiKeys.spoonacularKey || "";
+  document.getElementById("api-modal").classList.add("active");
+}
+   function closeApiModal() {
+  document.getElementById("api-modal").classList.remove("active");
+}
 
     function saveGoalsFromSettings() {
       userGoals.calories = parseInt(document.getElementById("setting-goal-cal").value) || 2000;
@@ -4207,12 +4267,7 @@ const ANUVAAD_INDB_DATABASE = [
       showToast("Targets updated.");
     }
 
-    function saveApiKeys() {
-      apiKeys.ninjas = document.getElementById("key-ninjas").value.trim();
-      localStorage.setItem(STORAGE_KEY_KEYS, JSON.stringify(apiKeys));
-      closeApiModal();
-      showToast("Key saved.");
-    }
+    
 
     function switchTab(tabId) {
       document.querySelectorAll(".tab-view").forEach(el => el.classList.remove("active"));
@@ -5047,6 +5102,413 @@ function importJsonFile(event) {
   };
 
   reader.readAsText(file);
+}
+
+
+
+
+function openSpoonacularSearchModal() {
+  if (!apiKeys.spoonacularKey) {
+    openApiModal();
+    showToast("Please enter your Spoonacular API key first (🔑).");
+    return;
+  }
+  document.getElementById("spoonacular-search-modal").classList.add("active");
+  document.getElementById("spoonacular-search-query").value = "";
+  document.getElementById("spoonacular-results-container").innerHTML = "";
+  document.getElementById("spoonacular-search-status").style.display = "none";
+  document.getElementById("spoonacular-search-query").focus();
+}
+
+function closeSpoonacularSearchModal() {
+  document.getElementById("spoonacular-search-modal").classList.remove("active");
+}
+
+async function searchSpoonacularFood() {
+  const query = document.getElementById("spoonacular-search-query").value.trim();
+  const statusEl = document.getElementById("spoonacular-search-status");
+  const container = document.getElementById("spoonacular-results-container");
+
+  if (!query) {
+    showToast("Please enter an ingredient or food name.");
+    return;
+  }
+  if (!apiKeys.spoonacularKey) {
+    showToast("Please enter your Spoonacular API key first (🔑).");
+    openApiModal();
+    return;
+  }
+
+  statusEl.style.display = "block";
+  statusEl.style.color = "var(--text-sec)";
+  statusEl.innerText = `🔍 Analyzing "${query}" via Spoonacular...`;
+  container.innerHTML = "";
+
+  try {
+    // 1. Natural language parse using parseIngredients
+    const parseUrl = `https://api.spoonacular.com/recipes/parseIngredients?includeNutrition=true&apiKey=${encodeURIComponent(apiKeys.spoonacularKey)}`;
+    const bodyData = new URLSearchParams({ ingredientList: query });
+
+    const res = await fetch(parseUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: bodyData
+    });
+
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) throw new Error("Invalid API key or quota exceeded.");
+      throw new Error(`HTTP ${res.status}: Failed to reach Spoonacular`);
+    }
+
+    const data = await res.json();
+    let results = [];
+
+    if (Array.isArray(data) && data.length > 0 && data[0].nutrition?.nutrients) {
+      results = data.map(ing => {
+        const nutrients = ing.nutrition?.nutrients || [];
+        const getNutrient = name => {
+          const n = nutrients.find(it => it.name.toLowerCase() === name.toLowerCase());
+          return n ? Math.round(n.amount * 10) / 10 : 0;
+        };
+
+        return {
+          id: "sp_" + (ing.id || Date.now() + Math.random()),
+          name: ing.name ? ing.name.charAt(0).toUpperCase() + ing.name.slice(1) : query,
+          brand: "Spoonacular",
+          portion: `${ing.amount || 1} ${ing.unit || "serving"}`.trim(),
+          calories: Math.round(getNutrient("Calories")),
+          protein: getNutrient("Protein"),
+          carbs: getNutrient("Carbohydrates"),
+          fat: getNutrient("Fat"),
+          sugar: getNutrient("Sugar"),
+          cholesterol: Math.round(getNutrient("Cholesterol")),
+          origin: "SPOONACULAR"
+        };
+      });
+    }
+
+    // 2. Fallback to guessNutrition if parseIngredients returned 0 calories / no items
+    if (results.length === 0 || results[0].calories === 0) {
+      const guessUrl = `https://api.spoonacular.com/recipes/guessNutrition?title=${encodeURIComponent(query)}&apiKey=${encodeURIComponent(apiKeys.spoonacularKey)}`;
+      const guessRes = await fetch(guessUrl);
+      if (guessRes.ok) {
+        const guess = await guessRes.json();
+        if (guess.calories?.value) {
+          results = [{
+            id: "sp_guess_" + Date.now(),
+            name: query.charAt(0).toUpperCase() + query.slice(1),
+            brand: `Spoonacular (${guess.recipesUsed || 1} recipes avg)`,
+            portion: "1 serving",
+            calories: Math.round(guess.calories.value),
+            protein: Math.round((guess.protein?.value || 0) * 10) / 10,
+            carbs: Math.round((guess.carbs?.value || 0) * 10) / 10,
+            fat: Math.round((guess.fat?.value || 0) * 10) / 10,
+            sugar: 0,
+            cholesterol: 0,
+            origin: "SPOONACULAR"
+          }];
+        }
+      }
+    }
+
+    if (results.length === 0) {
+      statusEl.style.color = "var(--text-sec)";
+      statusEl.innerText = `No nutrition data found for "${query}".`;
+      return;
+    }
+
+    statusEl.style.color = "var(--success)";
+    statusEl.innerText = `✓ Found nutrition data:`;
+
+    container.innerHTML = results.map(item => `
+      <div class="db-food-card" style="margin-bottom: 8px;">
+        <div style="flex: 1; padding-right: 10px;">
+          <div class="db-food-name">
+            ${item.name}
+            <span class="badge badge-api" style="margin-left: 4px;">🥄 Spoonacular</span>
+          </div>
+          <div class="db-food-stats">
+            <span>${item.portion}</span> • 
+            <span class="badge badge-macro">P: <b>${item.protein}g</b></span>
+            <span class="badge badge-macro">C: <b>${item.carbs}g</b></span>
+            <span>F: <b>${item.fat}g</b></span>
+            ${item.sugar ? `• Sugar: <b>${item.sugar}g</b>` : ""}
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div class="db-food-cal">${item.calories} <span style="font-size: 10px; color: var(--text-sec);">kcal</span></div>
+          <button class="btn-db-log" style="background: #E0F2FE; color: #0284C7; border-color: #0284C7; margin-top: 4px;" onclick="importSpoonacularFood('${encodeURIComponent(JSON.stringify(item))}')">
+            + Save
+          </button>
+        </div>
+      </div>
+    `).join("");
+
+  } catch (err) {
+    console.error("Spoonacular search error:", err);
+    statusEl.style.color = "var(--danger)";
+    statusEl.innerText = `❌ Error: ${err.message}`;
+  }
+}
+
+function importSpoonacularFood(encodedJsonStr) {
+  const item = JSON.parse(decodeURIComponent(encodedJsonStr));
+  const existingIndex = customFoods.findIndex(
+    f => f.name.toLowerCase() === item.name.toLowerCase() && (f.brand || "Generic").toLowerCase() === item.brand.toLowerCase()
+  );
+
+  if (existingIndex >= 0) {
+    customFoods[existingIndex] = item;
+  } else {
+    customFoods.unshift(item);
+  }
+
+  persistCustomFoods();
+  renderDatabaseView();
+  awardXP(20, `Imported ${item.name}`);
+  playDesiChime("log");
+  showToast(`✓ Added "${item.name}" to database!`);
+}
+
+
+
+// Import item from FatSecret directly into local custom food database
+
+function getAllDatabaseFoods() {
+  const defaultList = anuvaadFoods.map(item => ({
+    id: "indb_" + item[0].replace(/\s+/g, "_"),
+    name: item[0],
+    brand: "Generic", // Default brand for all embedded INDB items
+    portion: item[1],
+    calories: item[2],
+    protein: item[3],
+    carbs: item[4],
+    fat: item[5],
+    sugar: 0,
+    cholesterol: 0,
+    origin: (item[0].includes("Bihari") || item[0].includes("Sattu") || item[0].includes("Litti")) ? "BIHARI" : "INDB"
+  }));
+  return [...customFoods, ...defaultList];
+}
+
+function renderDatabaseView() {
+  const container = document.getElementById("db-items-container");
+  const query = (document.getElementById("db-search-input").value || "").trim().toLowerCase();
+  const allList = getAllDatabaseFoods();
+
+  document.getElementById("db-total-count-lbl").innerText = 
+    `${allList.length} items available (${customFoods.length} custom/API, ${anuvaadFoods.length} embedded)`;
+
+  const matches = allList.filter(item => 
+    item.name.toLowerCase().includes(query) || 
+    (item.brand && item.brand.toLowerCase().includes(query)) ||
+    item.portion.toLowerCase().includes(query)
+  );
+
+  if (matches.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec);">No food items found matching "${query}".</div>`;
+    return;
+  }
+
+  container.innerHTML = matches.map(item => {
+    const brandName = item.brand || "Generic";
+    return `
+      <div class="db-food-card">
+        <div style="flex: 1; padding-right: 10px;">
+          <div class="db-food-name">
+            ${item.name}
+            <span class="badge" style="background: #F1F5F9; color: #475569; border: 0.5px solid #CBD5E1; margin-left: 4px;">
+              🏷️ ${brandName}
+            </span>
+          </div>
+          <div class="db-food-stats">
+            <span>${item.portion}</span> • 
+            <span class="badge badge-macro">P: <b>${item.protein}g</b></span>
+            <span class="badge badge-macro">C: <b>${item.carbs}g</b></span>
+            <span>F: <b>${item.fat}g</b></span>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div class="db-food-cal">${item.calories} <span style="font-size: 10px; font-weight: 600; color: var(--text-sec);">kcal</span></div>
+          <button class="btn-db-log" onclick="promptLogDbFood(${JSON.stringify(item).replace(/"/g, '&quot;')})">+ Log</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function saveNewCustomFood() {
+  const name = document.getElementById("cust-food-name").value.trim();
+  const brand = document.getElementById("cust-food-brand").value.trim() || "Generic";
+  const cals = parseFloat(document.getElementById("cust-food-cal").value);
+  if (!name || isNaN(cals)) return;
+
+  customFoods.unshift({
+    name,
+    brand,
+    calories: cals,
+    protein: parseFloat(document.getElementById("cust-food-pro").value) || 0,
+    carbs: parseFloat(document.getElementById("cust-food-carb").value) || 0,
+    fat: parseFloat(document.getElementById("cust-food-fat").value) || 0,
+    portion: document.getElementById("cust-food-portion").value || "1 serving",
+    origin: "CUSTOM"
+  });
+
+  persistCustomFoods();
+  closeAddCustomFoodModal();
+  renderDatabaseView();
+  showToast(`Custom food "${name} (${brand})" saved.`);
+}
+// Open and close Open Food Facts modal
+function openOffApiModal() {
+  document.getElementById("off-search-modal").classList.add("active");
+  document.getElementById("off-search-query").value = "";
+  document.getElementById("off-results-container").innerHTML = "";
+  document.getElementById("off-search-status").style.display = "none";
+  document.getElementById("off-search-query").focus();
+}
+
+function closeOffApiModal() {
+  document.getElementById("off-search-modal").classList.remove("active");
+}
+
+// Parse Open Food Facts product structure & normalize macros
+function parseOffProduct(p) {
+  const n = p.nutriments || {};
+
+  // Extract calories (check kcal first, fallback to kJ/4.184)
+  let cals = n["energy-kcal_100g"] ?? n["energy-kcal_serving"] ?? n["energy-kcal"];
+  if (cals === undefined && n["energy_100g"]) {
+    cals = Math.round(n["energy_100g"] / 4.184);
+  }
+  cals = Math.round(parseFloat(cals) || 0);
+
+  const pro = Math.round((parseFloat(n["proteins_100g"] ?? n["proteins_serving"] ?? n["proteins"] ?? 0)) * 10) / 10;
+  const carbs = Math.round((parseFloat(n["carbohydrates_100g"] ?? n["carbohydrates_serving"] ?? n["carbohydrates"] ?? 0)) * 10) / 10;
+  const fat = Math.round((parseFloat(n["fat_100g"] ?? n["fat_serving"] ?? n["fat"] ?? 0)) * 10) / 10;
+  const sugar = Math.round((parseFloat(n["sugars_100g"] ?? n["sugars_serving"] ?? n["sugars"] ?? 0)) * 10) / 10;
+
+  // Cholesterol in OFF is stored in grams; convert to mg
+  let chol = parseFloat(n["cholesterol_100g"] ?? n["cholesterol_serving"] ?? n["cholesterol"] ?? 0);
+  chol = Math.round(chol > 1 ? chol : chol * 1000);
+
+  // Brand extraction: take first brand tag or default to "Generic"
+  let brand = "Generic";
+  if (p.brands && p.brands.trim()) {
+    brand = p.brands.split(",")[0].trim();
+  }
+
+  const name = p.product_name || p.product_name_en || p.generic_name || "Unnamed Product";
+  const portion = p.serving_size || "100g";
+
+  return {
+    id: "off_" + (p.code || Date.now() + Math.random()),
+    name,
+    brand,
+    portion,
+    calories: cals,
+    protein: pro,
+    carbs,
+    fat,
+    sugar,
+    cholesterol: chol,
+    origin: "API"
+  };
+}
+
+// Search Open Food Facts (Direct browser fetch, no CORS proxy needed)
+async function searchOffFood() {
+  const query = document.getElementById("off-search-query").value.trim();
+  const statusEl = document.getElementById("off-search-status");
+  const container = document.getElementById("off-results-container");
+
+  if (!query) {
+    showToast("Please enter a food or brand name.");
+    return;
+  }
+
+  statusEl.style.display = "block";
+  statusEl.style.color = "var(--text-sec)";
+  statusEl.innerText = `🔍 Searching Open Food Facts for "${query}"...`;
+  container.innerHTML = "";
+
+  try {
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=25`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Failed to reach Open Food Facts`);
+    }
+
+    const data = await res.json();
+    const products = data.products || [];
+
+    // Filter out items that have no name or no calorie data
+    const validProducts = products
+      .map(p => parseOffProduct(p))
+      .filter(p => p.name !== "Unnamed Product" && (p.calories > 0 || p.protein > 0));
+
+    if (validProducts.length === 0) {
+      statusEl.style.color = "var(--text-sec)";
+      statusEl.innerText = `No items with nutrition data found for "${query}".`;
+      return;
+    }
+
+    statusEl.style.color = "var(--success)";
+    statusEl.innerText = `✓ Found ${validProducts.length} verified products:`;
+
+    container.innerHTML = validProducts.map(item => `
+      <div class="db-food-card" style="margin-bottom: 8px;">
+        <div style="flex: 1; padding-right: 10px;">
+          <div class="db-food-name">
+            ${item.name}
+            <span class="badge" style="background: #F1F5F9; color: #475569; border: 0.5px solid #CBD5E1; margin-left: 4px;">
+              🏷️ ${item.brand}
+            </span>
+          </div>
+          <div class="db-food-stats">
+            <span>${item.portion}</span> • 
+            <span class="badge badge-macro">P: <b>${item.protein}g</b></span>
+            <span class="badge badge-macro">C: <b>${item.carbs}g</b></span>
+            <span>F: <b>${item.fat}g</b></span>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div class="db-food-cal">${item.calories} <span style="font-size: 10px; color: var(--text-sec);">kcal</span></div>
+          <button class="btn-db-log" style="background: #E0F2FE; color: #0284C7; border-color: #0284C7; margin-top: 4px;" onclick="importOffFood('${encodeURIComponent(JSON.stringify(item))}')">
+            + Save
+          </button>
+        </div>
+      </div>
+    `).join("");
+
+  } catch (err) {
+    console.error("Open Food Facts search error:", err);
+    statusEl.style.color = "var(--danger)";
+    statusEl.innerText = `❌ Error: ${err.message}`;
+  }
+}
+
+// Import item directly into local custom database
+function importOffFood(encodedJsonStr) {
+  const item = JSON.parse(decodeURIComponent(encodedJsonStr));
+
+  // Check if item already exists by name and brand
+  const existingIndex = customFoods.findIndex(
+    f => f.name.toLowerCase() === item.name.toLowerCase() && (f.brand || "Generic").toLowerCase() === item.brand.toLowerCase()
+  );
+
+  if (existingIndex >= 0) {
+    customFoods[existingIndex] = item;
+  } else {
+    customFoods.unshift(item);
+  }
+
+  persistCustomFoods();
+  renderDatabaseView();
+  awardXP(20, `Imported ${item.name}`);
+  playDesiChime("log");
+  showToast(`✓ Added "${item.name} (${item.brand})" to your database!`);
 }
   </script>
   <!-- Google tag (gtag.js) -->
