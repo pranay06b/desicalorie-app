@@ -3471,12 +3471,27 @@ const STORAGE_KEY_DELETED_FOODS = "desicalorie_deleted_foods_v14";
       renderArchiveLogs();
       renderYoddhaDashboard();
     });
+function toggleSoundMute() {
+  isSoundMuted = !isSoundMuted;
+  localStorage.setItem(STORAGE_KEY_MUTED, isSoundMuted ? "1" : "0");
+  updateSoundUI();
+  showToast(isSoundMuted ? "🔇 Sounds Muted" : "🔊 Sounds Enabled");
+}
 
+function updateSoundUI() {
+  const headerBtn = document.getElementById("sound-toggle-btn");
+  if (headerBtn) {
+    headerBtn.innerHTML = isSoundMuted ? "🔇" : "🔊";
+    headerBtn.title = isSoundMuted ? "Unmute Sounds" : "Mute Sounds";
+  }
+}
 function loadAllSavedData() {
   try {
     const savedMuted = localStorage.getItem(STORAGE_KEY_MUTED);
     isSoundMuted = savedMuted === "1";
-    if (typeof updateSoundUI === "function") updateSoundUI();
+    if (typeof updateSoundUI === "function") {
+      updateSoundUI();
+    }
 
     const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
     if (savedLogs) currentLogs = JSON.parse(savedLogs);
@@ -5647,20 +5662,7 @@ function importOffFood(encodedJsonStr) {
   playDesiChime("log");
   showToast(`✓ Added "${item.name} (${item.brand})" to your database!`);
 }
-    function toggleSoundMute() {
-  isSoundMuted = !isSoundMuted;
-  localStorage.setItem(STORAGE_KEY_MUTED, isSoundMuted ? "1" : "0");
-  updateSoundUI();
-  showToast(isSoundMuted ? "🔇 Sounds Muted" : "🔊 Sounds Enabled");
-}
-
-function updateSoundUI() {
-  const headerBtn = document.getElementById("sound-toggle-btn");
-  if (headerBtn) {
-    headerBtn.innerHTML = isSoundMuted ? "🔇" : "🔊";
-    headerBtn.title = isSoundMuted ? "Unmute Sounds" : "Mute Sounds";
-  }
-}
+    
   </script>
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5S9QHP9BX"></script>
