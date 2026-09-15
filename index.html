@@ -637,12 +637,14 @@
       <span>🍛</span> Desi Calorie
     </div>
     <div class="header-actions">
+      
       <div class="streak-pill" id="header-streak-pill" onclick="switchTab('yoddha')">
         🔥 <span id="header-streak-count">0</span> Days
       </div>
       <button class="icon-btn" onclick="openCalcModal()" title="Fat Loss Calculator">🧮</button>
       <button class="icon-btn" onclick="openApiModal()" title="API Settings">🔑</button>
       <button class="icon-btn" onclick="openSettingsModal()" title="App Settings">⚙️</button>
+      <button class="icon-btn" id="sound-toggle-btn" onclick="toggleSoundMute()" title="Mute/Unmute Sounds">🔊</button>
     </div>
   </header>
 
@@ -3415,7 +3417,8 @@ const anuvaadFoods = ANUVAAD_INDB_DATABASE;
     /* ==========================================================================
        STORAGE KEYS & STATE
        ========================================================================== */
-
+  const STORAGE_KEY_MUTED = "desicalorie_sound_muted_v14";
+    let isSoundMuted = false;
     const STORAGE_KEY_LOGS = "desicalorie_5yr_logs_v13";
     const STORAGE_KEY_GOALS = "desicalorie_goals_v13";
     const STORAGE_KEY_CUSTOM_FOODS = "desicalorie_custom_foods_v13";
@@ -3470,7 +3473,11 @@ const STORAGE_KEY_DELETED_FOODS = "desicalorie_deleted_foods_v14";
     });
 
 function loadAllSavedData() {
+  
   try {
+    const savedMuted = localStorage.getItem(STORAGE_KEY_MUTED);
+    isSoundMuted = savedMuted === "1";
+    updateSoundUI();
     const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
     if (savedLogs) currentLogs = JSON.parse(savedLogs);
 
@@ -3768,40 +3775,44 @@ function saveApiKeys() {
        SOUND CHIMES & CONFETTI
        ========================================================================== */
     function playDesiChime(type) {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+  // Return immediately if sounds are muted
+  if (isSoundMuted) return;
 
-        if (type === "log") {
-          osc.frequency.setValueAtTime(523.25, ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.15);
-          gain.gain.setValueAtTime(0.12, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.2);
-        } else if (type === "quest") {
-          osc.frequency.setValueAtTime(440, ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.25);
-          gain.gain.setValueAtTime(0.15, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.3);
-        } else if (type === "level") {
-          osc.frequency.setValueAtTime(329.63, ctx.currentTime);
-          osc.frequency.setValueAtTime(440, ctx.currentTime + 0.1);
-          osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.2);
-          gain.gain.setValueAtTime(0.2, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.4);
-        }
-      } catch (e) {}
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === "log") {
+      osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    } else if (type === "quest") {
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } else if (type === "level") {
+      osc.frequency.setValueAtTime(329.63, ctx.currentTime);
+      osc.frequency.setValueAtTime(440, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
     }
+  } catch (e) {}
+}
+
 
     function triggerConfetti() {
       const canvas = document.getElementById("confetti-canvas");
