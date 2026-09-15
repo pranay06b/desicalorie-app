@@ -3473,11 +3473,11 @@ const STORAGE_KEY_DELETED_FOODS = "desicalorie_deleted_foods_v14";
     });
 
 function loadAllSavedData() {
-  
   try {
     const savedMuted = localStorage.getItem(STORAGE_KEY_MUTED);
     isSoundMuted = savedMuted === "1";
-    updateSoundUI();
+    if (typeof updateSoundUI === "function") updateSoundUI();
+
     const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
     if (savedLogs) currentLogs = JSON.parse(savedLogs);
 
@@ -3513,18 +3513,18 @@ function loadAllSavedData() {
       const spoonInput = document.getElementById("key-spoonacular-key");
       if (spoonInput) spoonInput.value = apiKeys.spoonacularKey || "";
     }
-  } catch (e) {
-    console.error("Storage load error:", e);
-  }
-  const savedDeleted = localStorage.getItem(STORAGE_KEY_DELETED_FOODS);
+
+    const savedDeleted = localStorage.getItem(STORAGE_KEY_DELETED_FOODS);
     if (savedDeleted) {
       try { deletedFoodIds = JSON.parse(savedDeleted); } catch (e) {}
     }
 
-    // Ensure all custom foods have a unique identifier
     customFoods.forEach((f, idx) => {
       if (!f.id) f.id = "cust_" + idx + "_" + encodeURIComponent(f.name);
     });
+  } catch (e) {
+    console.error("Storage load error:", e);
+  }
 }
 function saveApiKeys() {
   const keyInput = document.getElementById("key-spoonacular-key");
@@ -4082,6 +4082,8 @@ function renderDatabaseView() {
 
   container.innerHTML = matches.map(item => {
     const brandName = item.brand || "Generic";
+    // Escapes single quotes to %27 so apostrophes in food names never break onclick
+    const safeId = encodeURIComponent(item.id).replace(/'/g, "%27");
 
     return `
       <div class="db-food-card">
@@ -4102,74 +4104,14 @@ function renderDatabaseView() {
         <div style="text-align: right;">
           <div class="db-food-cal">${item.calories} <span style="font-size: 10px; font-weight: 600; color: var(--text-sec);">kcal</span></div>
           <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center; margin-top: 4px;">
-            <button class="icon-btn" style="width: 28px; height: 28px; font-size: 12px;" onclick="openEditFoodById('${encodeURIComponent(item.id)}')" title="Edit food">✏️</button>
-            <button class="icon-btn" style="width: 28px; height: 28px; font-size: 12px; color: var(--danger);" onclick="deleteFoodById('${encodeURIComponent(item.id)}')" title="Delete food">🗑️</button>
-            <button class="btn-db-log" style="margin: 0; padding: 4px 8px;" onclick="logDbFoodById('${encodeURIComponent(item.id)}')">+ Log</button>
+            <button class="icon-btn" style="width: 28px; height: 28px; font-size: 12px;" onclick="openEditFoodById('${safeId}')" title="Edit food">✏️</button>
+            <button class="icon-btn" style="width: 28px; height: 28px; font-size: 12px; color: var(--danger);" onclick="deleteFoodById('${safeId}')" title="Delete food">🗑️</button>
+            <button class="btn-db-log" style="margin: 0; padding: 4px 8px;" onclick="logDbFoodById('${safeId}')">+ Log</button>
           </div>
         </div>
       </div>
     `;
   }).join("");
-}
-
-
-function closeEditFoodModal() {
-  document.getElementById("edit-food-modal").classList.remove("active");
-}
-
-function saveEditedFood() {
-  const id = document.getElementById("edit-food-id").value;
-  const name = document.getElementById("edit-food-name").value.trim();
-  const brand = document.getElementById("edit-food-brand").value.trim() || "Generic";
-  const portion = document.getElementById("edit-food-portion").value.trim() || "1 serving";
-  const calories = parseFloat(document.getElementById("edit-food-cal").value);
-  const fat = parseFloat(document.getElementById("edit-food-fat").value) || 0;
-  const protein = parseFloat(document.getElementById("edit-food-pro").value) || 0;
-  const carbs = parseFloat(document.getElementById("edit-food-carb").value) || 0;
-
-  if (!name || isNaN(calories)) {
-    showToast("Please enter a valid food name and calories.");
-    return;
-  }
-
-  // 1. If it's an existing custom food, update it in customFoods
-  const customIdx = customFoods.findIndex(f => f.id === id);
-  if (customIdx >= 0) {
-    customFoods[customIdx] = {
-      ...customFoods[customIdx],
-      name,
-      brand,
-      portion,
-      calories: Math.round(calories),
-      fat,
-      protein,
-      carbs
-    };
-  } else {
-    // 2. If it was an embedded INDB food, hide original and save edited copy to customFoods
-    if (id.startsWith("indb_") && !deletedFoodIds.includes(id)) {
-      deletedFoodIds.push(id);
-      localStorage.setItem(STORAGE_KEY_DELETED_FOODS, JSON.stringify(deletedFoodIds));
-    }
-    customFoods.unshift({
-      id: "cust_" + Date.now(),
-      name,
-      brand,
-      portion,
-      calories: Math.round(calories),
-      fat,
-      protein,
-      carbs,
-      sugar: 0,
-      cholesterol: 0,
-      origin: "CUSTOM"
-    });
-  }
-
-  persistCustomFoods();
-  closeEditFoodModal();
-  renderDatabaseView();
-  showToast(`✓ Updated "${name}" in database!`);
 }
 
 function openEditFoodById(encodedId) {
@@ -4227,7 +4169,6 @@ function saveEditedFood() {
       carbs
     };
   } else {
-    // If it was an embedded INDB food, hide the default and insert modified copy into customFoods
     if (id.startsWith("indb_") && !deletedFoodIds.includes(id)) {
       deletedFoodIds.push(id);
       localStorage.setItem(STORAGE_KEY_DELETED_FOODS, JSON.stringify(deletedFoodIds));
@@ -5705,6 +5646,20 @@ function importOffFood(encodedJsonStr) {
   awardXP(20, `Imported ${item.name}`);
   playDesiChime("log");
   showToast(`✓ Added "${item.name} (${item.brand})" to your database!`);
+}
+    function toggleSoundMute() {
+  isSoundMuted = !isSoundMuted;
+  localStorage.setItem(STORAGE_KEY_MUTED, isSoundMuted ? "1" : "0");
+  updateSoundUI();
+  showToast(isSoundMuted ? "🔇 Sounds Muted" : "🔊 Sounds Enabled");
+}
+
+function updateSoundUI() {
+  const headerBtn = document.getElementById("sound-toggle-btn");
+  if (headerBtn) {
+    headerBtn.innerHTML = isSoundMuted ? "🔇" : "🔊";
+    headerBtn.title = isSoundMuted ? "Unmute Sounds" : "Mute Sounds";
+  }
 }
   </script>
   <!-- Google tag (gtag.js) -->
