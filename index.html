@@ -662,6 +662,19 @@
         <button class="date-nav-btn" onclick="changeDate(1)" title="Next Day">›</button>
       </div>
 
+      <!-- Daily Weight Tracker -->
+<div class="card" style="padding: 10px 14px; margin-bottom: 14px; background: linear-gradient(135deg, #F8FAFC, #EFF6FF); border: 1px solid #BFDBFE;">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <div style="font-size: 11px; font-weight: 700; color: #0284C7; text-transform: uppercase; margin-bottom: 4px;">Daily Weight (kg)</div>
+      <input type="number" id="daily-weight-input" step="0.1" placeholder="e.g. 75.0" style="width: 80px; padding: 6px; border: 1px solid #7DD3FC; border-radius: var(--radius-sm); font-weight: 800; font-size: 15px; outline: none; color: var(--text);" onchange="saveDailyWeight()">
+    </div>
+    <div style="text-align: right;">
+      <div style="font-size: 11px; font-weight: 700; color: var(--text-sec); text-transform: uppercase; margin-bottom: 4px;">Vs. Yesterday</div>
+      <div id="weight-change-display" style="font-size: 15px; font-weight: 800; color: var(--text);">--</div>
+    </div>
+  </div>
+</div>
       <!-- Calorie & Daily Goal Card -->
       <div class="card">
         <div class="calorie-dashboard">
@@ -1193,6 +1206,16 @@
         </button>
       </div>
 
+      <!-- Methodology Selector -->
+<div style="background: var(--surface-secondary); padding: 10px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); margin-bottom: 12px;">
+  <label class="form-label">Body Fat Methodology</label>
+  <select id="calc-method" class="form-input" onchange="runFatLossCalculation()">
+    <option value="usnavy">🇺🇸 US Navy Tape (Accurate for most)</option>
+    <option value="ymca">🏋️ YMCA Formula (Waist & Weight)</option>
+    <option value="bmi">⚖️ BMI-Based (No tape required)</option>
+    <option value="average">📊 Average of All Methods</option>
+  </select>
+</div>
       <!-- Core Metrics: Weight -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div class="form-group">
@@ -1294,6 +1317,9 @@
           <div style="background: var(--surface); padding: 6px; border-radius: 6px; border: 0.5px solid var(--border);">
             <div style="font-size: 10px; color: var(--text-sec);">Lean Mass (LBM)</div>
             <div style="font-size: 13px; font-weight: 800; color: var(--blue);" id="calc-lean-mass">58.9 kg</div>
+            <div style="font-size: 10px; color: var(--text-sec); text-align: center; margin-bottom: 8px;">
+  <b>Navy:</b> <span id="est-navy">0</span>% | <b>YMCA:</b> <span id="est-ymca">0</span>% | <b>BMI:</b> <span id="est-bmi">0</span>%
+</div>
           </div>
         </div>
 
@@ -1559,6 +1585,7 @@
   </nav>
 
   <script>
+    
     /* ==========================================================================
        AUTHENTIC ANUVAAD INDB 2024.11 EMBEDDED DATABASE SAMPLE
        Format: [Food Name, Portion Unit, Calories (kcal), Protein (g), Carbs (g), Fat (g)]
@@ -3866,7 +3893,7 @@ function saveApiKeys() {
   const dayData = getDayLog(currentDateStr);
   const slots = ["breakfast", "lunch", "snacks", "dinner", "midnight"];
 
-  let grandTotalCals = 0, grandTotalPro = 0, grandTotalCarbs = 0, grandTotalFat = 0, grandTotalSugar = 0, grandTotalChol = 0, totalItemCount = 0;
+  let grandTotalCals = 0, grandTotalPro =  0, grandTotalCarbs = 0, grandTotalFat = 0, grandTotalSugar = 0, grandTotalChol = 0, totalItemCount = 0;
 
   slots.forEach(slotKey => {
     const container = document.getElementById(`items-${slotKey}`);
@@ -4010,6 +4037,49 @@ function saveApiKeys() {
   const liveStreak = calculateCurrentStreak();
   document.getElementById("header-streak-count").innerText = liveStreak;
   document.getElementById("yoddha-streak-display").innerText = liveStreak;
+}
+    function saveDailyWeight() {
+  const w = parseFloat(document.getElementById("daily-weight-input").value);
+  if (!isNaN(w)) {
+    getDayLog(currentDateStr).weight = w;
+    persistLogs();
+    renderWeightTracker();
+    showToast("Daily weight saved.");
+  }
+}
+
+function renderWeightTracker() {
+  const todayData = getDayLog(currentDateStr);
+  const wInput = document.getElementById("daily-weight-input");
+  
+  if (todayData && todayData.weight) {
+    wInput.value = todayData.weight;
+  } else {
+    wInput.value = "";
+  }
+
+  const yesterdayStr = getOffsetDateStr(currentDateStr, -1);
+  const yData = currentLogs[yesterdayStr];
+  const yWeight = yData ? yData.weight : null;
+
+  const changeDisplay = document.getElementById("weight-change-display");
+  
+  if (todayData && todayData.weight && yWeight) {
+    const diff = todayData.weight - yWeight;
+    const sign = diff > 0 ? "+" : ""; 
+    const color = diff > 0 ? "var(--danger)" : (diff < 0 ? "var(--success)" : "var(--text-sec)");
+    changeDisplay.innerHTML = `<span style="color: ${color}">${sign}${diff.toFixed(1)} kg</span>`;
+  } else if (yWeight) {
+    changeDisplay.innerHTML = `<span style="font-size: 11px; color: var(--text-sec);">Prev: ${yWeight} kg</span>`;
+  } else {
+    changeDisplay.innerText = "--";
+  }
+}
+
+function getOffsetDateStr(baseStr, offsetDays) {
+  const parts = baseStr.split("-").map(Number);
+  const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + offsetDays));
+  return d.toISOString().split("T")[0];
 }
 
     function deleteFoodItem(slotKey, idx) {
@@ -5068,124 +5138,162 @@ function setCalcMode(mode) {
 }
 
 function runFatLossCalculation() {
-  const currWt = parseFloat(document.getElementById("calc-current-wt").value) || 75;
-  const goalWt = parseFloat(document.getElementById("calc-goal-wt").value) || 68;
-  const ht = parseFloat(document.getElementById("calc-height").value) || 170;
+  let currWt = parseFloat(document.getElementById("calc-current-wt").value) || 75;
+  let goalWt = parseFloat(document.getElementById("calc-goal-wt").value) || 68;
+  let ht = parseFloat(document.getElementById("calc-height").value) || 170;
   const age = parseFloat(document.getElementById("calc-age").value) || 28;
   const gender = document.getElementById("calc-gender").value;
   const activityMult = parseFloat(document.getElementById("calc-activity").value) || 1.375;
   const weeklyRate = parseFloat(document.getElementById("calc-weekly-rate").value) || 0.50;
+  
+  // Failsafe: Check if the method dropdown actually exists in the HTML
+  const methodDropdown = document.getElementById("calc-method");
+  const method = methodDropdown ? methodDropdown.value : "usnavy";
 
-  const waist = parseFloat(document.getElementById("calc-waist").value) || 85;
-  const neck = parseFloat(document.getElementById("calc-neck").value) || 38;
-  const hip = parseFloat(document.getElementById("calc-hip") ? document.getElementById("calc-hip").value : 95) || 95;
+  let waist = parseFloat(document.getElementById("calc-waist").value) || 85;
+  let neck = parseFloat(document.getElementById("calc-neck").value) || 38;
+  
+  // Failsafe: Check if hip input exists (for females)
+  const hipInput = document.getElementById("calc-hip");
+  let hip = parseFloat(hipInput ? hipInput.value : 95) || 95;
 
-  // 1. Basal Metabolic Rate (Mifflin-St Jeor) & Maintenance TDEE
+  // Auto-correct inputs if the user types meters instead of centimeters
+  if (ht > 0 && ht < 3.0) ht = ht * 100;
+  if (waist > 0 && waist < 2.0) waist = waist * 100;
+  if (neck > 0 && neck < 1.0) neck = neck * 100;
+  if (hip > 0 && hip < 2.0) hip = hip * 100;
+
   const bmr = (10 * currWt) + (6.25 * ht) - (5 * age) + (gender === "male" ? 5 : -161);
   const tdee = Math.round(bmr * activityMult);
 
-  // 2. US Navy Body Fat % Formula
-  let bodyFatPct = 0;
+  let bfNavy = 0, bfYMCA = 0, bfBMI = 0;
+
+  // 1. Official DOD US Navy Method (Inches required for exact mathematical replication)
+  const ht_in = ht / 2.54;
+  const waist_in = waist / 2.54;
+  const neck_in = neck / 2.54;
+  const hip_in = hip / 2.54;
+
   try {
     if (gender === "male") {
-      const diff = waist - neck;
+      const diff = waist_in - neck_in;
       if (diff > 0) {
-        bodyFatPct = 495 / (1.0324 - (0.19077 * Math.log10(diff)) + (0.15456 * Math.log10(ht))) - 450;
+        bfNavy = (86.010 * Math.log10(diff)) - (70.041 * Math.log10(ht_in)) + 36.76;
       }
     } else {
-      const sum = waist + hip - neck;
+      const sum = waist_in + hip_in - neck_in;
       if (sum > 0) {
-        bodyFatPct = 495 / (1.29579 - (0.35004 * Math.log10(sum)) + (0.22100 * Math.log10(ht))) - 450;
+        bfNavy = (163.205 * Math.log10(sum)) - (97.684 * Math.log10(ht_in)) - 78.387;
       }
     }
-  } catch (e) {}
+  } catch(e) { console.warn("Navy calculation error", e); }
 
-  bodyFatPct = Math.max(5, Math.min(55, Math.round(bodyFatPct * 10) / 10));
-  const fatMass = Math.round((currWt * (bodyFatPct / 100)) * 10) / 10;
+  // 2. YMCA Method
+  const wt_lbs = currWt * 2.20462;
+  if (gender === "male") {
+    bfYMCA = ((-98.42 + 4.15 * waist_in - 0.082 * wt_lbs) / wt_lbs) * 100;
+  } else {
+    bfYMCA = ((-76.76 + 4.15 * waist_in - 0.082 * wt_lbs) / wt_lbs) * 100;
+  }
+
+  // 3. BMI Method
+  const bmi = currWt / Math.pow(ht / 100, 2);
+  if (gender === "male") {
+    bfBMI = (1.20 * bmi) + (0.23 * age) - 16.2;
+  } else {
+    bfBMI = (1.20 * bmi) + (0.23 * age) - 5.4;
+  }
+
+  // Hard-clamp absolute limits to prevent the UI from showing absurd numbers (3% to 60%)
+  bfNavy = Math.max(3, Math.min(60, bfNavy || 0));
+  bfYMCA = Math.max(3, Math.min(60, bfYMCA || 0));
+  bfBMI = Math.max(3, Math.min(60, bfBMI || 0));
+
+  // Methodology Selection
+  let finalBfPct = bfNavy;
+  if (method === "ymca") finalBfPct = bfYMCA;
+  else if (method === "bmi") finalBfPct = bfBMI;
+  else if (method === "average") finalBfPct = (bfNavy + bfYMCA + bfBMI) / 3;
+
+  finalBfPct = Math.round(finalBfPct * 10) / 10;
+  
+  // Safe UI Updates for Sub-metrics
+  const estNavyEl = document.getElementById("est-navy");
+  if (estNavyEl) estNavyEl.innerText = bfNavy.toFixed(1);
+  const estYmcaEl = document.getElementById("est-ymca");
+  if (estYmcaEl) estYmcaEl.innerText = bfYMCA.toFixed(1);
+  const estBmiEl = document.getElementById("est-bmi");
+  if (estBmiEl) estBmiEl.innerText = bfBMI.toFixed(1);
+
+  const fatMass = Math.round((currWt * (finalBfPct / 100)) * 10) / 10;
   const leanMass = Math.max(25, Math.round((currWt - fatMass) * 10) / 10);
 
-  // 3. Waist-to-Height Ratio (WHtR) & Asian Phenotype Visceral Risk
+  // Visceral Risk Evaluation (WHtR & WHR)
   const whtr = Math.round((waist / ht) * 100) / 100;
+  const whr = Math.round((waist / hip) * 100) / 100;
   let visceralPenalty = 0;
+  
   const riskCard = document.getElementById("whtr-risk-card");
   const riskLbl = document.getElementById("whtr-value-lbl");
   const riskBadge = document.getElementById("whtr-status-badge");
 
   if (riskCard && riskLbl && riskBadge) {
-    riskLbl.innerText = `WHtR: ${whtr.toFixed(2)} • Waist: ${waist}cm`;
+    riskLbl.innerText = `WHtR: ${whtr.toFixed(2)} ${gender === 'female' ? `• WHR: ${whr.toFixed(2)}` : ''}`;
+
+    let hasRisk = false;
+    if (whtr > 0.57 || (gender === "male" && whr >= 0.95) || (gender === "female" && whr >= 0.85)) {
+      hasRisk = true;
+    }
 
     if (whtr < 0.40) {
-      riskCard.style.background = "#FEF3C7";
-      riskBadge.style.background = "#FDE68A";
-      riskBadge.style.color = "#92400E";
-      riskBadge.innerText = "Underweight Range";
-    } else if (whtr <= 0.49) {
-      riskCard.style.background = "#DCFCE7";
-      riskBadge.style.background = "#BBF7D0";
-      riskBadge.style.color = "#166534";
-      riskBadge.innerText = "✓ Low Visceral Risk";
-    } else if (whtr <= 0.57) {
-      riskCard.style.background = "#FFEDD5";
-      riskBadge.style.background = "#FED7AA";
-      riskBadge.style.color = "#9A3412";
-      riskBadge.innerText = "⚠️ Elevated Visceral Risk";
+      riskCard.style.background = "#FEF3C7"; riskBadge.style.background = "#FDE68A"; riskBadge.style.color = "#92400E"; riskBadge.innerText = "Underweight";
+    } else if (!hasRisk && whtr <= 0.49) {
+      riskCard.style.background = "#DCFCE7"; riskBadge.style.background = "#BBF7D0"; riskBadge.style.color = "#166534"; riskBadge.innerText = "✓ Low Visceral Risk";
+    } else if (!hasRisk && whtr <= 0.57) {
+      riskCard.style.background = "#FFEDD5"; riskBadge.style.background = "#FED7AA"; riskBadge.style.color = "#9A3412"; riskBadge.innerText = "⚠️ Elevated Visceral Risk";
       visceralPenalty = (currentCalcMode === "belly") ? 80 : 0;
     } else {
-      riskCard.style.background = "#FEE2E2";
-      riskBadge.style.background = "#FECACA";
-      riskBadge.style.color = "#991B1B";
-      riskBadge.innerText = "🚨 High Visceral / Android Fat";
+      riskCard.style.background = "#FEE2E2"; riskBadge.style.background = "#FECACA"; riskBadge.style.color = "#991B1B"; riskBadge.innerText = "🚨 High Visceral / Android Fat";
       visceralPenalty = (currentCalcMode === "belly") ? 140 : 50;
     }
   }
 
-  // 4. Daily Deficit Calculation (1 kg body fat ≈ 7,700 kcal)
   let dailyDeficit = Math.round(weeklyRate * 1100) + visceralPenalty;
   let targetCals = tdee - dailyDeficit;
-
-  // Metabolic Safety Floor
+  
   const safetyFloor = (gender === "male") ? 1500 : 1200;
   if (targetCals < safetyFloor) {
     targetCals = safetyFloor;
     dailyDeficit = tdee - targetCals;
   }
 
-  // 5. Macro Distribution
   let targetPro = 0, targetCarb = 0, targetFat = 0;
   if (currentCalcMode === "belly") {
-    // Muscle-sparing high protein: 2.1g per kg Lean Mass
     targetPro = Math.round(leanMass * 2.1);
     targetFat = Math.round((targetCals * 0.28) / 9);
     targetCarb = Math.max(80, Math.round((targetCals - (targetPro * 4) - (targetFat * 9)) / 4));
   } else {
-    // Balanced fat loss: 1.75g per kg Lean Mass
     targetPro = Math.round(leanMass * 1.75);
     targetFat = Math.round((targetCals * 0.28) / 9);
     targetCarb = Math.max(90, Math.round((targetCals - (targetPro * 4) - (targetFat * 9)) / 4));
   }
-
-  // Functional Micro Goals
   const fiberTarget = (currentCalcMode === "belly") ? 38 : 32;
   const waterTarget = (currWt * 0.035).toFixed(1);
 
-  // 6. Projected Timeline & Milestone Target Date
   const kgToLose = Math.max(0, currWt - goalWt);
   const weeksNeeded = (kgToLose > 0 && weeklyRate > 0) ? Math.ceil(kgToLose / weeklyRate) : 0;
-
   const targetDate = new Date();
   targetDate.setDate(targetDate.getDate() + (weeksNeeded * 7));
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const dateString = `${monthNames[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
 
-  // 7. Update Dashboard Visuals
   document.getElementById("calc-target-cal").innerText = `${targetCals.toLocaleString()} kcal`;
   document.getElementById("calc-timeline").innerText = weeksNeeded > 0 ? `~${weeksNeeded} wks (${dateString})` : "Goal Achieved!";
-  document.getElementById("calc-bf-pct").innerText = `~${bodyFatPct}%`;
+  document.getElementById("calc-bf-pct").innerText = `~${finalBfPct}%`;
   document.getElementById("calc-fat-mass").innerText = `${fatMass} kg`;
   document.getElementById("calc-lean-mass").innerText = `${leanMass} kg`;
 
-  document.getElementById("calc-meta-stats").innerText = 
-    `BMR: ${Math.round(bmr)} • Maintenance (TDEE): ${tdee} • Deficit: -${dailyDeficit} kcal/day`;
+  document.getElementById("calc-meta-stats").innerText = `BMR: ${Math.round(bmr)} • Maintenance (TDEE): ${tdee} • Deficit: -${dailyDeficit} kcal/day`;
 
   const proPerLbm = (targetPro / leanMass).toFixed(1);
   document.getElementById("calc-pro-stat").innerText = `💪 Protein: ${targetPro}g (${proPerLbm}g/kg LBM)`;
@@ -5193,35 +5301,27 @@ function runFatLossCalculation() {
   document.getElementById("calc-fat-stat").innerText = `🥑 Healthy Fat: ${targetFat}g`;
   document.getElementById("calc-micro-stat").innerText = `🥗 Fiber: ≥${fiberTarget}g • 💧 Water: ${waterTarget}L`;
 
-  // 8. Dynamic Contextual Guidance & Recommendations
   let insightsHTML = "";
+  if (method === "usnavy") insightsHTML += `<li><b>US Navy Methodology:</b> Tracks tape measurements. Highly accurate for visceral fat tracking as it emphasizes waist circumference reduction over sheer weight.</li>`;
+  else if (method === "ymca") insightsHTML += `<li><b>YMCA Methodology:</b> A rapid estimation that penalizes excess total weight while rewarding lower waist measurements. Good for broad tracking.</li>`;
+  else if (method === "bmi") insightsHTML += `<li><b>BMI Methodology:</b> Uses weight and height. Provides a general baseline but doesn't distinguish between muscle and fat mass.</li>`;
+  else if (method === "average") insightsHTML += `<li><b>Averaged Methodology:</b> Blends Tape, YMCA, and BMI estimates to smooth out outliers and provide a balanced baseline fat percentage.</li>`;
 
   if (currentCalcMode === "belly") {
-    insightsHTML += `<li><b>Food Sequencing (Insulin Defense):</b> Consume fiber (salad/cucumbers/sprouts) and protein (dal/paneer/egg/chicken) <i>before</i> touching roti or rice to blunt the post-meal glucose and insulin spike.</li>`;
-    insightsHTML += `<li><b>Carb Quality Swap:</b> Shift away from maida and white sugar. Prioritize slow-digesting grains like Jowar, Bajra, Sattu, or controlled portions of brown/parboiled basmati.</li>`;
-    if (whtr > 0.50) {
-      insightsHTML += `<li><b>Cortisol & Visceral Drainage:</b> Central belly adiposity is directly aggravated by chronic stress and poor sleep. Aim for 7–8 hours of uninterrupted rest and take a 10–15 minute brisk stroll after your largest meal.</li>`;
+    insightsHTML += `<li><b>Food Sequencing (Insulin Defense):</b> Consume fiber (salad/sprouts) and protein (dal/paneer/chicken) <i>before</i> touching roti or rice to blunt the post-meal glucose and insulin spike.</li>`;
+    if (whtr > 0.50 || (gender === "male" && whr > 0.95) || (gender === "female" && whr > 0.85)) {
+      insightsHTML += `<li><b>Visceral Fat Protocol:</b> High WHtR/WHR indicates deep belly fat around organs. Focus on cortisol management (sleep) and go for a 15-min walk after your heaviest meal.</li>`;
     }
   } else {
-    insightsHTML += `<li><b>Volume Eating on a Deficit:</b> To stay full on a -${dailyDeficit} kcal deficit, pack half your plate with high-water Indian vegetables (Ghiya/Lauki, Tinda, Turai, Palak, Bhindi).</li>`;
-    insightsHTML += `<li><b>Protein Pacing:</b> Distribute your ${targetPro}g protein target across 3–4 meals (e.g., 25–35g per sitting) to minimize muscle catabolism while burning fat.</li>`;
+    insightsHTML += `<li><b>Protein Pacing:</b> Distribute your ${targetPro}g protein target across 3–4 meals to minimize muscle catabolism while burning fat.</li>`;
   }
 
-  insightsHTML += `<li><b>Fiber & Hydration Protocol:</b> Reach your daily ${fiberTarget}g fiber target via Sabja (sweet basil) seeds, whole lentils (chana/rajma), and raw greens. Drink ${waterTarget}L of water daily to support digestive transit and prevent water retention.</li>`;
+  insightsHTML += `<li><b>Fiber & Hydration Protocol:</b> Reach your daily ${fiberTarget}g fiber target via Sabja seeds, lentils, and raw greens. Drink ${waterTarget}L of water daily.</li>`;
 
   const insightsList = document.getElementById("calc-insights-list");
-  if (insightsList) {
-    insightsList.innerHTML = insightsHTML;
-  }
+  if (insightsList) insightsList.innerHTML = insightsHTML;
 
-  // Buffer targets for saving
-  window.calculatedTargets = {
-    calories: targetCals,
-    protein: targetPro,
-    carbs: targetCarb,
-    fat: targetFat,
-    fiber: fiberTarget
-  };
+  window.calculatedTargets = { calories: targetCals, protein: targetPro, carbs: targetCarb, fat: targetFat, fiber: fiberTarget };
 }
 
 function applyCalculatedGoals() {
