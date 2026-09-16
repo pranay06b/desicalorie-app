@@ -1069,6 +1069,20 @@
       <button class="btn-submit" onclick="saveEditedFood()">Save Changes</button>
     </div>
   </div>
+<!-- MODAL: GENERIC IN-APP CONFIRM (replaces native confirm(), which is blocked in sandboxed/webview contexts) -->
+  <div class="modal-overlay" id="app-confirm-modal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <div class="modal-title" id="app-confirm-title">⚠️ Please Confirm</div>
+        <button class="close-modal" onclick="closeAppConfirm(false)">✕</button>
+      </div>
+      <div id="app-confirm-message" style="font-size: 14px; color: var(--text-sec); line-height: 1.5; margin-bottom: 16px;"></div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-submit" style="background: var(--surface-secondary); color: var(--text); border: 1px solid var(--border); margin-top: 0; flex: 1;" onclick="closeAppConfirm(false)">Cancel</button>
+        <button class="btn-submit" style="margin-top: 0; flex: 1;" onclick="closeAppConfirm(true)">Confirm</button>
+      </div>
+    </div>
+  </div>
 <!-- MODAL: DETAILED NUTRITION BREAKDOWN (INDB / Anuvaad dataset) -->
   <div class="modal-overlay" id="nutrition-detail-modal">
     <div class="modal-content" style="max-height: 88vh;">
@@ -4294,6 +4308,26 @@ function getOffsetDateStr(baseStr, offsetDays) {
       document.getElementById("nutrition-detail-modal").classList.remove("active");
     }
 
+    /* ==========================================================================
+       IN-APP CONFIRM DIALOG
+       Native confirm()/alert() are blocked or silently no-op in sandboxed iframes
+       and many webviews (e.g. artifact previews), which makes restore/delete look
+       broken with no error. This custom modal works reliably everywhere instead.
+       ========================================================================== */
+    let _appConfirmCallback = null;
+    function showAppConfirm(message, onConfirm, title) {
+      document.getElementById("app-confirm-title").innerText = title || "⚠️ Please Confirm";
+      document.getElementById("app-confirm-message").innerText = message;
+      _appConfirmCallback = onConfirm;
+      document.getElementById("app-confirm-modal").classList.add("active");
+    }
+    function closeAppConfirm(result) {
+      document.getElementById("app-confirm-modal").classList.remove("active");
+      const cb = _appConfirmCallback;
+      _appConfirmCallback = null;
+      if (result && typeof cb === "function") cb();
+    }
+
 function renderDatabaseView() {
   const container = document.getElementById("db-items-container");
   const query = (document.getElementById("db-search-input").value || "").trim().toLowerCase();
@@ -4434,23 +4468,21 @@ function deleteFoodById(encodedId) {
   const food = allFoods.find(f => f.id === foodId);
   const displayName = food ? food.name : "this item";
 
-  if (!confirm(`Are you sure you want to delete "${displayName}" from the database?`)) {
-    return;
-  }
-
-  const customIdx = customFoods.findIndex(f => f.id === foodId);
-  if (customIdx >= 0) {
-    customFoods.splice(customIdx, 1);
-    persistCustomFoods();
-  } else {
-    if (!deletedFoodIds.includes(foodId)) {
-      deletedFoodIds.push(foodId);
-      localStorage.setItem(STORAGE_KEY_DELETED_FOODS, JSON.stringify(deletedFoodIds));
+  showAppConfirm(`Are you sure you want to delete "${displayName}" from the database?`, () => {
+    const customIdx = customFoods.findIndex(f => f.id === foodId);
+    if (customIdx >= 0) {
+      customFoods.splice(customIdx, 1);
+      persistCustomFoods();
+    } else {
+      if (!deletedFoodIds.includes(foodId)) {
+        deletedFoodIds.push(foodId);
+        localStorage.setItem(STORAGE_KEY_DELETED_FOODS, JSON.stringify(deletedFoodIds));
+      }
     }
-  }
 
-  renderDatabaseView();
-  showToast(`🗑️ Removed "${displayName}" from database.`);
+    renderDatabaseView();
+    showToast(`🗑️ Removed "${displayName}" from database.`);
+  }, "🗑️ Delete Food");
 }
 
 function logDbFoodById(encodedId) {
@@ -5495,6 +5527,7 @@ function applyCalculatedGoals() {
 function importJsonFile(event) {
   const file = event.target.files[0];
   if (!file) return;
+  event.target.value = ""; // Reset immediately so the same file can be re-selected later, regardless of outcome
 
   const reader = new FileReader();
 
@@ -5508,69 +5541,68 @@ function importJsonFile(event) {
         return;
       }
 
-      const confirmRestore = confirm(
-        "Restoring this backup will replace your current logs, custom foods, meal plans, and targets with the backup file data. Do you want to proceed?"
+      // Uses the in-app confirm modal (not native confirm()), which is blocked
+      // or silently no-ops in sandboxed iframes / some webviews, and would
+      // otherwise make the restore silently fail with no error shown.
+      showAppConfirm(
+        "Restoring this backup will replace your current logs, custom foods, meal plans, and targets with the backup file data. Do you want to proceed?",
+        () => {
+          // 1. Restore Logs
+          if (data.logs && typeof data.logs === "object") {
+            currentLogs = data.logs;
+            persistLogs();
+          }
+
+          // 2. Restore User Goals
+          if (data.userGoals && typeof data.userGoals === "object") {
+            userGoals = { ...userGoals, ...data.userGoals };
+            localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
+
+            // Update settings modal inputs
+            document.getElementById("setting-goal-cal").value = userGoals.calories || 2000;
+            document.getElementById("setting-goal-pro").value = userGoals.protein || 75;
+            document.getElementById("setting-goal-carb").value = userGoals.carbs || 220;
+            document.getElementById("setting-goal-fat").value = userGoals.fat || 65;
+            document.getElementById("setting-goal-sugar").value = userGoals.sugar || 25;
+            document.getElementById("setting-goal-chol").value = userGoals.cholesterol || 300;
+            document.getElementById("planner-target-cals").innerText = userGoals.calories || 2000;
+          }
+
+          // 3. Restore Custom Foods
+          if (Array.isArray(data.customFoods)) {
+            customFoods = data.customFoods;
+            persistCustomFoods();
+          }
+
+          // 4. Restore Custom Meal Plans
+          if (Array.isArray(data.customPlans)) {
+            customPlans = data.customPlans;
+            localStorage.setItem(STORAGE_KEY_CUSTOM_PLANS, JSON.stringify(customPlans));
+          }
+
+          // 5. Restore Yoddha Gamification Profile & XP
+          if (data.yoddhaProfile && typeof data.yoddhaProfile === "object") {
+            yoddhaProfile = data.yoddhaProfile;
+            persistYoddha();
+          }
+
+          // Re-render all views to reflect restored data
+          renderTodayDashboard();
+          renderDatabaseView();
+          renderRecommendedPlans();
+          renderArchiveLogs();
+          renderYoddhaDashboard();
+
+          closeSettingsModal();
+          triggerConfetti();
+          playDesiChime("level");
+          showToast("✓ Backup restored successfully!");
+        },
+        "📂 Restore Backup"
       );
-      if (!confirmRestore) {
-        event.target.value = ""; // Reset file input
-        return;
-      }
-
-      // 1. Restore Logs
-      if (data.logs && typeof data.logs === "object") {
-        currentLogs = data.logs;
-        persistLogs();
-      }
-
-      // 2. Restore User Goals
-      if (data.userGoals && typeof data.userGoals === "object") {
-        userGoals = { ...userGoals, ...data.userGoals };
-        localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
-        
-        // Update settings modal inputs
-        document.getElementById("setting-goal-cal").value = userGoals.calories || 2000;
-        document.getElementById("setting-goal-pro").value = userGoals.protein || 75;
-        document.getElementById("setting-goal-carb").value = userGoals.carbs || 220;
-        document.getElementById("setting-goal-fat").value = userGoals.fat || 65;
-        document.getElementById("setting-goal-sugar").value = userGoals.sugar || 25;
-        document.getElementById("setting-goal-chol").value = userGoals.cholesterol || 300;
-        document.getElementById("planner-target-cals").innerText = userGoals.calories || 2000;
-      }
-
-      // 3. Restore Custom Foods
-      if (Array.isArray(data.customFoods)) {
-        customFoods = data.customFoods;
-        persistCustomFoods();
-      }
-
-      // 4. Restore Custom Meal Plans
-      if (Array.isArray(data.customPlans)) {
-        customPlans = data.customPlans;
-        localStorage.setItem(STORAGE_KEY_CUSTOM_PLANS, JSON.stringify(customPlans));
-      }
-
-      // 5. Restore Yoddha Gamification Profile & XP
-      if (data.yoddhaProfile && typeof data.yoddhaProfile === "object") {
-        yoddhaProfile = data.yoddhaProfile;
-        persistYoddha();
-      }
-
-      // Re-render all views to reflect restored data
-      renderTodayDashboard();
-      renderDatabaseView();
-      renderRecommendedPlans();
-      renderArchiveLogs();
-      renderYoddhaDashboard();
-
-      closeSettingsModal();
-      triggerConfetti();
-      playDesiChime("level");
-      showToast("✓ Backup restored successfully!");
     } catch (err) {
       console.error("Import error:", err);
       showToast("❌ Failed to parse JSON file.");
-    } finally {
-      event.target.value = ""; // Clear file input so the same file can be re-selected if needed
     }
   };
 
