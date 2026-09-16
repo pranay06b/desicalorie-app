@@ -909,6 +909,14 @@
 
     <!-- TAB 4: 5-YEAR LOGBOOK ARCHIVE -->
     <div id="tab-archive" class="tab-view">
+      <div class="card" style="margin-bottom: 10px;">
+        <div style="display:flex; gap:6px;">
+          <button id="archive-subtab-logbook" class="btn-submit" style="flex:1; margin:0; padding:8px; font-size:12px; background:var(--primary); color:white;" onclick="setArchiveSubView('logbook')">📜 Logbook</button>
+          <button id="archive-subtab-nutrition" class="btn-submit" style="flex:1; margin:0; padding:8px; font-size:12px; background:var(--surface-secondary); color:var(--text); border:1px solid var(--border);" onclick="setArchiveSubView('nutrition')">🥗 Nutrition Log</button>
+        </div>
+      </div>
+
+      <div id="archive-subview-logbook">
       <div class="card" style="background: linear-gradient(135deg, #1C1C1E, #2C2C2E); color: white;">
         <div style="font-size: 17px; font-weight: 800; margin-bottom: 4px;">📜 5-Year Logbook Archive</div>
         <div style="font-size: 11px; color: #A1A1AA;">Daily calories, protein, carbs, sugar, cholesterol, and meals stored locally without cloud dependency.</div>
@@ -934,6 +942,17 @@
 
       <input type="text" class="form-input" id="archive-search-query" placeholder="🔍 Search past logged foods (e.g. Biryani, Sattu)..." oninput="renderArchiveLogs()" style="margin-bottom: 14px;">
       <div id="archive-days-container"></div>
+      </div>
+
+      <div id="archive-subview-nutrition" style="display:none;">
+        <div class="card">
+          <h3 style="margin: 0 0 4px 0;">🥗 Nutrition Log</h3>
+          <p style="font-size: 13px; color: var(--text-sec); margin: 0;">
+            Consumed vs. required — calorie &amp; macro targets are personalized from your Body Calculator (⚙️); micronutrient targets use a general adult reference.
+          </p>
+        </div>
+        <div id="nutrition-body"></div>
+      </div>
     </div>
 
     <!-- TAB 5: DESI YODDHA GAMIFICATION -->
@@ -3685,6 +3704,413 @@ function saveApiKeys() {
     }
 
     /* ==========================================================================
+       NUTRITION LOG — DAILY / WEEKLY / MONTHLY CONSUMED VS. REQUIRED
+       Calorie & macro targets come from userGoals (personalized via the Body
+       Calculator using the user's own height/weight/age/activity). Detailed
+       micronutrients (vitamins & minerals) are compared against a general
+       adult reference intake (approximate ICMR/WHO-style values) since the
+       app does not collect the extra biometrics (sex-specific RDA, pregnancy,
+       etc.) needed to personalize those the way calories/macros are.
+       ========================================================================== */
+    const MICRO_RDA_REFERENCE = {
+      fibre: 30, sfa: 20000, mufa: 25000, pufa: 17000,
+      calcium: 1000, phosphorus: 700, magnesium: 340, sodium: 2000, potassium: 3500,
+      iron: 19, copper: 1.7, selenium: 40, chromium: 0.03, manganese: 2.3, molybdenum: 0.045, zinc: 15,
+      vitA: 800, vitE: 15, vitD2: null, vitD3: 15, vitK1: 60, vitK2: null, folate: 300,
+      vitB1: 1.2, vitB2: 1.3, vitB3: 15, vitB5: 5, vitB6: 1.7, vitB7: 30, vitB9: 300, vitC: 80, carotenoids: null
+    };
+
+    function getRequiredForNutrientKey(key) {
+      if (key === "sugar") return userGoals.sugar || 25;
+      if (key === "cholesterol") return userGoals.cholesterol || 300;
+      const v = MICRO_RDA_REFERENCE[key];
+      return (v === undefined) ? null : v;
+    }
+
+    let nutritionSubView = "daily";
+    let nutritionDayDate = null;
+    let nutritionWeekAnchor = null;
+    let nutritionMonthYear = null;
+    let nutritionMonthNum = null;
+    let archiveSubView = "logbook";
+
+    function setArchiveSubView(view) {
+      const logbookBtn = document.getElementById("archive-subtab-logbook");
+      const nutriBtn = document.getElementById("archive-subtab-nutrition");
+      const logbookPane = document.getElementById("archive-subview-logbook");
+      const nutriPane = document.getElementById("archive-subview-nutrition");
+      if (!logbookBtn || !nutriBtn || !logbookPane || !nutriPane) return;
+
+      const activeStyle = { background: "var(--primary)", color: "white", border: "none" };
+      const inactiveStyle = { background: "var(--surface-secondary)", color: "var(--text)", border: "1px solid var(--border)" };
+      const apply = (el, style) => { el.style.background = style.background; el.style.color = style.color; el.style.border = style.border; };
+
+      if (view === "nutrition") {
+        archiveSubView = "nutrition";
+        logbookPane.style.display = "none";
+        nutriPane.style.display = "block";
+        apply(nutriBtn, activeStyle);
+        apply(logbookBtn, inactiveStyle);
+        renderNutritionTab();
+      } else {
+        archiveSubView = "logbook";
+        logbookPane.style.display = "block";
+        nutriPane.style.display = "none";
+        apply(logbookBtn, activeStyle);
+        apply(nutriBtn, inactiveStyle);
+        renderArchiveLogs();
+      }
+    }
+
+    function initNutritionState() {
+      if (!nutritionDayDate) nutritionDayDate = currentDateStr || getTodayDateStr();
+      if (!nutritionWeekAnchor) nutritionWeekAnchor = getWeekStartDateStr(nutritionDayDate);
+      if (!nutritionMonthYear) {
+        const parts = (currentDateStr || getTodayDateStr()).split("-");
+        nutritionMonthYear = parts[0];
+        nutritionMonthNum = parts[1];
+      }
+    }
+
+    function getWeekStartDateStr(dateStr) {
+      const parts = dateStr.split("-").map(Number);
+      const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+      const day = d.getUTCDay(); // 0=Sun..6=Sat
+      const diffToMonday = (day === 0) ? -6 : (1 - day);
+      d.setUTCDate(d.getUTCDate() + diffToMonday);
+      return d.toISOString().split("T")[0];
+    }
+
+    function getDaysInMonth(year, month) {
+      return new Date(Date.UTC(year, month, 0)).getUTCDate();
+    }
+
+    function formatDateHuman(dateStr) {
+      const parts = dateStr.split("-").map(Number);
+      const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+      return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+    }
+
+    // Sums detailed micronutrients (from NUTRIENT_FIELD_META) across a list of date strings.
+    // Only items that carry a saved `nutrients` profile contribute (matches how the
+    // Detailed Nutrition modal works for embedded/custom/Spoonacular-imported foods).
+    function getRangeDetailedNutrientTotals(dateStrs) {
+      const totals = {};
+      NUTRIENT_FIELD_META.forEach(f => { totals[f.key] = 0; });
+      let itemsWithData = 0, itemsTotal = 0;
+      dateStrs.forEach(dateStr => {
+        const entry = currentLogs[dateStr];
+        if (!entry || !entry.meals) return;
+        ["breakfast", "lunch", "snacks", "dinner", "midnight"].forEach(slot => {
+          (entry.meals[slot] || []).forEach(it => {
+            itemsTotal++;
+            const qty = it.qty || 1;
+            if (it.nutrients) {
+              itemsWithData++;
+              NUTRIENT_FIELD_META.forEach(f => {
+                const v = it.nutrients[f.key];
+                if (v !== null && v !== undefined) totals[f.key] += v * qty;
+              });
+            }
+          });
+        });
+      });
+      return { totals, itemsWithData, itemsTotal };
+    }
+
+    // Sums basic macro totals (calories/protein/carbs/fat/sugar/cholesterol) across a range.
+    function getRangeMacroTotals(dateStrs) {
+      const agg = { cals: 0, pro: 0, carbs: 0, fat: 0, sugar: 0, chol: 0, count: 0, daysLogged: 0 };
+      dateStrs.forEach(d => {
+        if (hasAnyMealLogged(d)) agg.daysLogged++;
+        const t = getDayNutrientTotals(d);
+        agg.cals += t.cals; agg.pro += t.pro; agg.carbs += t.carbs;
+        agg.fat += t.fat; agg.sugar += t.sugar; agg.chol += t.chol; agg.count += t.count;
+      });
+      return agg;
+    }
+
+    function nutriBarColor(pct) {
+      if (pct < 50) return "var(--danger)";
+      if (pct < 85) return "var(--warning)";
+      if (pct <= 115) return "var(--success)";
+      return "var(--danger)";
+    }
+
+    // Renders one "consumed vs required" progress row. limitMode=true treats the
+    // required value as an upper limit (sugar/sodium/cholesterol/saturated fat style)
+    // rather than a target to reach.
+    function renderNutriRow(label, unit, consumed, required, limitMode) {
+      const consumedR = Math.round(consumed * 10) / 10;
+      if (required === null || required === undefined) {
+        return `
+          <div class="limit-status-lbl" style="padding: 6px 0; border-bottom: 0.5px solid var(--border, #E5E7EB);">
+            <span style="color: var(--text-sec); font-weight: 600;">${label}</span>
+            <span style="font-weight: 700;">${consumedR}${unit} <span style="color: var(--text-sec); font-weight: 500;">(no reference)</span></span>
+          </div>`;
+      }
+      const pct = required > 0 ? Math.round((consumed / required) * 100) : 0;
+      const barPct = Math.min(100, pct);
+      const color = limitMode ? (pct > 100 ? "var(--danger)" : "var(--success)") : nutriBarColor(pct);
+      return `
+        <div style="padding: 6px 0; border-bottom: 0.5px solid var(--border, #E5E7EB);">
+          <div class="limit-status-lbl" style="margin-bottom: 4px;">
+            <span style="color: var(--text-sec); font-weight: 600;">${label}${limitMode ? " (limit)" : ""}</span>
+            <span style="font-weight: 700;">${consumedR}${unit} / ${required}${unit}</span>
+          </div>
+          <div class="limit-track"><div class="limit-fill" style="width:${barPct}%; background:${color};"></div></div>
+          <div style="text-align:right; font-size: 10px; color: var(--text-sec); font-weight: 700;">${pct}%</div>
+        </div>`;
+    }
+
+    function renderMicronutrientBreakdown(totals, itemsWithData, itemsTotal) {
+      const groups = ["Macros & Fibre", "Fats", "Minerals", "Vitamins"];
+      let html = "";
+      groups.forEach(groupName => {
+        const fields = NUTRIENT_FIELD_META.filter(f => f.group === groupName && f.key !== "sugar" && f.key !== "cholesterol");
+        if (fields.length === 0) return;
+        const limitKeys = ["sfa", "mufa", "pufa", "sodium"];
+        const rows = fields.map(f => renderNutriRow(f.label, f.unit, totals[f.key] || 0, getRequiredForNutrientKey(f.key), limitKeys.includes(f.key))).join("");
+        html += `
+          <div style="margin-bottom: 10px;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--primary); margin-bottom: 2px;">${groupName}</div>
+            ${rows}
+          </div>`;
+      });
+      const dataNote = itemsTotal > 0
+        ? `<div style="font-size: 10px; color: var(--text-sec); text-align:center; margin-top: 6px;">Micronutrients based on ${itemsWithData}/${itemsTotal} logged item(s) with detailed data. Reference values are general adult approximations, not medical advice.</div>`
+        : `<div style="font-size: 12px; color: var(--text-sec); text-align:center; padding: 10px 0;">No meals logged for this period yet.</div>`;
+      return html + dataNote;
+    }
+
+    function setNutritionSubView(view) {
+      nutritionSubView = view;
+      renderNutritionTab();
+    }
+
+    function changeNutritionDay(offset) {
+      nutritionDayDate = getOffsetDateStr(nutritionDayDate, offset);
+      renderNutritionTab();
+    }
+
+    function changeNutritionWeek(offsetWeeks) {
+      nutritionWeekAnchor = getOffsetDateStr(nutritionWeekAnchor, offsetWeeks * 7);
+      renderNutritionTab();
+    }
+
+    function changeNutritionMonth(offset) {
+      let y = parseInt(nutritionMonthYear, 10);
+      let m = parseInt(nutritionMonthNum, 10) + offset;
+      if (m < 1) { m = 12; y -= 1; }
+      if (m > 12) { m = 1; y += 1; }
+      nutritionMonthYear = String(y);
+      nutritionMonthNum = String(m).padStart(2, "0");
+      renderNutritionTab();
+    }
+
+    function subViewToggleBtn(id, label, active) {
+      return `<button class="btn-submit" style="flex:1; margin:0; padding:8px; font-size:12px; background:${active ? "var(--primary)" : "var(--surface-secondary)"}; color:${active ? "white" : "var(--text)"}; ${active ? "" : "border:1px solid var(--border);"}" onclick="setNutritionSubView('${id}')">${label}</button>`;
+    }
+
+    function renderNutritionTab() {
+      initNutritionState();
+      const body = document.getElementById("nutrition-body");
+      if (!body) return;
+
+      const toggleHtml = `
+        <div style="display:flex; gap:6px; margin: 4px 0 12px 0;">
+          ${subViewToggleBtn("daily", "📅 Daily", nutritionSubView === "daily")}
+          ${subViewToggleBtn("weekly", "🗓️ Weekly", nutritionSubView === "weekly")}
+          ${subViewToggleBtn("monthly", "📆 Monthly", nutritionSubView === "monthly")}
+        </div>`;
+
+      let contentHtml = "";
+      if (nutritionSubView === "daily") contentHtml = renderNutritionDaily();
+      else if (nutritionSubView === "weekly") contentHtml = renderNutritionWeekly();
+      else contentHtml = renderNutritionMonthly();
+
+      body.innerHTML = toggleHtml + contentHtml;
+    }
+
+    function macroCardHtml(consumed, required, periodLabel) {
+      return `
+        <div class="card">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;">🔥 Calories &amp; Macros <span style="color:var(--text-sec); font-weight:600;">(${periodLabel})</span></div>
+          ${renderNutriRow("Calories", " kcal", consumed.cals, required.calories, false)}
+          ${renderNutriRow("Protein", "g", consumed.pro, required.protein, false)}
+          ${renderNutriRow("Carbs", "g", consumed.carbs, required.carbs, false)}
+          ${renderNutriRow("Fat", "g", consumed.fat, required.fat, false)}
+          ${renderNutriRow("Free Sugar", "g", consumed.sugar, required.sugar, true)}
+          ${renderNutriRow("Cholesterol", "mg", consumed.chol, required.cholesterol, true)}
+        </div>`;
+    }
+
+    function renderNutritionDaily() {
+      const dateStr = nutritionDayDate;
+      const macro = getDayNutrientTotals(dateStr);
+      const { totals, itemsWithData, itemsTotal } = getRangeDetailedNutrientTotals([dateStr]);
+      const isToday = dateStr === getTodayDateStr();
+
+      let html = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
+          <button class="icon-btn" onclick="changeNutritionDay(-1)">‹</button>
+          <div style="font-weight:700; font-size:14px;">${formatDateHuman(dateStr)}${isToday ? " (Today)" : ""}</div>
+          <button class="icon-btn" onclick="changeNutritionDay(1)" ${isToday ? "disabled style=\"opacity:0.35;\"" : ""}>›</button>
+        </div>`;
+
+      html += macroCardHtml(macro, userGoals, "Day");
+
+      html += `
+        <div class="card">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">🧬 Detailed Micronutrients</div>
+          ${renderMicronutrientBreakdown(totals, itemsWithData, itemsTotal)}
+        </div>`;
+
+      return html;
+    }
+
+    function renderNutritionWeekly() {
+      const weekStart = nutritionWeekAnchor;
+      const days = getDateRangeArray(weekStart, 7);
+      const weekEnd = days[6];
+      const macroAgg = getRangeMacroTotals(days);
+      const { totals, itemsWithData, itemsTotal } = getRangeDetailedNutrientTotals(days);
+
+      const weeklyRequired = {
+        calories: (userGoals.calories || 0) * 7,
+        protein: (userGoals.protein || 0) * 7,
+        carbs: (userGoals.carbs || 0) * 7,
+        fat: (userGoals.fat || 0) * 7,
+        sugar: (userGoals.sugar || 0) * 7,
+        cholesterol: (userGoals.cholesterol || 0) * 7
+      };
+      const weeklyMicroRequired = {};
+      NUTRIENT_FIELD_META.forEach(f => {
+        const r = getRequiredForNutrientKey(f.key);
+        weeklyMicroRequired[f.key] = (r === null) ? null : r * 7;
+      });
+      const weeklyBreakdownHtml = renderMicronutrientBreakdownWithRequired(totals, itemsWithData, itemsTotal, weeklyMicroRequired);
+
+      const todayStr = getTodayDateStr();
+      const dayBarsHtml = days.map(d => {
+        const t = getDayNutrientTotals(d);
+        const pct = userGoals.calories > 0 ? Math.min(100, Math.round((t.cals / userGoals.calories) * 100)) : 0;
+        const isFuture = d > todayStr;
+        const label = formatDateHuman(d).split(" ").slice(0, 2).join(" ");
+        return `
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div style="font-size:9px; color:var(--text-sec); font-weight:700;">${isFuture ? "—" : t.cals}</div>
+            <div style="width:100%; height:70px; background:rgba(0,0,0,0.06); border-radius:4px; display:flex; align-items:flex-end; overflow:hidden;">
+              <div style="width:100%; height:${isFuture ? 0 : pct}%; background:${nutriBarColor(pct)};"></div>
+            </div>
+            <div style="font-size:9px; color:var(--text-sec); font-weight:700;">${label}</div>
+          </div>`;
+      }).join("");
+
+      let html = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
+          <button class="icon-btn" onclick="changeNutritionWeek(-1)">‹</button>
+          <div style="font-weight:700; font-size:13px; text-align:center;">${formatDateHuman(weekStart)} – ${formatDateHuman(weekEnd)}</div>
+          <button class="icon-btn" onclick="changeNutritionWeek(1)" ${weekEnd >= todayStr ? "disabled style=\"opacity:0.35;\"" : ""}>›</button>
+        </div>
+        <div class="card">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;">📊 Calories per Day <span style="color:var(--text-sec); font-weight:600;">(vs. ${userGoals.calories} kcal target)</span></div>
+          <div style="display:flex; gap:6px;">${dayBarsHtml}</div>
+          <div style="font-size:11px; color:var(--text-sec); margin-top:8px; text-align:center;">${macroAgg.daysLogged}/7 days logged</div>
+        </div>`;
+
+      html += macroCardHtml(macroAgg, weeklyRequired, "Week Total");
+
+      html += `
+        <div class="card">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">🧬 Detailed Micronutrients <span style="color:var(--text-sec); font-weight:600;">(Week Total)</span></div>
+          ${weeklyBreakdownHtml}
+        </div>`;
+
+      return html;
+    }
+
+    function renderNutritionMonthly() {
+      const year = parseInt(nutritionMonthYear, 10);
+      const month = parseInt(nutritionMonthNum, 10);
+      const daysInMonth = getDaysInMonth(year, month);
+      const monthStart = `${nutritionMonthYear}-${nutritionMonthNum}-01`;
+      const days = getDateRangeArray(monthStart, daysInMonth);
+      const todayStr = getTodayDateStr();
+      const elapsedDays = days.filter(d => d <= todayStr).length || 1;
+
+      const macroAgg = getRangeMacroTotals(days);
+      const { totals, itemsWithData, itemsTotal } = getRangeDetailedNutrientTotals(days);
+
+      const monthlyRequired = {
+        calories: (userGoals.calories || 0) * elapsedDays,
+        protein: (userGoals.protein || 0) * elapsedDays,
+        carbs: (userGoals.carbs || 0) * elapsedDays,
+        fat: (userGoals.fat || 0) * elapsedDays,
+        sugar: (userGoals.sugar || 0) * elapsedDays,
+        cholesterol: (userGoals.cholesterol || 0) * elapsedDays
+      };
+      const monthlyMicroRequired = {};
+      NUTRIENT_FIELD_META.forEach(f => {
+        const r = getRequiredForNutrientKey(f.key);
+        monthlyMicroRequired[f.key] = (r === null) ? null : r * elapsedDays;
+      });
+      const monthlyBreakdownHtml = renderMicronutrientBreakdownWithRequired(totals, itemsWithData, itemsTotal, monthlyMicroRequired);
+
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const isCurrentMonth = (nutritionMonthYear === todayStr.split("-")[0] && nutritionMonthNum === todayStr.split("-")[1]);
+
+      let html = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
+          <button class="icon-btn" onclick="changeNutritionMonth(-1)">‹</button>
+          <div style="font-weight:700; font-size:14px;">${monthNames[month - 1]} ${year}</div>
+          <button class="icon-btn" onclick="changeNutritionMonth(1)" ${isCurrentMonth ? "disabled style=\"opacity:0.35;\"" : ""}>›</button>
+        </div>
+        <div class="card">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">📈 Month Summary</div>
+          <div style="font-size:12px; color:var(--text-sec);">${macroAgg.daysLogged}/${elapsedDays} day(s) logged so far &middot; Avg ${macroAgg.daysLogged > 0 ? Math.round(macroAgg.cals / macroAgg.daysLogged) : 0} kcal/day logged</div>
+        </div>`;
+
+      html += macroCardHtml(macroAgg, monthlyRequired, `${elapsedDays} days elapsed`);
+
+      html += `
+        <div class="card">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">🧬 Detailed Micronutrients <span style="color:var(--text-sec); font-weight:600;">(Month-to-date)</span></div>
+          ${monthlyBreakdownHtml}
+        </div>`;
+
+      return html;
+    }
+
+    function getDateRangeArray(startStr, days) {
+      const arr = [];
+      for (let i = 0; i < days; i++) arr.push(getOffsetDateStr(startStr, i));
+      return arr;
+    }
+
+    // Same as renderMicronutrientBreakdown but takes an explicit required-value map
+    // (used for weekly/monthly totals, where the required value is period-scaled).
+    function renderMicronutrientBreakdownWithRequired(totals, itemsWithData, itemsTotal, requiredMap) {
+      const groups = ["Macros & Fibre", "Fats", "Minerals", "Vitamins"];
+      let html = "";
+      groups.forEach(groupName => {
+        const fields = NUTRIENT_FIELD_META.filter(f => f.group === groupName && f.key !== "sugar" && f.key !== "cholesterol");
+        if (fields.length === 0) return;
+        const limitKeys = ["sfa", "mufa", "pufa", "sodium"];
+        const rows = fields.map(f => renderNutriRow(f.label, f.unit, totals[f.key] || 0, requiredMap[f.key], limitKeys.includes(f.key))).join("");
+        html += `
+          <div style="margin-bottom: 10px;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--primary); margin-bottom: 2px;">${groupName}</div>
+            ${rows}
+          </div>`;
+      });
+      const dataNote = itemsTotal > 0
+        ? `<div style="font-size: 10px; color: var(--text-sec); text-align:center; margin-top: 6px;">Micronutrients based on ${itemsWithData}/${itemsTotal} logged item(s) with detailed data. Reference values are general adult approximations, not medical advice.</div>`
+        : `<div style="font-size: 12px; color: var(--text-sec); text-align:center; padding: 10px 0;">No meals logged for this period yet.</div>`;
+      return html + dataNote;
+    }
+
+    /* ==========================================================================
        YODDHA GAMIFICATION SYSTEM (LEVELS, 4 DAILY QUESTS, 11 STREAKS)
        ========================================================================== */
     function getCurrentLevelInfo(xp) {
@@ -4762,7 +5188,7 @@ function openApiModal() {
 
       if (tabId === "database") renderDatabaseView();
       if (tabId === "planner") renderRecommendedPlans();
-      if (tabId === "archive") renderArchiveLogs();
+      if (tabId === "archive") setArchiveSubView(archiveSubView);
       if (tabId === "yoddha") renderYoddhaDashboard();
     }
 
@@ -5629,6 +6055,83 @@ function closeSpoonacularSearchModal() {
   document.getElementById("spoonacular-search-modal").classList.remove("active");
 }
 
+/* ==========================================================================
+   SPOONACULAR → ANUVAAD/INDB DETAILED NUTRIENT MAPPING
+   Spoonacular's parseIngredients (includeNutrition=true) returns a flat
+   nutrients[] array of {name, amount, unit}. This maps those onto the same
+   NUTRIENT_FIELD_META schema (and units) used by the embedded INDB database,
+   so Spoonacular-imported foods get full detailed nutrition just like
+   pre-saved foods (visible in "Detailed Nutrition" and the Nutrition Log).
+   ========================================================================== */
+const SPOONACULAR_TO_INDB_MAP = [
+  { key: "sugar",       names: ["Sugar"],                                    unit: "g" },
+  { key: "fibre",       names: ["Fiber"],                                    unit: "g" },
+  { key: "sfa",         names: ["Saturated Fat"],                            unit: "mg" },
+  { key: "mufa",        names: ["Mono Unsaturated Fat", "Monounsaturated Fat"], unit: "mg" },
+  { key: "pufa",        names: ["Poly Unsaturated Fat", "Polyunsaturated Fat"], unit: "mg" },
+  { key: "cholesterol", names: ["Cholesterol"],                              unit: "mg" },
+  { key: "calcium",     names: ["Calcium"],                                  unit: "mg" },
+  { key: "phosphorus",  names: ["Phosphorus"],                               unit: "mg" },
+  { key: "magnesium",   names: ["Magnesium"],                                unit: "mg" },
+  { key: "sodium",      names: ["Sodium"],                                   unit: "mg" },
+  { key: "potassium",   names: ["Potassium"],                                unit: "mg" },
+  { key: "iron",        names: ["Iron"],                                     unit: "mg" },
+  { key: "copper",      names: ["Copper"],                                   unit: "mg" },
+  { key: "selenium",    names: ["Selenium"],                                 unit: "µg" },
+  { key: "manganese",   names: ["Manganese"],                                unit: "mg" },
+  { key: "zinc",        names: ["Zinc"],                                     unit: "mg" },
+  { key: "vitA",        names: ["Vitamin A"],                                unit: "µg" },
+  { key: "vitE",        names: ["Vitamin E"],                                unit: "mg" },
+  { key: "vitD3",       names: ["Vitamin D"],                                unit: "µg" },
+  { key: "vitK1",       names: ["Vitamin K"],                                unit: "µg" },
+  { key: "folate",      names: ["Folate"],                                   unit: "µg" },
+  { key: "vitB1",       names: ["Vitamin B1", "Thiamin", "Thiamine"],        unit: "mg" },
+  { key: "vitB2",       names: ["Vitamin B2", "Riboflavin"],                 unit: "mg" },
+  { key: "vitB3",       names: ["Vitamin B3", "Niacin"],                     unit: "mg" },
+  { key: "vitB5",       names: ["Vitamin B5", "Pantothenic Acid"],           unit: "mg" },
+  { key: "vitB6",       names: ["Vitamin B6"],                               unit: "mg" },
+  { key: "vitB7",       names: ["Vitamin B7", "Biotin"],                     unit: "µg" },
+  { key: "vitB9",       names: ["Vitamin B9", "Folic Acid"],                 unit: "µg" },
+  { key: "vitC",        names: ["Vitamin C"],                                unit: "mg" }
+];
+
+// Converts a mass-based nutrient value between g / mg / µg (returns null if either unit is unsupported, e.g. IU).
+function convertNutrientUnit(value, fromUnit, toUnit) {
+  if (value === null || value === undefined || isNaN(value)) return null;
+  fromUnit = (fromUnit || "").trim().toLowerCase();
+  toUnit = (toUnit || "").trim().toLowerCase();
+  const toMg = { "g": 1000, "mg": 1, "µg": 0.001, "mcg": 0.001, "ug": 0.001 };
+  if (fromUnit === toUnit) return value;
+  if (!(fromUnit in toMg) || !(toUnit in toMg)) return null;
+  return (value * toMg[fromUnit]) / toMg[toUnit];
+}
+
+// Builds a {key: value|null} nutrient profile (same shape as buildNutrientProfile)
+// from Spoonacular's nutrition.nutrients array.
+function mapSpoonacularNutrients(nutrientsArr) {
+  const profile = {};
+  NUTRIENT_FIELD_META.forEach(f => { profile[f.key] = null; });
+  if (!Array.isArray(nutrientsArr) || nutrientsArr.length === 0) return profile;
+
+  const findByNames = names => {
+    for (const n of names) {
+      const hit = nutrientsArr.find(it => it.name && it.name.toLowerCase() === n.toLowerCase());
+      if (hit) return hit;
+    }
+    return null;
+  };
+
+  SPOONACULAR_TO_INDB_MAP.forEach(m => {
+    const hit = findByNames(m.names);
+    if (hit && typeof hit.amount === "number") {
+      const converted = convertNutrientUnit(hit.amount, hit.unit, m.unit);
+      if (converted !== null) profile[m.key] = Math.round(converted * 100) / 100;
+    }
+  });
+
+  return profile;
+}
+
 async function searchSpoonacularFood() {
   const query = document.getElementById("spoonacular-search-query").value.trim();
   const statusEl = document.getElementById("spoonacular-search-status");
@@ -5687,6 +6190,7 @@ async function searchSpoonacularFood() {
           fat: getNutrient("Fat"),
           sugar: getNutrient("Sugar"),
           cholesterol: Math.round(getNutrient("Cholesterol")),
+          nutrients: mapSpoonacularNutrients(nutrients),
           origin: "SPOONACULAR"
         };
       });
@@ -5710,6 +6214,7 @@ async function searchSpoonacularFood() {
             fat: Math.round((guess.fat?.value || 0) * 10) / 10,
             sugar: 0,
             cholesterol: 0,
+            nutrients: mapSpoonacularNutrients([]),
             origin: "SPOONACULAR"
           }];
         }
