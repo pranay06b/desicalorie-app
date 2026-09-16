@@ -948,7 +948,7 @@
         <div class="card">
           <h3 style="margin: 0 0 4px 0;">🥗 Nutrition Log</h3>
           <p style="font-size: 13px; color: var(--text-sec); margin: 0;">
-            Consumed vs. required — calorie &amp; macro targets are personalized from your Body Calculator (⚙️); micronutrient targets use a general adult reference.
+            Consumed vs. required — calorie, macro, fibre &amp; sugar targets are personalized from your Body Calculator (⚙️), along with iron, zinc, calcium, magnesium, potassium and several vitamins based on your age &amp; sex. Remaining micronutrients use a general adult reference.
           </p>
         </div>
         <div id="nutrition-body"></div>
@@ -3706,11 +3706,17 @@ function saveApiKeys() {
     /* ==========================================================================
        NUTRITION LOG — DAILY / WEEKLY / MONTHLY CONSUMED VS. REQUIRED
        Calorie & macro targets come from userGoals (personalized via the Body
-       Calculator using the user's own height/weight/age/activity). Detailed
-       micronutrients (vitamins & minerals) are compared against a general
-       adult reference intake (approximate ICMR/WHO-style values) since the
-       app does not collect the extra biometrics (sex-specific RDA, pregnancy,
-       etc.) needed to personalize those the way calories/macros are.
+       Calculator using the user's own height/weight/age/activity/sex). Sex-
+       and age-dependent micronutrients (iron, zinc, calcium, magnesium,
+       potassium, vitamins A/C/D3/K1/B1/B2/B3/B6) are ALSO personalized off
+       the same Body Calculator inputs the moment the user saves their goals
+       (see computePersonalizedMicroRDA / userGoals.microRDA below). Fibre and
+       Free Sugar targets are likewise derived from the calculator's calorie
+       target rather than a flat number. Micronutrients that don't meaningfully
+       vary by sex/age (sodium cap, trace minerals, most B-vitamins, etc.)
+       still fall back to a general adult reference intake, and everyone falls
+       back to that same reference until the calculator has been run at least
+       once — these are approximate values, not medical advice.
        ========================================================================== */
     const MICRO_RDA_REFERENCE = {
       fibre: 30, sfa: 20000, mufa: 25000, pufa: 17000,
@@ -3720,9 +3726,52 @@ function saveApiKeys() {
       vitB1: 1.2, vitB2: 1.3, vitB3: 15, vitB5: 5, vitB6: 1.7, vitB7: 30, vitB9: 300, vitC: 80, carotenoids: null
     };
 
+    // Computes sex- and age-adjusted RDAs for the micronutrients where sex/age
+    // materially change the recommendation (approximate ICMR/NIH-style adult
+    // values). Anything not returned here simply falls back to
+    // MICRO_RDA_REFERENCE. Called from the Body Calculator using its own
+    // gender/age inputs — this is what makes the nutrition log's micronutrient
+    // targets personal instead of a single generic number for everyone.
+    function computePersonalizedMicroRDA(gender, age) {
+      const isMale = gender === "male";
+      const isOlder = age >= 51;
+      const isYoungAdult = age <= 30;
+
+      return {
+        // Iron: premenopausal women need far more than men due to menstrual losses.
+        iron: isMale ? 19 : (isOlder ? 19 : 29),
+        // Zinc
+        zinc: isMale ? 17 : 12,
+        // Magnesium rises slightly with age for men, stays fairly flat for women.
+        magnesium: isMale ? (isYoungAdult ? 350 : 370) : (isYoungAdult ? 300 : 310),
+        // Calcium needs rise after 50 (bone density) for everyone.
+        calcium: isOlder ? 1200 : 1000,
+        // Potassium (2019 NASEM AI)
+        potassium: isMale ? 3400 : 2600,
+        // Vitamin A
+        vitA: isMale ? 900 : 700,
+        // Vitamin C
+        vitC: isMale ? 90 : 75,
+        // Vitamin D3 — needs rise after 70.
+        vitD3: age >= 71 ? 20 : 15,
+        // Vitamin K1 (AI)
+        vitK1: isMale ? 120 : 90,
+        // Thiamine / Riboflavin
+        vitB1: isMale ? 1.2 : 1.1,
+        vitB2: isMale ? 1.3 : 1.1,
+        // Niacin
+        vitB3: isMale ? 16 : 14,
+        // Vitamin B6 — needs rise after 50 for both sexes.
+        vitB6: isOlder ? (isMale ? 1.7 : 1.5) : 1.3
+      };
+    }
+
     function getRequiredForNutrientKey(key) {
       if (key === "sugar") return userGoals.sugar || 25;
       if (key === "cholesterol") return userGoals.cholesterol || 300;
+      if (key === "fibre" && userGoals.fiber) return userGoals.fiber;
+      const personalized = userGoals.microRDA && userGoals.microRDA[key];
+      if (personalized !== undefined && personalized !== null) return personalized;
       const v = MICRO_RDA_REFERENCE[key];
       return (v === undefined) ? null : v;
     }
@@ -5878,6 +5927,17 @@ function runFatLossCalculation() {
   const fiberTarget = (currentCalcMode === "belly") ? 38 : 32;
   const waterTarget = (currWt * 0.035).toFixed(1);
 
+  // Free-sugar cap personalized off the calculator's own calorie target
+  // (WHO: keep free sugars to ~5% of total energy; 4 kcal/g), rounded to
+  // the nearest 5g so it reads as a clean number. This replaces the old
+  // flat 25g-for-everyone default.
+  const sugarTarget = Math.max(15, Math.round((targetCals * 0.05 / 4) / 5) * 5);
+
+  // Sex/age-adjusted micronutrient RDAs, using the same gender & age the
+  // calculator already collects — these get saved onto userGoals.microRDA
+  // in applyCalculatedGoals() and take over from the generic reference table.
+  const personalizedMicro = computePersonalizedMicroRDA(gender, age);
+
   const kgToLose = Math.max(0, currWt - goalWt);
   const weeksNeeded = (kgToLose > 0 && weeklyRate > 0) ? Math.ceil(kgToLose / weeklyRate) : 0;
   const targetDate = new Date();
@@ -5897,7 +5957,7 @@ function runFatLossCalculation() {
   document.getElementById("calc-pro-stat").innerText = `💪 Protein: ${targetPro}g (${proPerLbm}g/kg LBM)`;
   document.getElementById("calc-carb-stat").innerText = `🌾 Complex Carbs: ${targetCarb}g`;
   document.getElementById("calc-fat-stat").innerText = `🥑 Healthy Fat: ${targetFat}g`;
-  document.getElementById("calc-micro-stat").innerText = `🥗 Fiber: ≥${fiberTarget}g • 💧 Water: ${waterTarget}L`;
+  document.getElementById("calc-micro-stat").innerText = `🥗 Fiber: ≥${fiberTarget}g • 💧 Water: ${waterTarget}L • 🍬 Sugar: ≤${sugarTarget}g`;
 
   let insightsHTML = "";
   if (method === "usnavy") insightsHTML += `<li><b>US Navy Methodology:</b> Tracks tape measurements. Highly accurate for visceral fat tracking as it emphasizes waist circumference reduction over sheer weight.</li>`;
@@ -5919,7 +5979,11 @@ function runFatLossCalculation() {
   const insightsList = document.getElementById("calc-insights-list");
   if (insightsList) insightsList.innerHTML = insightsHTML;
 
-  window.calculatedTargets = { calories: targetCals, protein: targetPro, carbs: targetCarb, fat: targetFat, fiber: fiberTarget, tdee: tdee };
+  window.calculatedTargets = {
+    calories: targetCals, protein: targetPro, carbs: targetCarb, fat: targetFat,
+    fiber: fiberTarget, sugar: sugarTarget, tdee: tdee,
+    gender: gender, age: age, micro: personalizedMicro
+  };
 }
 
 function applyCalculatedGoals() {
@@ -5933,6 +5997,16 @@ function applyCalculatedGoals() {
   userGoals.fat = window.calculatedTargets.fat;
   userGoals.tdee = window.calculatedTargets.tdee || (window.calculatedTargets.calories + 550);
 
+  // Personalize fibre, free-sugar and the sex/age-dependent micronutrient
+  // RDAs off this same calculator run, instead of leaving them on the
+  // generic one-size-fits-all reference (getRequiredForNutrientKey reads
+  // these first, falling back to MICRO_RDA_REFERENCE only when absent).
+  userGoals.fiber = window.calculatedTargets.fiber;
+  userGoals.sugar = window.calculatedTargets.sugar;
+  userGoals.gender = window.calculatedTargets.gender;
+  userGoals.age = window.calculatedTargets.age;
+  userGoals.microRDA = window.calculatedTargets.micro;
+
   localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
 
   document.getElementById("planner-target-cals").innerText = userGoals.calories;
@@ -5940,6 +6014,8 @@ function applyCalculatedGoals() {
   document.getElementById("setting-goal-pro").value = userGoals.protein;
   document.getElementById("setting-goal-carb").value = userGoals.carbs;
   document.getElementById("setting-goal-fat").value = userGoals.fat;
+  const settingSugarEl = document.getElementById("setting-goal-sugar");
+  if (settingSugarEl) settingSugarEl.value = userGoals.sugar;
 
   awardXP(30, "Calibrated Advanced Biometrics");
   triggerConfetti();
@@ -5948,7 +6024,7 @@ function applyCalculatedGoals() {
   renderTodayDashboard();
   renderRecommendedPlans();
   renderYoddhaDashboard();
-  showToast(`🎯 Goals updated: ${userGoals.calories} kcal (Protein: ${userGoals.protein}g, Carbs: ${userGoals.carbs}g)`);
+  showToast(`🎯 Goals updated: ${userGoals.calories} kcal (Protein: ${userGoals.protein}g, Carbs: ${userGoals.carbs}g, Sugar: ≤${userGoals.sugar}g)`);
 }
 function importJsonFile(event) {
   const file = event.target.files[0];
