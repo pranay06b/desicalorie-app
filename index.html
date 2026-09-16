@@ -3511,6 +3511,10 @@ function updateSoundUI() {
     headerBtn.innerHTML = isSoundMuted ? "🔇" : "🔊";
     headerBtn.title = isSoundMuted ? "Unmute Sounds" : "Mute Sounds";
   }
+  const settingsBtn = document.getElementById("settings-sound-btn");
+  if (settingsBtn) {
+    settingsBtn.innerHTML = isSoundMuted ? "🔇 Muted" : "🔊 Enabled";
+  }
 }
 function loadAllSavedData() {
   try {
@@ -4753,65 +4757,50 @@ const STORAGE_KEY_CUSTOM_PLANS = "desicalorie_custom_plans_v13";
       showToast(`⚡ Applied "${selectedPlan.title}" to ${currentDateStr}!`);
     }
 function shareOrExportLogs(mode) {
+  const exportPayload = {
+    exportedAt: new Date().toISOString(),
+    currentDate: currentDateStr,
+    userGoals: userGoals,
+    yoddhaProfile: yoddhaProfile,
+    customFoods: customFoods,
+    customPlans: customPlans,
+    logs: currentLogs
+  };
+
+  const jsonStr = JSON.stringify(exportPayload, null, 2);
+
   if (mode === 'sheet') {
-    const totals = getDayNutrientTotals(currentDateStr);
-    const dayEntry = getDayLog(currentDateStr);
-    const slots = ["breakfast", "lunch", "snacks", "dinner", "midnight"];
-    const slotLabels = {
-      breakfast: "🌅 Breakfast",
-      lunch: "🍛 Lunch",
-      snacks: "☕️ Evening Snacks",
-      dinner: "🍲 Dinner",
-      midnight: "🌙 Midnight Cravings"
-    };
+    const fileName = `desi_calorie_backup_${currentDateStr}.json`;
+    const jsonFile = new File([jsonStr], fileName, { type: "application/json" });
 
-    let summary = `🍛 *Desi Calorie Daily Report (${currentDateStr})*\n\n`;
-    summary += `🔥 *Calories:* ${totals.cals} / ${userGoals.calories} kcal\n`;
-    summary += `💪 *Protein:* ${totals.pro}g / ${userGoals.protein || 75}g\n`;
-    summary += `🌾 *Carbs:* ${totals.carbs}g / ${userGoals.carbs || 220}g\n`;
-    summary += `🥑 *Fat:* ${totals.fat}g / ${userGoals.fat || 65}g\n`;
-    summary += `🍬 *Sugar:* ${totals.sugar}g • 🫀 *Chol:* ${totals.chol}mg\n\n`;
-    summary += `📋 *Items Logged:*\n`;
-
-    let hasItems = false;
-    slots.forEach(slot => {
-      const items = dayEntry.meals[slot] || [];
-      if (items.length > 0) {
-        hasItems = true;
-        summary += `\n*${slotLabels[slot]}*\n`;
-        items.forEach(it => {
-          const qty = it.qty || 1;
-          const cal = Math.round(it.calories * qty);
-          const p = Math.round((it.protein || 0) * qty);
-          summary += ` • ${it.name} (${qty}x) — ${cal} kcal | P: ${p}g\n`;
-        });
-      }
-    });
-
-    if (!hasItems) summary += `_(No meals recorded for this date)_\n`;
-
-    if (navigator.share) {
-      navigator.share({ title: `Desi Calorie - ${currentDateStr}`, text: summary })
-        .catch(err => {
-          if (err.name !== 'AbortError') {
-            window.open(`https://wa.me/?text=${encodeURIComponent(summary)}`, '_blank');
-          }
-        });
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(summary)}`, '_blank');
+    // 1. Share as actual .json file via native share sheet (WhatsApp, Drive, Telegram, AirDrop)
+    if (navigator.canShare && navigator.canShare({ files: [jsonFile] })) {
+      navigator.share({
+        title: `Desi Calorie Backup (${currentDateStr})`,
+        files: [jsonFile]
+      }).catch(err => {
+        if (err.name !== 'AbortError') {
+          window.open(`https://wa.me/?text=${encodeURIComponent(jsonStr)}`, '_blank');
+        }
+      });
+    } 
+    // 2. Fallback: Share raw JSON text via Web Share API
+    else if (navigator.share) {
+      navigator.share({
+        title: `Desi Calorie Backup (${currentDateStr})`,
+        text: jsonStr
+      }).catch(err => {
+        if (err.name !== 'AbortError') {
+          window.open(`https://wa.me/?text=${encodeURIComponent(jsonStr)}`, '_blank');
+        }
+      });
+    } 
+    // 3. Fallback: Direct WhatsApp Web / App intent with raw JSON payload
+    else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(jsonStr)}`, '_blank');
     }
   } else if (mode === 'download') {
-    const exportPayload = {
-      exportedAt: new Date().toISOString(),
-      currentDate: currentDateStr,
-      userGoals: userGoals,
-      yoddhaProfile: yoddhaProfile,
-      customFoods: customFoods,
-      customPlans: customPlans,
-      logs: currentLogs
-    };
-
-    const jsonBlob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
+    const jsonBlob = new Blob([jsonStr], { type: "application/json" });
     const downloadUrl = URL.createObjectURL(jsonBlob);
     const dlAnchor = document.createElement("a");
     dlAnchor.href = downloadUrl;
