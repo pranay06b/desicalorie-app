@@ -3828,36 +3828,175 @@ function importJsonFile(event) {
 
   const reader = new FileReader();
 
+  /*
+   * Import compatibility layer
+   * Supports:
+   *  - Current Desi Calorie backups (logs, userGoals, customFoods, customPlans, yoddhaProfile)
+   *  - Older backups that used alternate key names / nesting
+   *  - Older meal items that only stored the original 6 nutrition fields
+   *  - Older exports where logs were stored directly as daily-log objects
+   *
+   * Newer nutrition fields are preserved whenever present; missing legacy
+   * fields receive safe zero defaults so old backups continue to work.
+   */
+  function firstDefined(obj, keys) {
+    if (!obj || typeof obj !== "object") return undefined;
+    for (const key of keys) {
+      if (obj[key] !== undefined && obj[key] !== null) return obj[key];
+    }
+    return undefined;
+  }
+
+  function normalizeFoodItem(item) {
+    if (!item || typeof item !== "object") return null;
+    const food = { ...item };
+
+    food.id = food.id || food.foodId || ("legacy_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8));
+    food.name = firstDefined(food, ["name", "foodName", "food", "itemName", "title"]) || "Unnamed Food";
+    food.brand = firstDefined(food, ["brand", "manufacturer"]) || "Generic";
+    food.portion = firstDefined(food, ["portion", "serving", "servingSize", "portionSize", "unit"]) || "1 serving";
+
+    // Support both current names and common names from older exports.
+    food.calories = Number(firstDefined(food, ["calories", "calorie", "kcal", "energy"])) || 0;
+    food.protein = Number(firstDefined(food, ["protein", "proteins", "protein_g"])) || 0;
+    food.carbs = Number(firstDefined(food, ["carbs", "carbohydrates", "carbohydrate", "carbs_g"])) || 0;
+    food.fat = Number(firstDefined(food, ["fat", "totalFat", "fat_g"])) || 0;
+    food.sugar = Number(firstDefined(food, ["sugar", "freeSugar", "free_sugar", "sugars"])) || 0;
+    food.cholesterol = Number(firstDefined(food, ["cholesterol", "cholesterolMg", "cholesterol_mg"])) || 0;
+    food.qty = Number(firstDefined(food, ["qty", "quantity", "servings", "multiplier"])) || 1;
+    food.origin = firstDefined(food, ["origin", "source"]) || "CUSTOM";
+
+    // Preserve the complete modern Anuvaad nutrition payload if an old/new
+    // backup already contains it. Do not throw away any unknown nutrient keys.
+    return food;
+  }
+
+  function normalizeMeals(meals) {
+    const result = { breakfast: [], lunch: [], snacks: [], dinner: [], midnight: [] };
+    if (!meals || typeof meals !== "object") return result;
+
+    const aliases = {
+      breakfast: ["breakfast", "morning", "morningMeal", "breakfastMeal"],
+      lunch: ["lunch", "afternoon", "lunchMeal"],
+      snacks: ["snacks", "snack", "evening", "eveningSnacks", "eveningMeal"],
+      dinner: ["dinner", "night", "dinnerMeal"],
+      midnight: ["midnight", "lateNight", "midnightCravings", "lateNightMeal"]
+    };
+
+    Object.keys(result).forEach(slot => {
+      let items;
+      for (const key of aliases[slot]) {
+        if (Array.isArray(meals[key])) { items = meals[key]; break; }
+      }
+      if (items) result[slot] = items.map(normalizeFoodItem).filter(Boolean);
+    });
+
+    // Some legacy versions stored one flat `items` / `foods` array.
+    if (Object.values(result).every(arr => arr.length === 0)) {
+      const flat = firstDefined(meals, ["items", "foods", "foodItems"]);
+      if (Array.isArray(flat)) result.lunch = flat.map(normalizeFoodItem).filter(Boolean);
+    }
+    return result;
+  }
+
+  function normalizeLogs(rawLogs) {
+    if (!rawLogs) return null;
+
+    // Current and most legacy formats: { "YYYY-MM-DD": { meals: {...} } }
+    if (!Array.isArray(rawLogs) && typeof rawLogs === "object") {
+      const out = {};
+      Object.keys(rawLogs).forEach(dateKey => {
+        const entry = rawLogs[dateKey];
+        if (!entry || typeof entry !== "object") return;
+        const mealsSource = firstDefined(entry, ["meals", "mealLog", "foodLog", "diet", "dailyMeals"]);
+        if (mealsSource) {
+          out[dateKey] = { ...entry, meals: normalizeMeals(mealsSource) };
+        }
+      });
+      if (Object.keys(out).length) return out;
+    }
+
+    // Older exports sometimes used [{date, meals: ...}] or [{date, items:...}].
+    if (Array.isArray(rawLogs)) {
+      const out = {};
+      rawLogs.forEach(entry => {
+        if (!entry || typeof entry !== "object") return;
+        const date = firstDefined(entry, ["date", "dateStr", "day", "logDate"]);
+        if (!date) return;
+        const mealsSource = firstDefined(entry, ["meals", "mealLog", "foodLog", "diet"]);
+        out[date] = { ...entry, meals: normalizeMeals(mealsSource || entry) };
+      });
+      return out;
+    }
+    return null;
+  }
+
+  function normalizeCustomFoods(rawFoods) {
+    if (!Array.isArray(rawFoods)) return null;
+    return rawFoods.map(normalizeFoodItem).filter(Boolean);
+  }
+
   reader.onload = function(e) {
     try {
-      const data = JSON.parse(e.target.result);
+      const raw = JSON.parse(e.target.result);
+      if (!raw || typeof raw !== "object") {
+        showToast("⚠️ Invalid JSON backup file.");
+        return;
+      }
 
-      // Validate that this is a valid Desi Calorie backup file
-      if (!data || (!data.logs && !data.userGoals && !data.customFoods)) {
-        showToast("⚠️ Invalid backup file format.");
+      // Unwrap common wrapper formats used by older versions/apps.
+      const data = firstDefined(raw, ["backup", "data", "payload"]) &&
+                   typeof firstDefined(raw, ["backup", "data", "payload"]) === "object"
+                   ? firstDefined(raw, ["backup", "data", "payload"])
+                   : raw;
+
+      const rawLogs = firstDefined(data, ["logs", "currentLogs", "dailyLogs", "foodLogs", "mealLogs", "dietLogs"]);
+      const rawGoals = firstDefined(data, ["userGoals", "goals", "settings", "targets", "nutritionGoals"]);
+      const rawCustomFoods = firstDefined(data, ["customFoods", "customFood", "foods", "myFoods", "userFoods"]);
+      const rawPlans = firstDefined(data, ["customPlans", "mealPlans", "plans"]);
+      const rawProfile = firstDefined(data, ["yoddhaProfile", "profile", "gamification", "userProfile"]);
+
+      const normalizedLogs = normalizeLogs(rawLogs);
+      const normalizedFoods = normalizeCustomFoods(rawCustomFoods);
+      const hasRecognizedData = !!(normalizedLogs || rawGoals || normalizedFoods || rawPlans || rawProfile);
+
+      if (!hasRecognizedData) {
+        showToast("⚠️ Invalid or unsupported Desi Calorie backup format.");
         return;
       }
 
       const confirmRestore = confirm(
-        "Restoring this backup will replace your current logs, custom foods, meal plans, and targets with the backup file data. Do you want to proceed?"
+        "Restore this backup? Existing logs, custom foods, meal plans and targets included in the backup may replace your current data."
       );
       if (!confirmRestore) {
-        event.target.value = ""; // Reset file input
+        event.target.value = "";
         return;
       }
 
-      // 1. Restore Logs
-      if (data.logs && typeof data.logs === "object") {
-        currentLogs = data.logs;
+      // 1. Restore logs, accepting both old and current schemas.
+      if (normalizedLogs) {
+        currentLogs = normalizedLogs;
         persistLogs();
       }
 
-      // 2. Restore User Goals
-      if (data.userGoals && typeof data.userGoals === "object") {
-        userGoals = { ...userGoals, ...data.userGoals };
+      // 2. Restore goals, including older key names.
+      if (rawGoals && typeof rawGoals === "object") {
+        userGoals = { ...userGoals };
+        const goalAliases = {
+          calories: ["calories", "calorieGoal", "calorieBudget", "kcal", "dailyCalories"],
+          protein: ["protein", "proteinGoal", "dailyProtein"],
+          carbs: ["carbs", "carbohydrates", "carbGoal", "carbsGoal", "dailyCarbs"],
+          fat: ["fat", "fatGoal", "dailyFat"],
+          sugar: ["sugar", "sugarGoal", "freeSugar", "freeSugarGoal"],
+          cholesterol: ["cholesterol", "cholesterolGoal", "cholGoal", "dailyCholesterol"],
+          tdee: ["tdee", "TDEE"]
+        };
+        Object.keys(goalAliases).forEach(target => {
+          const value = firstDefined(rawGoals, goalAliases[target]);
+          if (value !== undefined && value !== null && value !== "") userGoals[target] = Number(value) || 0;
+        });
         localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(userGoals));
-        
-        // Update settings modal inputs
+
         document.getElementById("setting-goal-cal").value = userGoals.calories || 2000;
         document.getElementById("setting-goal-pro").value = userGoals.protein || 75;
         document.getElementById("setting-goal-carb").value = userGoals.carbs || 220;
@@ -3867,25 +4006,25 @@ function importJsonFile(event) {
         document.getElementById("planner-target-cals").innerText = userGoals.calories || 2000;
       }
 
-      // 3. Restore Custom Foods
-      if (Array.isArray(data.customFoods)) {
-        customFoods = data.customFoods;
+      // 3. Restore custom foods. Modern nutrient fields are retained.
+      if (normalizedFoods) {
+        customFoods = normalizedFoods;
         persistCustomFoods();
       }
 
-      // 4. Restore Custom Meal Plans
-      if (Array.isArray(data.customPlans)) {
-        customPlans = data.customPlans;
+      // 4. Restore plans, preserving the complete plan objects.
+      if (Array.isArray(rawPlans)) {
+        customPlans = rawPlans;
         localStorage.setItem(STORAGE_KEY_CUSTOM_PLANS, JSON.stringify(customPlans));
       }
 
-      // 5. Restore Yoddha Gamification Profile & XP
-      if (data.yoddhaProfile && typeof data.yoddhaProfile === "object") {
-        yoddhaProfile = data.yoddhaProfile;
+      // 5. Restore gamification profile.
+      if (rawProfile && typeof rawProfile === "object") {
+        yoddhaProfile = rawProfile;
+        if (!yoddhaProfile.claimedQuests) yoddhaProfile.claimedQuests = {};
         persistYoddha();
       }
 
-      // Re-render all views to reflect restored data
       renderTodayDashboard();
       renderDatabaseView();
       renderRecommendedPlans();
@@ -3895,20 +4034,22 @@ function importJsonFile(event) {
       closeSettingsModal();
       triggerConfetti();
       playDesiChime("level");
-      showToast("✓ Backup restored successfully!");
+      showToast("✓ Backup restored — compatible with older & newer formats!");
     } catch (err) {
       console.error("Import error:", err);
-      showToast("❌ Failed to parse JSON file.");
+      showToast("❌ Failed to parse or restore JSON file.");
     } finally {
-      event.target.value = ""; // Clear file input so the same file can be re-selected if needed
+      event.target.value = "";
     }
+  };
+
+  reader.onerror = function() {
+    showToast("❌ Could not read the JSON file.");
+    event.target.value = "";
   };
 
   reader.readAsText(file);
 }
-
-
-
 
 function openSpoonacularSearchModal() {
   if (!apiKeys.spoonacularKey) {
