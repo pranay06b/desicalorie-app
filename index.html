@@ -1311,6 +1311,7 @@
     <option value="1.00">⚡ 1.00 kg/wk (Max Deficit: -1,100 kcal/d)</option>
     <option value="custom">✏️ Custom kg/week</option>
   </select>
+  <div id="pace-floor-note" style="display:none; font-size: 11px; color: var(--warning); font-weight: 600; margin-top: 4px;"></div>
   <input
     type="number"
     id="calc-weekly-rate-custom"
@@ -5926,14 +5927,26 @@ if (rateSelectVal === "custom") {
     }
   }
 
-  let dailyDeficit = Math.round(weeklyRate * 1100) + visceralPenalty;
-  let targetCals = tdee - dailyDeficit;
-  
-  const safetyFloor = (gender === "male") ? 1500 : 1200;
-  if (targetCals < safetyFloor) {
-    targetCals = safetyFloor;
-    dailyDeficit = tdee - targetCals;
+ let dailyDeficit = Math.round(weeklyRate * 1100) + visceralPenalty;
+let targetCals = tdee - dailyDeficit;
+
+const safetyFloor = (gender === "male") ? 1500 : 1200;
+let floorClamped = false;
+if (targetCals < safetyFloor) {
+  targetCals = safetyFloor;
+  dailyDeficit = tdee - targetCals;
+  floorClamped = true;
+}
+
+const paceNote = document.getElementById("pace-floor-note");
+if (paceNote) {
+  if (floorClamped) {
+    paceNote.style.display = "block";
+    paceNote.innerText = `⚠️ At this pace your target would drop below the ${safetyFloor} kcal safety minimum, so it's capped there. Weekly weight-loss timeline still reflects your chosen pace, but daily intake won't go lower — try increasing activity level instead.`;
+  } else {
+    paceNote.style.display = "none";
   }
+}
 
   let targetPro = 0, targetCarb = 0, targetFat = 0;
   if (currentCalcMode === "belly") {
@@ -5972,8 +5985,9 @@ if (rateSelectVal === "custom") {
   document.getElementById("calc-fat-mass").innerText = `${fatMass} kg`;
   document.getElementById("calc-lean-mass").innerText = `${leanMass} kg`;
 
-  document.getElementById("calc-meta-stats").innerText = `BMR: ${Math.round(bmr)} • Maintenance (TDEE): ${tdee} • Deficit: -${dailyDeficit} kcal/day`;
-
+document.getElementById("calc-meta-stats").innerText =
+  `BMR: ${Math.round(bmr)} • Maintenance (TDEE): ${tdee} • Deficit: -${dailyDeficit} kcal/day${floorClamped ? " (capped)" : ""}`;
+  
   const proPerLbm = (targetPro / leanMass).toFixed(1);
   document.getElementById("calc-pro-stat").innerText = `💪 Protein: ${targetPro}g (${proPerLbm}g/kg LBM)`;
   document.getElementById("calc-carb-stat").innerText = `🌾 Complex Carbs: ${targetCarb}g`;
